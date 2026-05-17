@@ -198,8 +198,15 @@ def _render_login():
         else '<span style="font-size:28px;font-weight:800;letter-spacing:-0.02em;">ORIEL</span>'
     )
 
-    st.markdown(
-        f"""
+    # Build the login HTML into a variable, then collapse blank lines and
+    # leading indentation before handing to st.markdown. Streamlit's
+    # markdown engine breaks HTML blocks on blank lines and treats deeply
+    # indented chunks as code blocks — both would corrupt our form. Stripping
+    # blank lines keeps the entire HTML as one continuous block; CSS inside
+    # <style> is whitespace-tolerant so this is a safe transformation.
+    import re as _re_login
+    import textwrap as _tw_login
+    _login_html = f"""
         <style>
           /* ── Kill Streamlit chrome completely ────────────────────────── */
           header[data-testid="stHeader"],
@@ -761,9 +768,18 @@ def _render_login():
             }});
           }})();
         </script>
-        """,
-        unsafe_allow_html=True,
-    )
+        """
+    # 1) Dedent: textwrap strips the common leading whitespace introduced
+    #    by the f-string being inside the function body. After this, top-
+    #    level HTML tags start at column 0, satisfying CommonMark's "less
+    #    than 4 spaces" rule for HTML blocks.
+    # 2) Collapse blank lines: this keeps the whole HTML as a single block
+    #    in the markdown parser's eyes — so it passes through verbatim
+    #    instead of breaking into separate blocks (some of which would be
+    #    interpreted as indented code blocks).
+    _login_html = _tw_login.dedent(_login_html)
+    _login_html = _re_login.sub(r"\n[ \t]*\n+", "\n", _login_html)
+    st.markdown(_login_html, unsafe_allow_html=True)
 
     # Hidden Streamlit form — the real auth backend. Off-screen via CSS;
     # driven by JS bridge above. On submit, validates credentials and
