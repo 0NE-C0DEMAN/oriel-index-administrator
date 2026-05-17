@@ -156,42 +156,17 @@ def _oriel_logo_uri() -> str:
 
 
 def _render_login():
-    """Fully custom JSX-style login screen.
+    """Split-screen login: gradient hero on the left, Streamlit form on
+    the right. We position a fixed accent-gradient `<aside>` covering the
+    left half of the viewport, and constrain Streamlit's natural main
+    container to the right half via CSS — that way the Streamlit form is
+    real and interactive (no JS bridge needed) and the page LOOKS like a
+    polished two-column JSX login.
 
-    Architecture (Façade pattern):
-      • We render OUR OWN HTML/CSS form — every pixel under our control.
-        No Streamlit widget defaults fighting us on input shells, the
-        password-toggle button, focus rings, fonts, etc.
-      • A hidden `st.form(...)` sits off-screen as the auth backend. It
-        owns Streamlit's session_state and rerun lifecycle.
-      • A tiny JS bridge copies values from our visible inputs into the
-        hidden Streamlit inputs (via React's nativeInputValueSetter so
-        React tracks the change), then clicks the hidden submit button.
-
-    Why not a true JSX iframe? An iframe is cross-origin from Streamlit's
-    page → can't reach Streamlit's form via JS → would need postMessage
-    relay. The façade is simpler and visually identical to JSX.
+    Theme is forced light via `.streamlit/config.toml` so HF Spaces' dark
+    default doesn't fight our input styling.
     """
     logo_uri = _oriel_logo_uri()
-
-    # Surface validation errors from the previous submit attempt. We pop
-    # so the error doesn't persist across renders.
-    login_err = st.session_state.pop("_login_err", False)
-    err_html = ""
-    if login_err:
-        err_html = """
-        <div class="oriel-jsx-error" role="alert">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none"
-               stroke="currentColor" stroke-width="2.2"
-               stroke-linecap="round" stroke-linejoin="round">
-            <circle cx="12" cy="12" r="10"/>
-            <line x1="12" y1="8" x2="12" y2="12"/>
-            <line x1="12" y1="16" x2="12.01" y2="16"/>
-          </svg>
-          Invalid username or password.
-        </div>
-        """
-
     logo_html = (
         f'<img src="{logo_uri}" alt="Oriel" />'
         if logo_uri
@@ -208,96 +183,83 @@ def _render_login():
     import textwrap as _tw_login
     _login_html = f"""
         <style>
-          /* ── Kill Streamlit chrome completely ────────────────────────── */
+          /* ── Kill Streamlit chrome ───────────────────────────────────── */
           header[data-testid="stHeader"],
           footer,
           [data-testid="stSidebar"],
           [data-testid="stToolbar"],
           [data-testid="stStatusWidget"],
           [data-testid="stDecoration"] {{ display: none !important; }}
-
           html, body, .stApp {{
             margin: 0 !important; padding: 0 !important;
-            height: 100vh !important; overflow: hidden !important;
+            min-height: 100vh !important;
             background: #FFFFFF !important;
             font-family: 'Inter', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
             color-scheme: light !important;
+            color: #0E1733 !important;
           }}
           [data-testid="stAppViewContainer"],
-          [data-testid="stMain"],
-          [data-testid="stMainBlockContainer"] {{
+          [data-testid="stMain"] {{
             padding: 0 !important; margin: 0 !important;
             background: transparent !important;
+          }}
+          /* RIGHT pane = Streamlit's natural main container. Slide it to
+             the right half of the viewport and center the form vertically. */
+          [data-testid="stMainBlockContainer"] {{
+            position: relative !important;
+            margin-left: 50% !important;
+            width: 50% !important;
             max-width: none !important;
+            min-height: 100vh !important;
+            padding: 48px 56px !important;
+            box-sizing: border-box !important;
+            display: flex !important;
+            flex-direction: column !important;
+            justify-content: center !important;
+            background: #FFFFFF !important;
           }}
-
-          /* HIDE the Streamlit form completely — it's our submission backend.
-             We keep it in the DOM (just visually hidden + non-interactive)
-             so its inputs and submit button can be programmatically driven
-             from our visible JSX-styled form. */
-          [data-testid="stForm"] {{
-            position: fixed !important;
-            left: -10000px !important;
-            top: -10000px !important;
-            width: 1px !important;
-            height: 1px !important;
-            opacity: 0 !important;
-            overflow: hidden !important;
-            pointer-events: none !important;
-            z-index: -1 !important;
+          [data-testid="stMainBlockContainer"] > div {{
+            width: 100% !important;
+            max-width: 400px !important;
+            margin: 0 auto !important;
           }}
-
-          /* ── Login canvas (full-bleed split-screen) ──────────────────── */
-          .oriel-jsx-login {{
-            position: fixed; inset: 0;
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            min-height: 100vh;
-            color: #0E1733;
-            font-family: 'Inter', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
-          }}
-
-          /* ── LEFT pane: accent gradient hero ─────────────────────────── */
-          .oriel-jsx-hero {{
-            position: relative;
+          /* ── LEFT pane: fixed accent-gradient hero ───────────────────── */
+          .oriel-login-hero {{
+            position: fixed; top: 0; left: 0; bottom: 0; width: 50%;
             background:
               radial-gradient(circle at 18% 22%, rgba(255,255,255,0.20) 0%, transparent 38%),
               radial-gradient(circle at 82% 78%, rgba(91,138,255,0.30) 0%, transparent 42%),
               linear-gradient(135deg, #1C39B0 0%, #2D5BFF 50%, #4F7BFF 100%);
             overflow: hidden;
             padding: 56px 64px;
+            box-sizing: border-box;
             display: flex; flex-direction: column; justify-content: space-between;
             color: #FFFFFF;
+            z-index: 1;
           }}
-          .oriel-jsx-hero::before {{
-            content: '';
-            position: absolute; inset: 0;
+          .oriel-login-hero::before {{
+            content: ''; position: absolute; inset: 0;
             background-image: radial-gradient(circle at 1px 1px, rgba(255,255,255,0.10) 1px, transparent 1px);
             background-size: 28px 28px;
             mask-image: linear-gradient(180deg, transparent 0%, black 22%, black 78%, transparent 100%);
             -webkit-mask-image: linear-gradient(180deg, transparent 0%, black 22%, black 78%, transparent 100%);
-            pointer-events: none;
-            opacity: 0.7;
+            pointer-events: none; opacity: 0.7;
           }}
-          .oriel-jsx-hero::after {{
-            content: '';
-            position: absolute;
+          .oriel-login-hero::after {{
+            content: ''; position: absolute;
             bottom: -180px; right: -180px;
             width: 520px; height: 520px;
             border-radius: 50%;
             background: radial-gradient(circle, rgba(255,255,255,0.22) 0%, rgba(255,255,255,0.06) 35%, transparent 65%);
-            pointer-events: none;
-            filter: blur(2px);
+            pointer-events: none; filter: blur(2px);
           }}
-
           .oriel-hero-mark {{
             display: flex; align-items: center; gap: 14px;
             position: relative; z-index: 2;
           }}
           .oriel-hero-mark img {{
             height: 56px; width: auto;
-            filter: brightness(0) invert(1);
-            opacity: 0.96;
+            filter: brightness(0) invert(1); opacity: 0.96;
           }}
           .oriel-hero-mark-tag {{
             font-size: 10.5px; font-weight: 700; letter-spacing: 0.16em;
@@ -309,7 +271,6 @@ def _render_login():
             background: rgba(255,255,255,0.06);
             backdrop-filter: blur(6px);
           }}
-
           .oriel-hero-body {{ position: relative; z-index: 2; max-width: 460px; }}
           .oriel-hero-eyebrow {{
             font-size: 11.5px; font-weight: 700;
@@ -339,9 +300,7 @@ def _render_login():
             color: rgba(255,255,255,0.82);
             margin-bottom: 26px;
           }}
-          .oriel-hero-tags {{
-            display: flex; gap: 8px; flex-wrap: wrap;
-          }}
+          .oriel-hero-tags {{ display: flex; gap: 8px; flex-wrap: wrap; }}
           .oriel-hero-tag {{
             font-size: 11.5px; font-weight: 600;
             letter-spacing: 0.04em;
@@ -352,7 +311,6 @@ def _render_login():
             backdrop-filter: blur(4px);
             color: #FFFFFF;
           }}
-
           .oriel-hero-foot {{
             position: relative; z-index: 2;
             display: flex; align-items: center; justify-content: space-between;
@@ -380,23 +338,7 @@ def _render_login():
             0%, 100% {{ opacity: 1; }}
             50%      {{ opacity: 0.55; }}
           }}
-
-          /* ── RIGHT pane: our JSX-style form ──────────────────────────── */
-          .oriel-jsx-formpane {{
-            display: flex; align-items: center; justify-content: center;
-            padding: 48px 56px;
-            background: #FFFFFF;
-          }}
-          .oriel-jsx-form-wrap {{
-            width: 100%;
-            max-width: 400px;
-            animation: oriel-fade-up 360ms cubic-bezier(0.16, 1, 0.3, 1);
-          }}
-          @keyframes oriel-fade-up {{
-            from {{ opacity: 0; transform: translateY(8px); }}
-            to   {{ opacity: 1; transform: translateY(0); }}
-          }}
-
+          /* ── RIGHT pane content (above the Streamlit form) ───────────── */
           .oriel-form-eyebrow {{
             font-size: 11px; font-weight: 700;
             letter-spacing: 0.16em; text-transform: uppercase;
@@ -413,396 +355,239 @@ def _render_login():
           .oriel-form-sub {{
             font-size: 14.5px; line-height: 1.55;
             color: #5A6478;
-            margin: 0 0 28px 0;
+            margin: 0 0 24px 0;
           }}
-
-          /* The visible form */
-          .oriel-jsx-form {{ display: block; }}
-          .oriel-jsx-field {{ margin-bottom: 14px; }}
-          .oriel-jsx-label {{
-            display: block;
-            font-size: 11px; font-weight: 700;
-            color: #5A6478;
-            letter-spacing: 0.10em;
-            text-transform: uppercase;
-            margin-bottom: 8px;
-          }}
-          .oriel-jsx-input-wrap {{
-            position: relative;
-            display: flex; align-items: center;
-            background: #F8FAFD;
-            border: 1.5px solid #E3E7EF;
-            border-radius: 10px;
-            transition: border-color 0.15s ease, background 0.15s ease, box-shadow 0.15s ease;
-            height: 48px;
-            overflow: hidden;
-          }}
-          .oriel-jsx-input-wrap:hover {{ border-color: #CFD5E1; }}
-          .oriel-jsx-input-wrap:focus-within {{
-            background: #FFFFFF;
-            border-color: #2D5BFF;
-            box-shadow: 0 0 0 4px rgba(45, 91, 255, 0.10);
-          }}
-          .oriel-jsx-input {{
-            flex: 1; min-width: 0;
-            background: transparent;
-            border: 0; outline: 0;
-            padding: 0 15px;
-            font-family: inherit;
-            font-size: 14.5px;
-            font-weight: 500;
-            color: #0E1733;
-            height: 100%;
-            line-height: 1.2;
-          }}
-          .oriel-jsx-input::placeholder {{ color: #B4BAC8; font-weight: 400; }}
-          /* Kill autofill's yellow background (Chrome) */
-          .oriel-jsx-input:-webkit-autofill,
-          .oriel-jsx-input:-webkit-autofill:hover,
-          .oriel-jsx-input:-webkit-autofill:focus {{
-            -webkit-text-fill-color: #0E1733;
-            -webkit-box-shadow: 0 0 0 1000px #F8FAFD inset;
-            transition: background-color 5000s ease-in-out 0s;
-          }}
-          .oriel-jsx-input-wrap:focus-within .oriel-jsx-input:-webkit-autofill {{
-            -webkit-box-shadow: 0 0 0 1000px #FFFFFF inset;
-          }}
-
-          .oriel-jsx-eye {{
-            background: transparent;
-            border: 0;
-            color: #8A93A6;
-            padding: 0 14px;
-            height: 100%;
-            display: flex; align-items: center; justify-content: center;
-            cursor: pointer;
-            transition: color 0.15s ease;
-            -webkit-tap-highlight-color: transparent;
-          }}
-          .oriel-jsx-eye:hover {{ color: #2D5BFF; }}
-          .oriel-jsx-eye:focus {{ outline: 0; color: #2D5BFF; }}
-
-          .oriel-jsx-submit {{
-            width: 100%;
-            height: 50px;
-            background: linear-gradient(180deg, #2D5BFF 0%, #2347D6 100%);
-            color: #FFFFFF;
-            font-family: inherit;
-            font-weight: 650;
-            font-size: 14.5px;
-            letter-spacing: 0.01em;
-            border: 0;
-            border-radius: 10px;
-            margin-top: 14px;
-            cursor: pointer;
-            box-shadow:
-              0 4px 14px rgba(45, 91, 255, 0.32),
-              inset 0 1px 0 rgba(255,255,255,0.16);
-            transition: transform 0.18s ease, box-shadow 0.18s ease, background 0.18s ease;
-            display: inline-flex; align-items: center; justify-content: center; gap: 8px;
-          }}
-          .oriel-jsx-submit:hover {{
-            transform: translateY(-1px);
-            box-shadow:
-              0 8px 22px rgba(45, 91, 255, 0.42),
-              inset 0 1px 0 rgba(255,255,255,0.18);
-            background: linear-gradient(180deg, #3565FF 0%, #2A52E6 100%);
-          }}
-          .oriel-jsx-submit:active {{ transform: translateY(0); }}
-          .oriel-jsx-submit:disabled {{
-            opacity: 0.7; cursor: not-allowed; transform: none;
-            box-shadow: 0 2px 6px rgba(45, 91, 255, 0.18);
-          }}
-          .oriel-jsx-spin {{
-            width: 14px; height: 14px;
-            border-radius: 50%;
-            border: 2px solid rgba(255,255,255,0.32);
-            border-top-color: #FFFFFF;
-            animation: oriel-spin 700ms linear infinite;
-            display: inline-block;
-          }}
-          @keyframes oriel-spin {{ to {{ transform: rotate(360deg); }} }}
-
-          .oriel-jsx-error {{
-            display: flex; align-items: center; gap: 8px;
-            margin-top: 14px;
-            padding: 11px 14px;
-            background: #FEF2F2;
-            border: 1px solid rgba(220, 38, 38, 0.20);
-            border-radius: 10px;
-            color: #B91C1C; font-size: 13px; font-weight: 500;
-            animation: oriel-fade-up 240ms ease;
-          }}
-          .oriel-jsx-error svg {{ flex: none; color: #DC2626; }}
-
           .oriel-form-foot {{
-            margin-top: 24px;
+            margin-top: 22px;
             display: flex; align-items: center; gap: 8px;
             font-size: 11.5px; color: #8A93A6;
             font-weight: 500;
           }}
           .oriel-form-foot svg {{ color: #8A93A6; flex: none; }}
-
-          /* ── Responsive: collapse to single column on narrow viewports ─ */
+          /* ── Streamlit form polish — light theme bulletproof ─────────── */
+          [data-testid="stForm"] {{
+            background: transparent !important;
+            border: 0 !important;
+            padding: 0 !important;
+            box-shadow: none !important;
+          }}
+          /* Field labels */
+          [data-testid="stForm"] .stTextInput label,
+          [data-testid="stForm"] .stTextInput label p {{
+            font-size: 11px !important;
+            font-weight: 700 !important;
+            color: #5A6478 !important;
+            letter-spacing: 0.10em !important;
+            text-transform: uppercase !important;
+            margin-bottom: 8px !important;
+          }}
+          /* Input shells — every nesting Streamlit might wrap with */
+          [data-testid="stForm"] [data-baseweb="input"],
+          [data-testid="stForm"] [data-baseweb="base-input"],
+          [data-testid="stForm"] .stTextInput > div > div,
+          [data-testid="stForm"] [data-testid="stTextInputRootElement"] {{
+            background: #F8FAFD !important;
+            border: 1.5px solid #E3E7EF !important;
+            border-radius: 10px !important;
+            box-shadow: none !important;
+            color: #0E1733 !important;
+            min-height: 48px !important;
+            transition: border-color 0.15s ease, background 0.15s ease, box-shadow 0.15s ease !important;
+          }}
+          [data-testid="stForm"] [data-baseweb="input"]:hover,
+          [data-testid="stForm"] [data-baseweb="base-input"]:hover,
+          [data-testid="stForm"] .stTextInput > div > div:hover {{
+            border-color: #CFD5E1 !important;
+          }}
+          [data-testid="stForm"] [data-baseweb="input"]:focus-within,
+          [data-testid="stForm"] [data-baseweb="base-input"]:focus-within,
+          [data-testid="stForm"] .stTextInput > div > div:focus-within {{
+            background: #FFFFFF !important;
+            border-color: #2D5BFF !important;
+            box-shadow: 0 0 0 4px rgba(45, 91, 255, 0.10) !important;
+          }}
+          /* The actual <input> — strip native bg/border, set color */
+          [data-testid="stForm"] input,
+          [data-testid="stForm"] input[type="text"],
+          [data-testid="stForm"] input[type="password"] {{
+            background: transparent !important;
+            background-color: transparent !important;
+            border: 0 !important;
+            outline: 0 !important;
+            box-shadow: none !important;
+            color: #0E1733 !important;
+            -webkit-text-fill-color: #0E1733 !important;
+            font-size: 14.5px !important;
+            font-weight: 500 !important;
+            padding: 13px 15px !important;
+            caret-color: #2D5BFF !important;
+          }}
+          [data-testid="stForm"] input::placeholder {{
+            color: #B4BAC8 !important; font-weight: 400 !important;
+            -webkit-text-fill-color: #B4BAC8 !important;
+          }}
+          /* Kill Chrome autofill yellow bg */
+          [data-testid="stForm"] input:-webkit-autofill,
+          [data-testid="stForm"] input:-webkit-autofill:hover,
+          [data-testid="stForm"] input:-webkit-autofill:focus {{
+            -webkit-text-fill-color: #0E1733 !important;
+            -webkit-box-shadow: 0 0 0 1000px #F8FAFD inset !important;
+            transition: background-color 5000s ease-in-out 0s !important;
+          }}
+          /* Password reveal eye button — replace dark Streamlit default */
+          [data-testid="stForm"] [data-baseweb="input"] button,
+          [data-testid="stForm"] [data-testid="stTextInput"] button {{
+            background: transparent !important;
+            background-color: transparent !important;
+            border: 0 !important;
+            box-shadow: none !important;
+            color: #8A93A6 !important;
+            padding: 0 14px !important;
+            height: 100% !important;
+            display: flex !important;
+            align-items: center !important;
+          }}
+          [data-testid="stForm"] [data-baseweb="input"] button:hover,
+          [data-testid="stForm"] [data-testid="stTextInput"] button:hover {{
+            color: #2D5BFF !important;
+            background: transparent !important;
+          }}
+          [data-testid="stForm"] [data-baseweb="input"] button svg,
+          [data-testid="stForm"] [data-testid="stTextInput"] button svg {{
+            width: 16px !important; height: 16px !important;
+            fill: currentColor !important;
+            color: currentColor !important;
+          }}
+          /* Submit button — accent gradient with hover lift */
+          [data-testid="stForm"] [data-testid="stFormSubmitButton"] button,
+          [data-testid="stForm"] .stFormSubmitButton button {{
+            width: 100% !important;
+            background: linear-gradient(180deg, #2D5BFF 0%, #2347D6 100%) !important;
+            background-color: #2D5BFF !important;
+            color: #FFFFFF !important;
+            font-weight: 650 !important;
+            font-size: 14.5px !important;
+            letter-spacing: 0.01em !important;
+            padding: 14px 18px !important;
+            height: 50px !important;
+            border-radius: 10px !important;
+            border: 0 !important;
+            margin-top: 14px !important;
+            box-shadow:
+              0 4px 14px rgba(45, 91, 255, 0.32),
+              inset 0 1px 0 rgba(255,255,255,0.16) !important;
+            transition: transform 0.18s ease, box-shadow 0.18s ease, background 0.18s ease !important;
+          }}
+          [data-testid="stForm"] [data-testid="stFormSubmitButton"] button:hover,
+          [data-testid="stForm"] .stFormSubmitButton button:hover {{
+            transform: translateY(-1px);
+            background: linear-gradient(180deg, #3565FF 0%, #2A52E6 100%) !important;
+            box-shadow:
+              0 8px 22px rgba(45, 91, 255, 0.42),
+              inset 0 1px 0 rgba(255,255,255,0.18) !important;
+          }}
+          [data-testid="stForm"] [data-testid="stFormSubmitButton"] button p {{
+            color: #FFFFFF !important;
+            font-weight: 650 !important;
+            margin: 0 !important;
+          }}
+          /* Field spacing inside the form */
+          [data-testid="stForm"] [data-testid="stElementContainer"] {{
+            margin-bottom: 12px !important;
+          }}
+          /* Error alert tint */
+          [data-testid="stAlert"] {{
+            border-radius: 10px !important;
+            margin-top: 14px !important;
+            border: 1px solid rgba(220, 38, 38, 0.20) !important;
+            background: #FEF2F2 !important;
+          }}
+          [data-testid="stAlert"] p,
+          [data-testid="stAlert"] div {{
+            color: #B91C1C !important; font-size: 13px !important;
+          }}
+          /* Fade-up entrance for the right pane */
+          [data-testid="stMainBlockContainer"] > div {{
+            animation: oriel-fade-up 360ms cubic-bezier(0.16, 1, 0.3, 1);
+          }}
+          @keyframes oriel-fade-up {{
+            from {{ opacity: 0; transform: translateY(8px); }}
+            to   {{ opacity: 1; transform: translateY(0); }}
+          }}
+          /* Responsive: collapse on narrow viewports */
           @media (max-width: 880px) {{
-            .oriel-jsx-login {{ grid-template-columns: 1fr; }}
-            .oriel-jsx-hero {{ display: none; }}
-            .oriel-jsx-formpane {{ padding: 24px; }}
+            .oriel-login-hero {{ display: none; }}
+            [data-testid="stMainBlockContainer"] {{
+              margin-left: 0 !important;
+              width: 100% !important;
+              padding: 24px !important;
+            }}
           }}
         </style>
-
-        <div class="oriel-jsx-login">
-
-          <!-- LEFT: hero -->
-          <aside class="oriel-jsx-hero">
-            <div class="oriel-hero-mark">
-              {logo_html}
-              <span class="oriel-hero-mark-tag">Index Administrator</span>
-            </div>
-
-            <div class="oriel-hero-body">
-              <div class="oriel-hero-eyebrow">A governed reference platform</div>
-              <div class="oriel-hero-title">
-                Reference indices,<br />
-                <em>built for capital markets.</em>
-              </div>
-              <div class="oriel-hero-sub">
-                Healthcare cost benchmarks, CPI forwards, and parity-validated
-                settlement curves — auditable, fallback-safe, and ready for the
-                next era of structured contracts.
-              </div>
-              <div class="oriel-hero-tags">
-                <span class="oriel-hero-tag">CPI Forwards</span>
-                <span class="oriel-hero-tag">Healthcare</span>
-                <span class="oriel-hero-tag">Parity Validation</span>
-                <span class="oriel-hero-tag">Tier-1 Basis</span>
-              </div>
-            </div>
-
-            <div class="oriel-hero-foot">
-              <div class="oriel-hero-foot-left">
-                <svg width="13" height="13" viewBox="0 0 24 24" fill="none"
-                     stroke="currentColor" stroke-width="2"
-                     stroke-linecap="round" stroke-linejoin="round">
-                  <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
-                </svg>
-                Oriel · Index Administrator v7.0
-              </div>
-              <span class="oriel-hero-foot-pill">
-                <span class="live-dot"></span> Live workspace
-              </span>
-            </div>
-          </aside>
-
-          <!-- RIGHT: our JSX-style form -->
-          <div class="oriel-jsx-formpane">
-            <div class="oriel-jsx-form-wrap">
-
-              <div class="oriel-form-eyebrow">
-                <svg width="12" height="12" viewBox="0 0 24 24" fill="none"
-                     stroke="currentColor" stroke-width="2.4"
-                     stroke-linecap="round" stroke-linejoin="round">
-                  <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
-                  <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
-                </svg>
-                Secure admin access
-              </div>
-              <h1 class="oriel-form-title">Welcome back.</h1>
-              <p class="oriel-form-sub">
-                Sign in to your private workspace to publish, review, and
-                audit governed reference indices.
-              </p>
-
-              <form id="oriel-jsx-form" class="oriel-jsx-form" autocomplete="on" novalidate>
-                <div class="oriel-jsx-field">
-                  <label class="oriel-jsx-label" for="oriel_u">Username</label>
-                  <div class="oriel-jsx-input-wrap">
-                    <input
-                      id="oriel_u" name="username" type="text"
-                      class="oriel-jsx-input"
-                      autocomplete="username"
-                      placeholder="Chris"
-                      autocapitalize="off"
-                      autocorrect="off"
-                      spellcheck="false"
-                    />
-                  </div>
-                </div>
-
-                <div class="oriel-jsx-field">
-                  <label class="oriel-jsx-label" for="oriel_p">Password</label>
-                  <div class="oriel-jsx-input-wrap">
-                    <input
-                      id="oriel_p" name="password" type="password"
-                      class="oriel-jsx-input"
-                      autocomplete="current-password"
-                      placeholder="••••••••••"
-                    />
-                    <button type="button" class="oriel-jsx-eye"
-                            id="oriel_eye" aria-label="Show password">
-                      <svg id="oriel_eye_icon" width="16" height="16"
-                           viewBox="0 0 24 24" fill="none"
-                           stroke="currentColor" stroke-width="2"
-                           stroke-linecap="round" stroke-linejoin="round">
-                        <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
-                        <circle cx="12" cy="12" r="3"/>
-                      </svg>
-                    </button>
-                  </div>
-                </div>
-
-                <button type="submit" class="oriel-jsx-submit" id="oriel_submit">
-                  <span id="oriel_submit_label">Sign in to Oriel</span>
-                </button>
-
-                {err_html}
-              </form>
-
-              <div class="oriel-form-foot">
-                <svg width="12" height="12" viewBox="0 0 24 24" fill="none"
-                     stroke="currentColor" stroke-width="2"
-                     stroke-linecap="round" stroke-linejoin="round">
-                  <circle cx="12" cy="12" r="10"/>
-                  <polyline points="12 6 12 12 16 14"/>
-                </svg>
-                Secure workspace · session ends when you close this tab.
-              </div>
+        <aside class="oriel-login-hero">
+          <div class="oriel-hero-mark">
+            {logo_html}
+            <span class="oriel-hero-mark-tag">Index Administrator</span>
+          </div>
+          <div class="oriel-hero-body">
+            <div class="oriel-hero-eyebrow">A governed reference platform</div>
+            <div class="oriel-hero-title">Reference indices,<br /><em>built for capital markets.</em></div>
+            <div class="oriel-hero-sub">Healthcare cost benchmarks, CPI forwards, and parity-validated settlement curves — auditable, fallback-safe, and ready for the next era of structured contracts.</div>
+            <div class="oriel-hero-tags">
+              <span class="oriel-hero-tag">CPI Forwards</span>
+              <span class="oriel-hero-tag">Healthcare</span>
+              <span class="oriel-hero-tag">Parity Validation</span>
+              <span class="oriel-hero-tag">Tier-1 Basis</span>
             </div>
           </div>
+          <div class="oriel-hero-foot">
+            <div class="oriel-hero-foot-left">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+              Oriel · Index Administrator v7.0
+            </div>
+            <span class="oriel-hero-foot-pill"><span class="live-dot"></span> Live workspace</span>
+          </div>
+        </aside>
+        <div class="oriel-form-eyebrow">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+          Secure admin access
         </div>
-
-        <script>
-          /* JSX-form → hidden Streamlit form bridge.
-
-             The visible form is plain HTML we control 100%. When the user
-             submits, we copy values into the hidden Streamlit text_inputs
-             (using React's nativeInputValueSetter so React tracks the
-             change), then programmatically click the hidden submit button.
-             Streamlit reruns server-side, validates, and either sets
-             session_state["oriel_auth"] or re-renders with an error. */
-          (function () {{
-            if (window.__orielLoginInit) return;
-            window.__orielLoginInit = true;
-
-            function ready(fn) {{
-              if (document.readyState !== 'loading') fn();
-              else document.addEventListener('DOMContentLoaded', fn);
-            }}
-
-            function setReactValue(input, value) {{
-              try {{
-                var proto = Object.getPrototypeOf(input);
-                var setter = Object.getOwnPropertyDescriptor(proto, 'value').set;
-                setter.call(input, value);
-              }} catch (e) {{
-                input.value = value;
-              }}
-              input.dispatchEvent(new Event('input', {{ bubbles: true }}));
-              input.dispatchEvent(new Event('change', {{ bubbles: true }}));
-            }}
-
-            function findStreamlitForm() {{
-              var stForm = document.querySelector('[data-testid="stForm"]');
-              if (!stForm) return null;
-              var allInputs = stForm.querySelectorAll('input');
-              var u = null, p = null;
-              allInputs.forEach(function (el) {{
-                if (el.type === 'password' && !p) p = el;
-                else if ((el.type === 'text' || !el.type) && !u) u = el;
-              }});
-              var btn = stForm.querySelector(
-                '[data-testid="stFormSubmitButton"] button, button[kind="primaryFormSubmit"], button[kind="secondaryFormSubmit"]'
-              );
-              if (!btn) btn = stForm.querySelector('button');
-              return (u && p && btn) ? {{ u: u, p: p, btn: btn }} : null;
-            }}
-
-            function waitFor(predicate, cb, attempts) {{
-              attempts = attempts || 40;
-              var result = predicate();
-              if (result) {{ cb(result); return; }}
-              if (attempts <= 0) {{ cb(null); return; }}
-              setTimeout(function () {{ waitFor(predicate, cb, attempts - 1); }}, 75);
-            }}
-
-            ready(function () {{
-              var form = document.getElementById('oriel-jsx-form');
-              var uInput = document.getElementById('oriel_u');
-              var pInput = document.getElementById('oriel_p');
-              var eyeBtn = document.getElementById('oriel_eye');
-              var submitBtn = document.getElementById('oriel_submit');
-              var submitLbl = document.getElementById('oriel_submit_label');
-              if (!form || !uInput || !pInput || !submitBtn) return;
-
-              /* Password show/hide toggle */
-              eyeBtn.addEventListener('click', function () {{
-                var hidden = pInput.type === 'password';
-                pInput.type = hidden ? 'text' : 'password';
-                eyeBtn.setAttribute('aria-label', hidden ? 'Hide password' : 'Show password');
-              }});
-
-              /* Auto-focus the username field */
-              setTimeout(function () {{ uInput.focus(); }}, 150);
-
-              /* Submit bridge */
-              form.addEventListener('submit', function (e) {{
-                e.preventDefault();
-                waitFor(findStreamlitForm, function (st) {{
-                  if (!st) {{
-                    console.error('[oriel] hidden Streamlit form not found');
-                    submitLbl.textContent = 'Sign in to Oriel';
-                    submitBtn.disabled = false;
-                    return;
-                  }}
-                  setReactValue(st.u, uInput.value);
-                  setReactValue(st.p, pInput.value);
-
-                  submitBtn.disabled = true;
-                  submitLbl.innerHTML = '<span class="oriel-jsx-spin"></span> Signing in…';
-
-                  /* Give React a microtask to commit the input values
-                     before we click submit. */
-                  setTimeout(function () {{ st.btn.click(); }}, 60);
-                }});
-              }});
-            }});
-          }})();
-        </script>
+        <h1 class="oriel-form-title">Welcome back.</h1>
+        <p class="oriel-form-sub">Sign in to your private workspace to publish, review, and audit governed reference indices.</p>
         """
-    # 1) Dedent: textwrap strips the common leading whitespace introduced
-    #    by the f-string being inside the function body. After this, top-
-    #    level HTML tags start at column 0, satisfying CommonMark's "less
-    #    than 4 spaces" rule for HTML blocks.
-    # 2) Collapse blank lines: this keeps the whole HTML as a single block
-    #    in the markdown parser's eyes — so it passes through verbatim
-    #    instead of breaking into separate blocks (some of which would be
-    #    interpreted as indented code blocks).
     _login_html = _tw_login.dedent(_login_html)
     _login_html = _re_login.sub(r"\n[ \t]*\n+", "\n", _login_html)
     st.markdown(_login_html, unsafe_allow_html=True)
 
-    # Hidden Streamlit form — the real auth backend. Off-screen via CSS;
-    # driven by JS bridge above. On submit, validates credentials and
-    # either flips session_state["oriel_auth"] or sets the error flag and
-    # reruns so our visible form re-renders with the error inlined.
+    # The actual login form — Streamlit's native widgets, styled by our
+    # CSS above to look like the JSX/React design system.
     with st.form("oriel_login", clear_on_submit=False, border=False):
         username = st.text_input(
-            "Username", label_visibility="collapsed",
-            key="_login_u_hidden",
+            "Username", placeholder="Chris", key="_login_u",
         )
         password = st.text_input(
-            "Password", type="password", label_visibility="collapsed",
-            key="_login_p_hidden",
+            "Password", type="password", placeholder="••••••••••", key="_login_p",
         )
-        submitted = st.form_submit_button("Sign in", type="primary")
+        submitted = st.form_submit_button(
+            "Sign in to Oriel", type="primary", use_container_width=True
+        )
         if submitted:
             if _check_credentials(username or "", password or ""):
                 st.session_state["oriel_auth"] = True
                 st.session_state["oriel_user"] = (username or "").strip()
                 st.rerun()
             else:
-                st.session_state["_login_err"] = True
-                st.rerun()
+                st.error("Invalid username or password.")
+
+    st.markdown(
+        """<div class="oriel-form-foot">"""
+        """<svg width="12" height="12" viewBox="0 0 24 24" fill="none" """
+        """stroke="currentColor" stroke-width="2" stroke-linecap="round" """
+        """stroke-linejoin="round"><circle cx="12" cy="12" r="10"/>"""
+        """<polyline points="12 6 12 12 16 14"/></svg>"""
+        """Secure workspace · session ends when you close this tab.</div>""",
+        unsafe_allow_html=True,
+    )
 
 # Logout handler — triggered by `?logout=1` from the React app's profile
 # dropdown. Clear session, drop the query param, rerun → login screen.
