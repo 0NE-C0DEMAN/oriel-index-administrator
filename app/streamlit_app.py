@@ -514,6 +514,69 @@ def _render_login():
             from {{ opacity: 0; transform: translateY(8px); }}
             to   {{ opacity: 1; transform: translateY(0); }}
           }}
+          /* ── Branded loading overlay ─────────────────────────────────
+             Fires on every Streamlit render: initial page load, every
+             form submit (which triggers a server rerun → markdown re-renders
+             → this div appears again). The fade-out animation runs once
+             and finishes after 700ms — covering the brief window where
+             Streamlit's default chrome would otherwise flash. */
+          .oriel-login-boot {{
+            position: fixed; inset: 0;
+            z-index: 9999;
+            display: flex; flex-direction: column;
+            align-items: center; justify-content: center;
+            gap: 18px;
+            color: #FFFFFF;
+            background:
+              radial-gradient(circle at 18% 22%, rgba(255,255,255,0.16) 0%, transparent 38%),
+              radial-gradient(circle at 82% 78%, rgba(91,138,255,0.30) 0%, transparent 42%),
+              linear-gradient(135deg, #1C39B0 0%, #2D5BFF 50%, #4F7BFF 100%);
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+            /* delay 350ms keeps the overlay visible long enough to mask the
+               Streamlit boot flash, then fades over 350ms (700ms total) */
+            animation: oriel-login-boot-out 350ms cubic-bezier(0.4, 0, 0.2, 1) 350ms forwards;
+          }}
+          @keyframes oriel-login-boot-out {{
+            to {{ opacity: 0; visibility: hidden; pointer-events: none; }}
+          }}
+          .oriel-login-boot-spin {{
+            width: 32px; height: 32px;
+            border-radius: 50%;
+            border: 3px solid rgba(255,255,255,0.20);
+            border-top-color: rgba(255,255,255,0.96);
+            animation: oriel-spin 700ms linear infinite;
+          }}
+          @keyframes oriel-spin {{ to {{ transform: rotate(360deg); }} }}
+          .oriel-login-boot-text {{
+            font-size: 13px; font-weight: 600; letter-spacing: 0.02em;
+            opacity: 0.92;
+          }}
+          .oriel-login-boot-sub {{
+            font-size: 11px; font-weight: 500; letter-spacing: 0.08em;
+            text-transform: uppercase;
+            opacity: 0.62;
+          }}
+          /* ── Suppress every Streamlit default loading indicator ─────── */
+          [data-testid="stStatusWidget"],
+          [data-testid="stConnectionStatus"],
+          [data-testid="stSkeleton"],
+          [data-testid="stToast"],
+          [data-testid="stToastContainer"],
+          .stSpinner,
+          [data-testid="stSpinner"],
+          [data-testid="stProgress"],
+          [class*="loadingIndicator"],
+          [class*="LoadingIndicator"] {{
+            display: none !important;
+            visibility: hidden !important;
+          }}
+          /* Submit button — when Streamlit injects its loading spinner,
+             style it to match our brand instead of using the dark default */
+          [data-testid="stForm"] [data-testid="stFormSubmitButton"] button [data-testid="stSpinner"],
+          [data-testid="stForm"] .stFormSubmitButton button [data-testid="stSpinner"] {{
+            display: inline-block !important; visibility: visible !important;
+            color: #FFFFFF !important;
+          }}
           /* Responsive: collapse on narrow viewports */
           @media (max-width: 880px) {{
             .oriel-login-hero {{ display: none; }}
@@ -524,6 +587,11 @@ def _render_login():
             }}
           }}
         </style>
+        <div class="oriel-login-boot" aria-hidden="true">
+          <div class="oriel-login-boot-spin"></div>
+          <div class="oriel-login-boot-text">Loading Oriel</div>
+          <div class="oriel-login-boot-sub">Index Administrator</div>
+        </div>
         <aside class="oriel-login-hero">
           <div class="oriel-hero-mark">
             {logo_html}
