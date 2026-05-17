@@ -36,18 +36,38 @@
 
   /* Logout — drop to the Streamlit parent page with ?logout=1, which our
      server-side handler in streamlit_app.py picks up to clear the session
-     and re-render the login screen. Inside the iframe we can't reach
-     server-side session_state directly, so a top-level redirect is the
-     cleanest way to round-trip back through the auth gate. */
+     and re-render the login screen.
+
+     Architecture caveat: our React app runs inside `streamlit.components.v1.html`,
+     which mounts an `about:srcdoc` iframe. From inside that iframe we
+     CANNOT read `window.top.location.pathname` (cross-origin throws). The
+     old code fell through to `window.location.pathname` which is `/srcdoc`
+     → navigating to `/srcdoc?logout=1` triggered Streamlit's "Page not
+     found" dialog.
+
+     Fix: only WRITE to `top.location.search` (or `.href` with origin-only).
+     Setting the search property doesn't require reading the parent's URL
+     and works cross-origin. The browser already knows the origin of the
+     top frame and keeps the path intact. */
   function _logout() {
     try {
       const target = window.top || window.parent || window;
-      const loc = target.location;
-      const base = loc.pathname + (loc.search ? '' : '');
-      loc.href = base + '?logout=1';
+      // Just rewrite the query string — keeps the parent's path intact
+      // without us having to read it (which would be cross-origin blocked).
+      target.location.search = '?logout=1';
     } catch (e) {
-      // Same-origin failure (rare) — fall back to in-iframe nav.
-      window.location.href = window.location.pathname + '?logout=1';
+      // Last-resort fallback: hard-replace the whole href via the parent's
+      // origin (which we CAN read from `document.referrer`). This keeps us
+      // off `/srcdoc`.
+      try {
+        const ref = document.referrer || '';
+        const parentOrigin = ref ? new URL(ref).origin : window.location.origin;
+        (window.top || window).location.href = parentOrigin + '/?logout=1';
+      } catch (e2) {
+        // Absolute worst case: in-iframe nav (will show the same 404 the
+        // user just saw, but better than no logout at all).
+        window.location.href = '/?logout=1';
+      }
     }
   }
 
