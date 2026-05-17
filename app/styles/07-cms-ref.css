@@ -1,0 +1,280 @@
+/* ==========================================================================
+   07-cms-ref.css — Healthcare Reference (CMS Lag Engine) tab additions.
+   Mostly empty by design: the strip and overview cards reuse standard
+   primitives. The only rules here are (1) the 6-col KPI override and
+   (2) overview-row layout fixes so the cms cards don't inherit the
+   "stretch the IP card to fill the rail" behaviour from HC/CPI Kalshi
+   (which works there because their IP cards have 7-8 rows; cms has 4).
+   ========================================================================== */
+
+/* ── KPI strip 6-cell grid override ───────────────────────────────── */
+.cms-kpi-strip .cms-kpi-grid-6 {
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+}
+@media (max-width: 1100px) { .cms-kpi-strip .cms-kpi-grid-6 { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+@media (max-width: 600px)  { .cms-kpi-strip .cms-kpi-grid-6 { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+
+/* Pink lead tone — match HC family */
+.cms-kpi-strip.accent-pink .idx-kpi-mono.lead { color: var(--pink); }
+
+/* Tone-tinted mono for basis bp values */
+.idx-kpi-mono.tone-pos  { color: var(--success); }
+.idx-kpi-mono.tone-neg  { color: var(--danger); }
+.idx-kpi-mono.tone-warn { color: var(--warning); }
+
+/* ============================================================================
+   Overview row layout — kill stretch-driven chart growth.
+   Pure CSS grid with align-items:stretch leaks the chart's intrinsic
+   min-height (320 from herochart-card + 280 from herochart-body) into the
+   row, which makes the chart taller than the rail. We:
+     • align-items:start  — neither column stretches, both at natural size
+     • IP / MvS at flex:0:0:auto — rail = sum of card content heights
+     • drop the chart-card / body / svg-wrap min-heights so the inline
+       height set from JS (= measured rail height) is what wins
+     • height:auto on the rail so it stays at its content height (some
+       browsers resolve `height:100%` against a half-resolved row height
+       and inflate it)
+   The actual height match happens in CmsOverviewPanel.jsx, which
+   ResizeObservers the rail and assigns its measured height to the chart
+   card via inline style.
+   ============================================================================ */
+.detail-tab-body .hero-row.cms-hero-row {
+  align-items: start;
+}
+.detail-tab-body .hero-row.cms-hero-row .hero-row-rail {
+  height: auto;
+}
+.detail-tab-body .hero-row.cms-hero-row .hero-row-rail > .ip-card,
+.detail-tab-body .hero-row.cms-hero-row .hero-row-rail > .mvs-card {
+  flex: 0 0 auto;
+  min-height: 0;
+}
+
+/* Chart card on cms: kill the 320 / 280 floors so the inline height
+   set from JS is what governs. */
+.detail-tab-body .hero-row.cms-hero-row .herochart-card {
+  min-height: 0;
+}
+.detail-tab-body .hero-row.cms-hero-row .herochart-body {
+  min-height: 0;
+}
+/* Forward-chart container shouldn't enforce a floor of its own — the
+   chart card's inline height is the source of truth. */
+.detail-tab-body .hero-row.cms-hero-row .herochart-body > .forward-chart {
+  flex: 1 1 auto;
+  min-height: 0;
+}
+
+/* Tone-tinted .ip-card-highlight-value (used by Current Translated Basis) */
+.ip-card-highlight-value.tone-success { color: var(--success); }
+.ip-card-highlight-value.tone-danger  { color: var(--danger); }
+.ip-card-highlight-value.tone-warning { color: var(--warning); }
+
+/* Stack the two overview rows with breathing room between them. */
+.cms-overview {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+/* Section header between row 1 and row 2 — small caps, pink accent rule
+   on the left, thin separator below. Mirrors v7's
+   "Basis history · Hedge lens · Top RV sleeves" header. */
+.cms-section-head {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  margin: 6px 0 -4px;
+  padding: 0 0 8px;
+  border-bottom: 1px solid var(--border-subtle);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.cms-section-head::before {
+  content: '';
+  width: 18px; height: 2px;
+  background: var(--pink);
+  border-radius: 1px;
+  flex: 0 0 auto;
+}
+
+/* Tone hooks for the data-table cells used by Top RV Sleeves. */
+.data-table tbody td.tone-success { color: var(--success); }
+.data-table tbody td.tone-warning { color: var(--warning); }
+.data-table tbody td.tone-danger  { color: var(--danger); }
+
+/* ============================================================================
+   Validation sub-tab (CmsValidationPanel) — Strategy Lenses, Benchmark
+   charts row, Provenance grid. Reuses standard primitives; the only
+   additions are the strategy-lens 3-column row and the provenance card.
+   ============================================================================ */
+.cms-validation {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+/* Strategy Lenses — 3 cells in a row, each rendered with the standard
+   .info-card chrome (header + eyebrow + body) so the cards visually
+   match Stats / Methodology / Live Feed cards on every other tab.
+   No icon chip, no left-border accent — the lead cell is signalled
+   by a "Primary lens" feed-pill in its header and a pink headline. */
+.cms-lens-row {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+}
+@media (max-width: 1024px) { .cms-lens-row { grid-template-columns: 1fr; } }
+
+.cms-lens-cell { transition: box-shadow 220ms ease; }
+.cms-lens-cell:hover { box-shadow: 0 4px 14px rgba(15, 23, 51, 0.06), 0 1px 2px rgba(15, 23, 51, 0.04); }
+
+/* "Primary lens" pill — slightly tighter than the standard feed-pill
+   so it sits cleanly next to the eyebrow. */
+.cms-lens-tag {
+  font-size: 9.5px;
+  letter-spacing: 0.06em;
+  padding: 2px 8px;
+}
+.cms-lens-row.accent-pink .cms-lens-tag {
+  background: var(--pink-light);
+  color: var(--pink);
+}
+
+.cms-lens-body {
+  padding: 14px 16px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.cms-lens-primary {
+  font-size: 15.5px;
+  font-weight: 700;
+  letter-spacing: -0.014em;
+  line-height: 1.35;
+  color: var(--text);
+}
+.cms-lens-row.accent-pink .cms-lens-cell.lead .cms-lens-primary { color: var(--pink); }
+.cms-lens-row.accent-accent .cms-lens-cell.lead .cms-lens-primary { color: var(--accent); }
+.cms-lens-sub {
+  font-size: 12px;
+  color: var(--text-muted);
+  line-height: 1.55;
+}
+
+/* Benchmark row — two equal-width chart cards. Bound chart card height
+   so the two side-by-side plots stay manageable (no JS measure here
+   since they're both charts with identical content shapes). */
+.cms-bench-row .herochart-card { min-height: 0; }
+.cms-bench-row .herochart-body  { min-height: 0; padding: 12px 14px 6px; }
+.cms-bench-row .herochart-body > .forward-chart { min-height: 240px; max-height: 320px; }
+
+/* Provenance grid — 2x2 cards. Each card is an .info-card with a
+   compact list of files inside. */
+.cms-prov-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+}
+@media (max-width: 1024px) { .cms-prov-grid { grid-template-columns: 1fr; } }
+
+.cms-prov-card {
+  display: flex;
+  flex-direction: column;
+}
+.cms-prov-head {
+  align-items: flex-start;
+}
+.cms-prov-sub {
+  font-size: 11px;
+  color: var(--text-muted);
+  margin-top: 2px;
+}
+.cms-prov-count {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  padding: 3px 10px;
+  border-radius: var(--r-full);
+  background: var(--bg-subtle);
+  color: var(--text);
+  border: 1px solid var(--border);
+}
+.cms-prov-count.tone-success {
+  background: var(--success-light); color: var(--success);
+  border-color: rgba(22, 163, 74, 0.30);
+}
+.cms-prov-count.tone-warning {
+  background: var(--warning-light); color: var(--warning);
+  border-color: rgba(217, 119, 6, 0.30);
+}
+.cms-prov-count.tone-danger {
+  background: var(--danger-light); color: var(--danger);
+  border-color: rgba(220, 38, 38, 0.30);
+}
+
+.cms-prov-list {
+  display: flex;
+  flex-direction: column;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  /* Cap the file list so cards stay compact even when many files are
+     present (e.g. a future expansion of parsed inputs). Sticky cards
+     already balance via grid; the inner list scrolls past this height. */
+  max-height: 280px;
+  overflow-y: auto;
+  scrollbar-gutter: stable;
+}
+.cms-prov-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 8px 16px;
+  border-bottom: 1px solid var(--border-subtle);
+  font-size: 11.5px;
+}
+.cms-prov-row:last-child { border-bottom: none; }
+.cms-prov-row:hover { background: var(--bg-subtle); }
+
+.cms-prov-file {
+  color: var(--text);
+  font-size: 11px;
+  word-break: break-all;
+  flex: 1 1 auto;
+  min-width: 0;
+}
+.cms-prov-row-right {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 8px;
+  flex-shrink: 0;
+}
+.cms-prov-status {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+  white-space: nowrap;
+}
+.cms-prov-status.tone-success { color: var(--success); }
+.cms-prov-status.tone-warning { color: var(--warning); }
+.cms-prov-status.tone-danger  { color: var(--danger); }
+.cms-prov-status.tone-muted   { color: var(--text-muted); }
+.cms-prov-hint {
+  font-size: 10px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-subtle);
+}
+.cms-prov-empty {
+  padding: 16px;
+  text-align: center;
+  font-size: 11.5px;
+  color: var(--text-subtle);
+  font-style: italic;
+}

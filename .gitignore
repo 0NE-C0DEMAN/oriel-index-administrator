@@ -1,0 +1,52 @@
+# Python caches
+__pycache__/
+*.py[cod]
+*$py.class
+*.pyc
+.pytest_cache/
+
+# Virtual environments
+venv/
+.venv/
+env/
+.env
+
+# OS / editor
+.DS_Store
+Thumbs.db
+*.swp
+.vscode/
+.idea/
+*.iml
+
+# Streamlit
+.streamlit/secrets.toml
+.streamlit/credentials.toml
+
+# Build outputs
+app/bundled.html
+app/__pycache__/
+
+# Local backups (we already zipped v1.0_done at the parent level)
+Redesign_backup_*/
+*.zip
+
+# Reference materials (PDFs, screenshots — not needed at runtime, 11MB)
+references/
+
+# Heavy PDFs / presentations / images inside the v7 mirror — runtime
+# only needs data/ and analytics/, not the marketing decks or v7's own
+# UI assets (our React app has its own logo bundled as base64).
+oriel_demo_v7/*.pdf
+oriel_demo_v7/.claude/
+oriel_demo_v7/.streamlit/
+oriel_demo_v7/outputs/
+oriel_demo_v7/assets/*.png
+oriel_demo_v7/assets/*.jpg
+oriel_demo_v7/assets/*.gif
+
+# Notebooks
+.ipynb_checkpoints/
+
+# Claude harness state
+.claude/

@@ -1,0 +1,603 @@
+/* ==========================================================================
+   08-medical-basis.css — ForecastEx Medical Basis tab additions.
+   Almost everything reuses standard primitives (.idx-kpi, .info-card,
+   .data-card, .data-table, .herochart-card, .herochart-tabs,
+   .perp-num-input, .ip-card-row, .feed-pill). Rules below only add the
+   bits that don't exist elsewhere: 4-cell grid override, 3-card legs
+   row, 2-col body row, settlement-calculator layout, surface-flow box,
+   and a couple of ladder-table niceties.
+   ========================================================================== */
+
+/* ── KPI strip 4-cell override ──────────────────────────────────────── */
+.mb-kpi-strip .mb-kpi-grid-4 {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+@media (max-width: 1100px) { .mb-kpi-strip .mb-kpi-grid-4 { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 600px)  { .mb-kpi-strip .mb-kpi-grid-4 { grid-template-columns: 1fr; } }
+
+.mb-kpi-strip.accent-pink .idx-kpi-mono.lead { color: var(--pink); }
+
+/* Compact maturity selector inside the ribbon. */
+.mb-mat-pick { cursor: default; margin-right: 4px; }
+.mb-mat-select {
+  height: 22px;
+  padding: 0 6px;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-radius: 5px;
+  color: var(--text);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  letter-spacing: 0.01em;
+  cursor: pointer;
+}
+.mb-mat-select:focus {
+  outline: none;
+  border-color: var(--pink);
+  box-shadow: 0 0 0 2px rgba(236, 72, 153, 0.18);
+}
+
+/* ── Overview body wrapper + section spacing ───────────────────────── */
+.mb-overview {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+/* Section 1 — Reference Legs · Contract Event.
+   A single thin info-card carrying the contract equation in one row
+   (replaces the 3 big cards that were chewing up vertical space).
+   Eyebrow on the left, equation on the right; on narrow screens the
+   eyebrow stacks above and the equation wraps with operators that
+   rotate 90° to match. */
+.mb-legs-strip {
+  padding: 0;
+}
+.mb-legs-strip-row {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  /* A touch more vertical padding so the strip has breathing room
+     and doesn't read as cramped next to the bigger cards below. */
+  padding: 18px 20px;
+  flex-wrap: wrap;
+}
+.mb-legs-strip-eyebrow {
+  flex: 0 0 auto;
+  white-space: nowrap;
+  border-right: 1px solid var(--border-subtle);
+  padding-right: 14px;
+}
+@media (max-width: 760px) {
+  .mb-legs-strip-eyebrow {
+    border-right: none;
+    padding-right: 0;
+    width: 100%;
+  }
+}
+
+.mb-legs-strip-equation {
+  flex: 1 1 auto;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  min-width: 0;
+}
+
+.mb-leg-mini {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 12px 8px 8px;
+  border-radius: var(--r-md);
+  background: var(--bg-subtle);
+  border: 1px solid var(--border-subtle);
+  transition: border-color 200ms ease, background 200ms ease;
+}
+.mb-leg-mini:hover {
+  background: var(--bg-elevated);
+  border-color: var(--border-strong);
+}
+.mb-leg-mini.event {
+  background: var(--pink-light);
+  border-color: rgba(236, 72, 153, 0.28);
+}
+
+.mb-leg-mini-num {
+  display: grid;
+  place-items: center;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: var(--bg-elevated);
+  color: var(--text-muted);
+  border: 1px solid var(--border);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10.5px;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+.mb-leg-mini.event .mb-leg-mini-num {
+  background: var(--pink);
+  color: white;
+  border-color: var(--pink);
+}
+
+.mb-leg-mini-text {
+  display: inline-flex;
+  flex-direction: column;
+  gap: 0;
+  min-width: 0;
+}
+.mb-leg-mini-name {
+  font-size: 12.5px;
+  font-weight: 700;
+  letter-spacing: -0.005em;
+  color: var(--text);
+  line-height: 1.25;
+  white-space: nowrap;
+}
+.mb-leg-mini.event .mb-leg-mini-name { color: var(--pink); }
+.mb-leg-mini-source {
+  font-size: 10px;
+  color: var(--text-muted);
+  letter-spacing: 0.005em;
+  line-height: 1.2;
+  white-space: nowrap;
+}
+
+/* Operators between legs — large mono so the equation reads visually. */
+.mb-leg-mini-op {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--text-subtle);
+  user-select: none;
+  flex-shrink: 0;
+  padding: 0 2px;
+}
+
+@media (max-width: 760px) {
+  .mb-legs-strip-equation { flex-direction: column; align-items: stretch; }
+  .mb-legs-strip-equation .mb-leg-mini { width: 100%; }
+  .mb-leg-mini-op { align-self: center; transform: rotate(90deg); padding: 4px 0; }
+}
+
+/* ── Section 2 — Body row.
+     Charts on the LEFT (1.35fr) for prominence; tools (Calculator + Spec
+     + Surface flow) on the RIGHT (1fr). On narrower screens the row
+     collapses to a single column with charts above tools. */
+.mb-body-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1.35fr) minmax(0, 1fr);
+  gap: 14px;
+  align-items: stretch;
+}
+@media (max-width: 1100px) { .mb-body-row { grid-template-columns: 1fr; } }
+
+.mb-col-left,
+.mb-col-right {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-width: 0;
+}
+
+/* The Charts card stretches to match the right column's natural height
+   (Calc trigger + Spec + Surface Flow) — same column-balancing trick
+   the rest of the app uses on hero rows. */
+.mb-col-left > .herochart-card {
+  flex: 1 1 auto;
+  min-height: 320px;
+}
+
+/* Contract spec table — enforce field column width so wrapped values
+   align cleanly. */
+.mb-spec-table th:first-child,
+.mb-spec-table td:first-child { width: 160px; }
+.mb-spec-field { white-space: nowrap; }
+
+/* ── Settlement Calculator — thin trigger + popover.
+     Reuses .perp-controls-trigger / .perp-controls-pop chrome from the
+     CPI Basis Tier-1 Controls so the pattern matches across tabs.
+     The trigger is a single-row button carrying the inputs summary
+     and the live YES/NO outcome pill; the popover holds the actual
+     CPI / Medical CPI / Threshold inputs. */
+.mb-calc-wrap {
+  align-self: flex-start;
+  width: 100%;
+}
+.mb-calc-trigger {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.mb-calc-trigger .perp-controls-trigger-summary {
+  flex: 1 1 auto;
+  text-align: left;
+  font-size: 11px;
+  color: var(--text-muted);
+  letter-spacing: 0.005em;
+}
+.mb-calc-trigger:hover {
+  border-color: var(--pink);
+  background: var(--pink-light);
+}
+.mb-calc-trigger.open {
+  border-color: var(--pink);
+  background: var(--pink-light);
+}
+
+/* Popover sized snug to its 3-column input grid + footer readout. */
+.mb-calc-pop {
+  min-width: 480px;
+  max-width: 560px;
+}
+@media (max-width: 720px) {
+  .mb-calc-pop { min-width: calc(100vw - 24px); }
+}
+.mb-calc-pop-grid {
+  grid-template-columns: 1fr 1fr 1fr;
+}
+@media (max-width: 600px) { .mb-calc-pop-grid { grid-template-columns: 1fr; } }
+
+.mb-calc-pop-grid .perp-num-input input,
+.mb-calc-pop-grid .perp-num-input select {
+  appearance: none;
+  -moz-appearance: textfield;
+  width: 100%;
+  padding: 7px 10px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--bg);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text);
+  transition: border-color 120ms, box-shadow 120ms;
+}
+.mb-calc-pop-grid .perp-num-input input:focus,
+.mb-calc-pop-grid .perp-num-input select:focus {
+  outline: 0;
+  border-color: var(--pink);
+  box-shadow: 0 0 0 3px var(--pink-light);
+}
+
+/* Foot — left: reset button (default ghost style), right: inline
+   readout of observed spread tone-tinted by sign. */
+.mb-calc-pop-readout {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 8px;
+}
+.mb-calc-pop-readout-label {
+  font-size: 11px;
+  color: var(--text-muted);
+  letter-spacing: 0.005em;
+}
+.mb-calc-pop-readout-value {
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: -0.005em;
+  color: var(--text);
+}
+.mb-calc-pop-readout-value.tone-success { color: var(--success); }
+.mb-calc-pop-readout-value.tone-danger  { color: var(--danger); }
+
+/* ── Surface flow box ────────────────────────────────────────────── */
+.mb-flow-card { display: flex; flex-direction: column; }
+.mb-flow-grid {
+  padding: 14px 16px 18px;
+  display: grid;
+  grid-template-columns: 1fr 28px 1fr 28px 1fr;
+  gap: 10px;
+  align-items: center;
+}
+@media (max-width: 720px) {
+  .mb-flow-grid { grid-template-columns: 1fr; }
+  .mb-flow-grid > .mb-flow-arrow { transform: rotate(90deg); justify-self: center; }
+}
+
+.mb-flow-step {
+  background: var(--bg-subtle);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 12px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  text-align: center;
+  transition: border-color 200ms ease, transform 200ms ease;
+}
+.mb-flow-step:hover {
+  border-color: var(--pink);
+  transform: translateY(-1px);
+}
+
+.mb-flow-num {
+  align-self: center;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background: var(--bg-elevated);
+  color: var(--pink);
+  border: 1px solid var(--pink-light);
+  display: grid;
+  place-items: center;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12px;
+  font-weight: 700;
+}
+.mb-flow-text { display: flex; flex-direction: column; gap: 2px; }
+.mb-flow-title {
+  font-size: 13px;
+  font-weight: 650;
+  letter-spacing: -0.005em;
+  color: var(--text);
+}
+.mb-flow-sub {
+  font-size: 11px;
+  color: var(--text-muted);
+}
+.mb-flow-arrow {
+  color: var(--pink);
+  justify-self: center;
+}
+
+/* ── Sample ladder table niceties ──────────────────────────────────── */
+.mb-ladder-table .small { font-size: 11px; color: var(--text-muted); }
+
+/* Maturity-group striping — every other 5-row maturity group gets a
+   subtle tint so the four maturities read as distinct blocks even
+   when the user isn't looking at the Maturity column. */
+.mb-ladder-table tbody tr.mb-ladder-row-alt td {
+  background: rgba(15, 23, 51, 0.025);
+}
+.mb-ladder-table tbody tr.mb-ladder-row-alt:hover td {
+  background: rgba(15, 23, 51, 0.045);
+}
+
+.mb-ladder-row-active td {
+  background: rgba(236, 72, 153, 0.07);
+  font-weight: 550;
+}
+.mb-ladder-row-active:hover td { background: rgba(236, 72, 153, 0.11); }
+/* The selected-maturity highlight wins regardless of alt-group tint. */
+.mb-ladder-table tbody tr.mb-ladder-row-active.mb-ladder-row-alt td {
+  background: rgba(236, 72, 153, 0.07);
+}
+
+/* ── Arbitrage status note (footer) ─────────────────────────────────── */
+.mb-arb-note {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 14px;
+  border-radius: var(--r-md);
+  font-size: 12px;
+  border: 1px solid;
+}
+.mb-arb-note.tone-success {
+  background: var(--success-light);
+  border-color: rgba(22, 163, 74, 0.25);
+  color: var(--success);
+}
+.mb-arb-note.tone-warning {
+  background: var(--warning-light);
+  border-color: rgba(217, 119, 6, 0.25);
+  color: var(--warning);
+}
+.mb-arb-label { font-weight: 700; letter-spacing: 0.005em; }
+.mb-arb-text  { color: var(--text-muted); font-weight: 500; }
+.mb-arb-note.tone-success .mb-arb-text,
+.mb-arb-note.tone-warning .mb-arb-text { color: inherit; opacity: 0.85; }
+
+/* ============================================================================
+   Polish layer — small visual touches that add clarity without changing the
+   underlying layout: live calc pill, charts maturity chip, reference legs
+   accent rail, animated surface flow connector.
+   ============================================================================ */
+
+/* The .mb-calc-pill is now mounted inside the .mb-calc-trigger button
+   (replacing the removed .mb-calc-card head). Same visual chrome. */
+.mb-calc-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 10px;
+  border-radius: var(--r-full);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.005em;
+  /* Subtle scale-in cue when the pill state flips — no flicker since the
+     transition runs on background/colour only. */
+  transition: background 200ms ease, color 200ms ease,
+              box-shadow 200ms ease;
+}
+.mb-calc-pill.yes {
+  background: var(--success-light);
+  color: var(--success);
+  box-shadow: inset 0 0 0 1px rgba(22, 163, 74, 0.25);
+}
+.mb-calc-pill.no {
+  background: var(--warning-light);
+  color: var(--warning);
+  box-shadow: inset 0 0 0 1px rgba(217, 119, 6, 0.25);
+}
+
+/* Maturity chip on the charts card head — matches the .feed-pill /
+   .topnav-pill rhythm so it feels like a peer, not a one-off. */
+.mb-charts-mat-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 10px;
+  border-radius: var(--r-full);
+  background: var(--pink-light);
+  color: var(--pink);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.005em;
+  border: 1px solid rgba(236, 72, 153, 0.30);
+  font-family: 'JetBrains Mono', monospace;
+  font-variant-numeric: tabular-nums;
+}
+.mb-charts-mat-chip svg { color: currentColor; opacity: 0.85; }
+
+/* Surface flow box — replace the static arrow icons with a subtle
+   gradient connecting line that runs through all three step cards.
+   The line shimmers gently on card hover. */
+.mb-flow-grid { position: relative; }
+.mb-flow-grid::before {
+  content: '';
+  position: absolute;
+  left: 14px; right: 14px;
+  top: 50%;
+  height: 2px;
+  border-radius: 1px;
+  background: linear-gradient(90deg,
+    rgba(236, 72, 153, 0.0) 0%,
+    rgba(236, 72, 153, 0.55) 35%,
+    rgba(236, 72, 153, 0.55) 65%,
+    rgba(236, 72, 153, 0.0) 100%);
+  z-index: 0;
+  pointer-events: none;
+  transform: translateY(-1px);
+  transition: opacity 200ms ease;
+  opacity: 0.6;
+}
+.mb-flow-grid:hover::before {
+  opacity: 1;
+}
+.mb-flow-step,
+.mb-flow-arrow {
+  position: relative;
+  z-index: 1;
+}
+.mb-flow-arrow {
+  /* Inherits .mb-flow-grid::before behind it; render the icon on top of
+     a small white circle so the line doesn't visually pierce the chevron. */
+  background: var(--bg-elevated);
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  box-shadow: 0 0 0 4px var(--bg-elevated);
+}
+@media (max-width: 720px) {
+  .mb-flow-grid::before { display: none; }
+}
+
+/* ============================================================================
+   Maturity Spotlight — compact 6-stat card that sits below the Charts
+   card in the left column. Reuses .info-card chrome; adds a 3-col grid
+   of mini-stats and a small footer line. The lead stat (Expected basis)
+   gets the family pink colour; tone-success / tone-danger flips for
+   term-structure / YoY deltas as appropriate.
+   ============================================================================ */
+.mb-spotlight .info-card-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.mb-spotlight-year {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 10px;
+  border-radius: var(--r-full);
+  background: var(--pink-light);
+  color: var(--pink);
+  font-size: 11px;
+  font-weight: 700;
+  border: 1px solid rgba(236, 72, 153, 0.30);
+  font-family: 'JetBrains Mono', monospace;
+  font-variant-numeric: tabular-nums;
+}
+.mb-spotlight-year svg { color: currentColor; opacity: 0.85; }
+
+.mb-spotlight-grid {
+  padding: 14px 16px 12px;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px 18px;
+}
+@media (max-width: 720px) {
+  .mb-spotlight-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
+.mb-spotlight-stat {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 8px 10px;
+  background: var(--bg-subtle);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--r-md);
+  transition: border-color 200ms ease, background 200ms ease;
+}
+.mb-spotlight-stat:hover {
+  border-color: var(--border-strong);
+  background: var(--bg-elevated);
+}
+.mb-spotlight-stat-label {
+  font-size: 9.5px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+.mb-spotlight-stat-value {
+  font-size: 16px;
+  font-weight: 700;
+  letter-spacing: -0.014em;
+  color: var(--text);
+  line-height: 1.2;
+}
+.mb-spotlight-stat-sub {
+  font-size: 10.5px;
+  color: var(--text-subtle);
+  letter-spacing: 0.005em;
+}
+.mb-spotlight-stat.lead {
+  background: var(--pink-light);
+  border-color: rgba(236, 72, 153, 0.25);
+}
+.mb-spotlight-stat.lead .mb-spotlight-stat-value { color: var(--pink); font-size: 18px; }
+.mb-spotlight-stat.lead .mb-spotlight-stat-label { color: var(--pink); }
+.mb-spotlight-stat.tone-success .mb-spotlight-stat-value { color: var(--success); }
+.mb-spotlight-stat.tone-danger  .mb-spotlight-stat-value { color: var(--danger); }
+.mb-spotlight-stat.tone-warning .mb-spotlight-stat-value { color: var(--warning); }
+
+.mb-spotlight-foot {
+  padding: 9px 16px 10px;
+  margin: 0;
+  border-top: 1px solid var(--border-subtle);
+  background: linear-gradient(180deg, transparent, rgba(15, 23, 51, 0.02));
+  font-size: 10.5px;
+  color: var(--text-muted);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.mb-spotlight-foot svg { color: var(--text-subtle); margin-right: 2px; vertical-align: -1px; }
+.mb-spotlight-foot-meta {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  letter-spacing: 0.005em;
+}
+.mb-spotlight-source {
+  margin-left: 4px;
+  padding: 1px 7px !important;
+  font-size: 9.5px !important;
+  font-family: 'JetBrains Mono', monospace !important;
+}

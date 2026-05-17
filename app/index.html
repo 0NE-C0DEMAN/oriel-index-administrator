@@ -1,0 +1,120 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
+  <title>Oriel · Index Administrator</title>
+  <meta name="description" content="Oriel prediction-index administrator — Healthcare, CPI, Basis, Parity." />
+
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+
+  <!-- React + Babel (CDN, no build step) -->
+  <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
+  <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+  <!-- Modular stylesheets — load in cascade order. Each file is a coherent
+       slice of the design system; later files (especially 06-perp.css)
+       intentionally override earlier rules. -->
+  <link rel="stylesheet" href="styles/01-base.css" />
+  <link rel="stylesheet" href="styles/02-views.css" />
+  <link rel="stylesheet" href="styles/03-admin.css" />
+  <link rel="stylesheet" href="styles/04-detail-cards.css" />
+  <link rel="stylesheet" href="styles/05-vol-surface.css" />
+  <link rel="stylesheet" href="styles/06-perp.css" />
+  <link rel="stylesheet" href="styles/07-cms-ref.css" />
+  <link rel="stylesheet" href="styles/08-medical-basis.css" />
+  <link rel="stylesheet" href="styles/09-parity.css" />
+</head>
+<body>
+  <div id="root">
+    <div class="boot-loader">
+      <div class="boot-spinner"></div>
+      <span>Loading Oriel…</span>
+    </div>
+  </div>
+
+  <!-- ========================================================================
+       Script load order. Each file is an IIFE that registers on window.App.
+       utils → atoms → layout → views → App → main
+       ======================================================================== -->
+
+  <!-- 1. Pure utilities + data (no React) -->
+  <script src="src/lib/utils.js"></script>
+  <script src="src/lib/oriel_logo.js"></script>
+  <script src="src/lib/engine.js"></script>
+  <script src="src/lib/nav.js"></script>
+  <script src="src/lib/indices.js"></script>
+  <script src="src/lib/adminData.js"></script>
+
+  <!-- 2. Components (atoms) -->
+  <script type="text/babel" data-presets="env,react" src="src/components/Icon.jsx"></script>
+  <script type="text/babel" data-presets="env,react" src="src/components/Badge.jsx"></script>
+  <script type="text/babel" data-presets="env,react" src="src/components/BrandMark.jsx"></script>
+  <script type="text/babel" data-presets="env,react" src="src/components/ChartModal.jsx"></script>
+  <script type="text/babel" data-presets="env,react" src="src/components/IndexCard.jsx"></script>
+
+  <!-- 3. Layout -->
+  <script type="text/babel" data-presets="env,react" src="src/layout/TopNav.jsx"></script>
+  <script type="text/babel" data-presets="env,react" src="src/layout/SubHeader.jsx"></script>
+
+  <!-- 4. Features (composites used by detail views) -->
+  <script type="text/babel" data-presets="env,react" src="src/features/ForwardCurveChart.jsx"></script>
+  <script type="text/babel" data-presets="env,react" src="src/features/DistributionChart.jsx"></script>
+  <script type="text/babel" data-presets="env,react" src="src/features/IndexKpiStrip.jsx"></script>
+  <script type="text/babel" data-presets="env,react" src="src/features/HeroChartCard.jsx"></script>
+  <script type="text/babel" data-presets="env,react" src="src/features/IndexPrintCard.jsx"></script>
+  <script type="text/babel" data-presets="env,react" src="src/features/MarketVsSignalCard.jsx"></script>
+  <script type="text/babel" data-presets="env,react" src="src/features/MethodologySteps.jsx"></script>
+  <script type="text/babel" data-presets="env,react" src="src/features/IndexInfoRow.jsx"></script>
+  <script type="text/babel" data-presets="env,react" src="src/features/IndexDataTabs.jsx"></script>
+  <script type="text/babel" data-presets="env,react" src="src/features/MedicalCpiMonitor.jsx"></script>
+  <script type="text/babel" data-presets="env,react" src="src/features/NotesPanel.jsx"></script>
+  <script type="text/babel" data-presets="env,react" src="src/features/MaturityDistribution.jsx"></script>
+  <script type="text/babel" data-presets="env,react" src="src/features/BasisDecomposition.jsx"></script>
+  <script type="text/babel" data-presets="env,react" src="src/features/VenueBlend.jsx"></script>
+  <script type="text/babel" data-presets="env,react" src="src/features/ParityGateStrip.jsx"></script>
+  <script type="text/babel" data-presets="env,react" src="src/features/VolSurfacePanel.jsx"></script>
+  <!-- PerpPrimitives provides leaf components used by PerpReadinessPanel
+       (window.App.PerpPrimitives.{HoverTip, PanelCard, PItem, ...}). Must
+       load BEFORE PerpReadinessPanel.jsx, which destructures it. -->
+  <script type="text/babel" data-presets="env,react" src="src/features/PerpPrimitives.jsx"></script>
+  <script type="text/babel" data-presets="env,react" src="src/features/PerpReadinessPanel.jsx"></script>
+  <!-- Oriel Healthcare Reference (CMS Lag Engine) — KPI strip swap-in
+       for the sticky head. Carries v7's title chips + description +
+       6-cell pipeline strip. Other CMS sections will be built up in
+       follow-up steps. -->
+  <script type="text/babel" data-presets="env,react" src="src/features/CmsKpiStrip.jsx"></script>
+  <!-- CMS Overview body — 3-line translation chart + Basis & Action +
+       Crosswalk Decomposition, in the standard hero-row layout. -->
+  <script type="text/babel" data-presets="env,react" src="src/features/CmsOverviewPanel.jsx"></script>
+  <!-- CMS Validation sub-tab — Strategy Lenses + Benchmark charts +
+       Pipeline Provenance, all in one scrollable page. -->
+  <script type="text/babel" data-presets="env,react" src="src/features/CmsValidationPanel.jsx"></script>
+  <!-- ForecastEx Medical Basis (mb) — sticky-head KPI strip with
+       maturity selector + custom Overview body (reference legs,
+       contract spec, settlement calculator, ladder/distribution/curve
+       sub-tabs, sample ladder table). -->
+  <script type="text/babel" data-presets="env,react" src="src/features/MedicalBasisKpiStrip.jsx"></script>
+  <script type="text/babel" data-presets="env,react" src="src/features/MedicalBasisOverviewPanel.jsx"></script>
+  <!-- OTC Parity Validation — full v7 parity_tab body with 4 sub-tabs:
+       Term Calibration · Reference OTC · DTCC SDR · Stress Case. Each
+       parity sub-view has KPI row + 2 charts + tables + front-month
+       card. Term sub-view has term-structure chart + tenor cards. -->
+  <script type="text/babel" data-presets="env,react" src="src/features/ParityOverviewPanel.jsx"></script>
+  <script type="text/babel" data-presets="env,react" src="src/features/IndexTables.jsx"></script>
+
+  <!-- 5. Views -->
+  <script type="text/babel" data-presets="env,react" src="src/views/PlaceholderView.jsx"></script>
+  <script type="text/babel" data-presets="env,react" src="src/views/IndicesView.jsx"></script>
+  <script type="text/babel" data-presets="env,react" src="src/views/IndexDetailView.jsx"></script>
+  <script type="text/babel" data-presets="env,react" src="src/views/IndexAdminView.jsx"></script>
+
+  <!-- 6. App + boot -->
+  <script type="text/babel" data-presets="env,react" src="src/App.jsx"></script>
+  <script type="text/babel" data-presets="env,react" src="src/main.jsx"></script>
+</body>
+</html>

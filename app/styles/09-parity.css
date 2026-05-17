@@ -1,0 +1,594 @@
+/* ==========================================================================
+   09-parity.css — OTC Parity tab styles (lean — leans on shared primitives).
+
+   Each parity sub-tab uses the SAME layout vocabulary as every CPI tab:
+     .idx-kpi          (top KPI strip — we add .parity-kpi-* shapes for cells)
+     .hero-row         (chart-left + cards-right rail; align-items: stretch)
+     .herochart-card   (chart container with inner tabs — already styled)
+     .ip-card          (rail print card — already styled, used unchanged)
+     .data-card        (full-width table — already styled, used unchanged)
+
+   This file adds ONLY the parity-specific bits not in 04-detail-cards.css:
+     - parity KPI cells (5-col grid with tone tints)
+     - chart canvas that stretches to fill .herochart-body
+     - chart tooltip
+     - gate progress bars (inside the .ip-card scorecard)
+     - front-pillar block (inside the .ip-card parity print)
+     - ip-card-status warn variant (for Term Calibration's REFERENCE pill)
+     - status / quality pills used in tables
+   ========================================================================== */
+
+.parity-page,
+.parity-view {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+/* ── Layout for parity hero-row ────────────────────────────────────────
+   Goal: chart card on the LEFT exactly matches the right-side rail's
+   TOTAL height (sum of Print + Scorecard/Snapshot, including the gap
+   between them). Same idiom as every other CPI tab.
+
+   Mechanism:
+     1. .hero-row uses CSS Grid with align-items: stretch — both columns
+        get the same row height.
+     2. The row height = max of (chart's natural / min, rail's natural).
+     3. Both rail cards are flex: 0 0 auto → rail keeps natural compact
+        height (no empty-space stretching inside cards).
+     4. Chart card has min-height set lower than the rail's natural so
+        the rail dictates the row height, and the chart stretches up
+        to match it.
+     5. Inside the chart card, the body and canvas use flex: 1 so the
+        SVG fills the full available height. */
+.parity-page .hero-row {
+  align-items: stretch;
+}
+.parity-page .hero-row-rail {
+  height: 100%;              /* fill the row height (set by stretch) */
+  align-self: stretch;
+}
+.parity-page .hero-row-rail > .ip-card,
+.parity-page .hero-row-rail > .mvs-card {
+  flex: 0 0 auto;            /* both cards: natural compact height */
+}
+
+/* Chart card height is purely driven by the row stretch (= rail's natural
+   height). NO max-height cap because the SVG is now position: absolute,
+   so it can't leak intrinsic dimensions into the chart card's natural
+   size — the chart card simply takes whatever height the row gives it
+   from the rail. Same idiom as CPI tabs (HeroChartCard auto-matches
+   IndexPrintCard + MarketVsSignalCard rail height via grid stretch). */
+.parity-page .herochart-card {
+  min-height: 320px;
+  height: 100%;             /* fill the .hero-row column completely */
+  align-self: stretch;
+  display: flex;
+  flex-direction: column;
+}
+.parity-page .herochart-card .herochart-body {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  overflow: hidden;
+  flex: 1 1 auto;            /* body fills card height after the head */
+}
+/* Canvas is the SVG's containing block. position: relative + the absolute
+   SVG inside means the SVG is taken OUT of normal layout flow — its
+   intrinsic width/height attributes can't leak into the chart card's
+   natural height calculation, which was forcing the row taller than
+   the rail. Now the chart card's height is determined purely by the
+   row's stretch behavior, and the SVG fills whatever height the canvas
+   ends up with. */
+.parity-page .parity-chart-canvas {
+  flex: 1 1 auto;
+  min-height: 240px;
+  width: 100%;
+  position: relative;
+  overflow: hidden;
+}
+.parity-page .parity-chart-canvas svg {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100% !important;
+  height: 100% !important;
+  display: block;
+}
+
+/* ── KPI strip cell grid (lives inside the standard .idx-kpi shell) ────── */
+.parity-kpi { padding: 0; }
+.parity-kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+}
+.parity-kpi-cell {
+  padding: 14px 16px;
+  border-right: 1px solid var(--border-subtle);
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+.parity-kpi-cell:last-child { border-right: 0; }
+.parity-kpi-cell.lead {
+  background: linear-gradient(180deg, rgba(45, 91, 255, 0.05), transparent);
+}
+.parity-kpi-cell.accent {
+  background: linear-gradient(180deg, rgba(45, 91, 255, 0.04), transparent);
+}
+.parity-kpi-cell.tone-pass .parity-kpi-cell-value { color: var(--success); }
+.parity-kpi-cell.tone-fail .parity-kpi-cell-value { color: var(--danger); }
+.parity-kpi-cell.tone-warn .parity-kpi-cell-value { color: #d97706; }
+.parity-kpi-cell-label {
+  font-size: 0.74rem;          /* ~11.8px (was 10.5px) */
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text-muted);
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.parity-kpi-cell-value {
+  font-size: 1.25rem;          /* ~20px (was 17.6px, matches perp's 19px) */
+  font-weight: 700;
+  color: var(--text-primary);
+  line-height: 1.15;
+  letter-spacing: -0.01em;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.parity-kpi-cell.lead .parity-kpi-cell-value { font-size: 1.4rem; }
+.parity-kpi-cell-sub {
+  font-size: 0.78rem;          /* ~12.5px (was 10.8px) */
+  color: var(--text-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.parity-kpi-dual {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 6px;
+}
+.parity-kpi-dual-primary { font-weight: 700; }
+.parity-kpi-dual-sep { color: var(--text-muted); font-weight: 400; }
+.parity-kpi-dual-secondary { color: var(--text-muted); font-size: 0.86em; }
+
+/* ── Chart canvas — stretches to fill .herochart-body (no fixed height) ── */
+.parity-chart-canvas {
+  position: relative;
+  flex: 1;
+  min-height: 280px;
+  width: 100%;
+  min-width: 0;
+}
+.parity-chart-canvas svg { width: 100%; height: 100%; display: block; }
+
+/* ── Chart tooltip (shared by all parity charts) ──────────────────────── */
+.parity-tooltip {
+  position: absolute;
+  transform: translate(-50%, -100%);
+  background: var(--bg-elevated, white);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 10px 12px;
+  font-size: 0.82rem;          /* ~13px (was 11.5px) */
+  min-width: 170px;
+  box-shadow: var(--shadow-pop, 0 8px 28px rgba(0, 0, 0, 0.14));
+  pointer-events: none;
+  z-index: 10;
+}
+.parity-tooltip-title {
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: var(--text);
+  margin-bottom: 6px;
+  border-bottom: 1px solid var(--border-subtle);
+  padding-bottom: 5px;
+}
+.parity-tooltip-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 14px;
+  font-size: 0.8rem;           /* ~12.8px (was 11.2px) */
+  color: var(--text-muted);
+  margin-top: 4px;
+}
+.parity-tooltip-row > span:last-child {
+  color: var(--text);
+  font-weight: 600;
+}
+.parity-tooltip-row .tone-pass,
+.parity-tooltip-row .tone-pos { color: var(--success); }
+.parity-tooltip-row .tone-fail,
+.parity-tooltip-row .tone-neg { color: var(--danger); }
+
+/* ── Status / quality pills, used in tables ────────────────────────────── */
+.parity-status-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 10px;
+  border-radius: 12px;
+  font-size: 0.78rem;          /* ~12.5px (was 11.2px) */
+  font-weight: 700;
+  letter-spacing: 0.04em;
+}
+.parity-status-pill.pass { background: rgba(34, 197, 94, 0.14); color: var(--success); }
+.parity-status-pill.fail { background: rgba(255, 107, 107, 0.14); color: var(--danger); }
+.parity-quality-pill {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 10px;
+  font-size: 0.74rem;          /* ~11.8px (was 10.5px) */
+  background: rgba(245, 158, 11, 0.12);
+  color: #b45309;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+
+/* ── Tables — match perp's table chrome (sticky headers, accent-soft
+   header background, hover row tint, scroll after a max-height cap) ─── */
+.parity-page .data-card-body {
+  padding: 0;               /* let the scroll wrapper own the padding */
+}
+.parity-page .data-card-body > .parity-table-scroll {
+  width: 100%;
+  max-height: 380px;        /* scroll after this height (matches perp) */
+  overflow-x: auto;
+  overflow-y: auto;
+}
+.parity-page .data-card-body > .parity-table-scroll.dense {
+  max-height: 280px;        /* tighter cap for the DTCC trade table */
+}
+.parity-page .data-card-body table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.82rem;       /* 13px body */
+}
+.parity-page .data-card-body thead th {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  background: var(--accent-soft);
+  padding: 10px 14px;
+  font-size: 0.74rem;       /* ~11.8px */
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  font-weight: 600;
+  text-align: left;
+  border-bottom: 1px solid var(--border);
+  white-space: nowrap;
+}
+.parity-page .data-card-body thead th.num { text-align: right; }
+.parity-page .data-card-body tbody td {
+  padding: 9px 14px;
+  border-bottom: 1px solid var(--border-subtle);
+  white-space: nowrap;
+  color: var(--text);
+  font-size: 0.82rem;
+}
+.parity-page .data-card-body tbody td.num { text-align: right; }
+.parity-page .data-card-body tbody tr:last-child td { border-bottom: 0; }
+.parity-page .data-card-body tbody tr:hover td { background: var(--accent-soft); }
+
+/* Failing-row tint (overrides hover so red rows stay red on hover) */
+.parity-page .data-card-body tbody tr.parity-row-fail td { background: rgba(255, 107, 107, 0.06); }
+.parity-page .data-card-body tbody tr.parity-row-fail:hover td { background: rgba(255, 107, 107, 0.10); }
+
+.parity-detail-table td.tone-pos { color: var(--success); }
+.parity-detail-table td.tone-neg { color: var(--danger); }
+
+.parity-trade-table td.small,
+.parity-tenor-table td.small {
+  font-size: 0.78rem;
+  color: var(--text-muted);
+}
+
+/* ── Mono code in ip-card row values ────────────────────────────────────── */
+.parity-mono-code {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.78rem;          /* ~12.5px (was 10.8px) */
+  background: rgba(0, 0, 0, 0.04);
+  padding: 2px 6px;
+  border-radius: 3px;
+  color: var(--text);
+}
+
+/* ── ip-card status warn variant (Term Calibration's REFERENCE pill) ───── */
+.ip-card-status.warn {
+  color: #b45309;
+  background: rgba(245, 158, 11, 0.10);
+  border-color: rgba(245, 158, 11, 0.25);
+}
+.ip-card-status.warn .ip-status-dot { background: #b45309; }
+
+/* ── Front-pillar block at the bottom of the Parity Print ip-card ──────── */
+.ip-card-front-block {
+  margin-top: auto;
+  padding: 10px 12px;
+  border-radius: 8px;
+  border: 1px solid var(--border-subtle);
+  background: var(--bg-subtle);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.ip-card-front-block.tone-pass { border-color: rgba(34, 197, 94, 0.25); background: rgba(34, 197, 94, 0.04); }
+.ip-card-front-block.tone-fail { border-color: rgba(255, 107, 107, 0.25); background: rgba(255, 107, 107, 0.04); }
+.ip-card-front-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+}
+.ip-card-front-eyebrow {
+  font-size: 0.62rem;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  font-weight: 600;
+}
+.ip-card-front-month {
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: var(--text);
+}
+.ip-card-front-rates {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 8px;
+}
+.ip-card-front-rates > div {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+.ip-card-front-rates > div span {
+  font-size: 0.62rem;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  font-weight: 600;
+}
+.ip-card-front-rates > div b {
+  font-size: 0.86rem;
+  font-weight: 700;
+  color: var(--text);
+}
+.ip-card-front-rates > div.basis.tone-pass b { color: var(--success); }
+.ip-card-front-rates > div.basis.tone-fail b { color: var(--danger); }
+
+/* ── mvs-card pill (used in Gate Scorecard / Tenor Snapshot headers) ── */
+.parity-mvs-pill {
+  display: inline-block;
+  padding: 3px 10px;
+  border-radius: 12px;
+  font-size: 0.78rem;          /* ~12.5px (was 10.5px) */
+  font-weight: 700;
+  letter-spacing: 0.04em;
+}
+.parity-mvs-pill.pass    { background: var(--success-light, rgba(34,197,94,0.14)); color: var(--success); }
+.parity-mvs-pill.fail    { background: var(--warning-light, rgba(255,107,107,0.14)); color: var(--danger); }
+.parity-mvs-pill.accent  { background: var(--accent-soft, rgba(45,91,255,0.10)); color: var(--accent); }
+
+/* ── Compact Gate Scorecard — single-line rows ────────────────────────── */
+.parity-gates-compact {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 12px 14px;
+}
+.parity-gate-line {
+  display: grid;
+  grid-template-columns: 16px 1fr 70px auto auto;
+  align-items: center;
+  gap: 10px;
+  padding: 7px 0;
+  font-size: 0.82rem;          /* ~13px (was 11.8px) */
+  border-bottom: 1px dashed var(--border-subtle);
+}
+.parity-gate-line:last-child { border-bottom: 0; }
+.parity-gate-line-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+.parity-gate-line.tone-pass .parity-gate-line-icon { color: var(--success); }
+.parity-gate-line.tone-fail .parity-gate-line-icon { color: var(--danger); }
+.parity-gate-line-label {
+  color: var(--text);
+  font-weight: 600;
+  font-size: 0.82rem;          /* ~13px (was 11.5px) */
+  white-space: nowrap;
+}
+.parity-gate-line-bar {
+  position: relative;
+  height: 4px;
+  background: rgba(120, 120, 120, 0.10);
+  border-radius: 2px;
+  overflow: hidden;
+  display: block;
+}
+.parity-gate-line-fill {
+  position: absolute;
+  inset: 0 auto 0 0;
+  border-radius: 2px;
+  transition: width 0.4s ease;
+  display: block;
+}
+.parity-gate-line.tone-pass .parity-gate-line-fill { background: var(--success); }
+.parity-gate-line.tone-fail .parity-gate-line-fill { background: var(--danger); }
+.parity-gate-line-overflow {
+  position: absolute;
+  left: 100%;
+  top: 0;
+  bottom: 0;
+  background: var(--danger);
+  opacity: 0.4;
+  border-radius: 2px;
+  display: block;
+}
+.parity-gate-line-observed {
+  color: var(--text);
+  font-weight: 700;
+  font-size: 0.82rem;          /* ~13px (was 11.5px) */
+  text-align: right;
+  white-space: nowrap;
+}
+.parity-gate-line-limit {
+  color: var(--text-muted);
+  font-size: 0.76rem;          /* ~12px (was 10.5px) */
+  white-space: nowrap;
+}
+
+/* (No parity-specific overrides needed for ip-card highlight or rows —
+   the standard .ip-card-highlight / .ip-card-rows from 04-detail-cards.css
+   already gives us the right look. Print cards use the standard chrome
+   verbatim, just like PerpPrintCard does.) */
+
+/* ── Bottom foot row — Front Maturity strip stacked above Methodology
+   strip. Each is a full-width .idx-kpi shell with parity-kpi-cells
+   inside, so they look identical in chrome to the top KPI strip on the
+   page. Two horizontal strips at the bottom = visual rhyme with the top. */
+.parity-foot-row {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+/* Front Maturity strip = 3 cells; Methodology strip = 5 cells */
+.parity-kpi-grid-3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.parity-kpi-grid-5 { grid-template-columns: repeat(5, minmax(0, 1fr)); }
+
+/* Foot-row KPI strips can have wider cells with more breathing room */
+.parity-foot-kpi .parity-kpi-cell {
+  padding: 14px 18px;
+  gap: 5px;
+}
+.parity-foot-kpi .parity-kpi-cell-value {
+  font-size: 1.30rem;
+}
+.parity-foot-kpi .parity-kpi-cell.lead .parity-kpi-cell-value {
+  font-size: 1.50rem;
+}
+
+@media (max-width: 1240px) {
+  .parity-kpi-grid-5 { grid-template-columns: repeat(3, 1fr); }
+}
+@media (max-width: 720px) {
+  .parity-kpi-grid-3 { grid-template-columns: 1fr; }
+  .parity-kpi-grid-5 { grid-template-columns: repeat(2, 1fr); }
+}
+
+/* ── Tenor Snapshot anchors (inside .mvs-card) ────────────────────────── */
+.parity-tenor-anchors {
+  display: flex;
+  flex-direction: column;
+  padding: 8px 14px 6px;
+}
+.parity-tenor-anchor {
+  display: grid;
+  grid-template-columns: 44px 1fr auto;
+  gap: 12px;
+  align-items: baseline;
+  padding: 9px 0;
+  border-bottom: 1px dashed var(--border-subtle);
+}
+.parity-tenor-anchor:last-child { border-bottom: 0; }
+.parity-tenor-anchor-tenor {
+  font-size: 0.88rem;          /* ~14px (was 12.5px) */
+  font-weight: 700;
+  color: var(--text);
+  letter-spacing: 0.02em;
+}
+.parity-tenor-anchor.lead .parity-tenor-anchor-tenor { color: var(--accent); }
+.parity-tenor-anchor-rate {
+  font-size: 1.05rem;          /* ~16.8px (was 15.4px) */
+  font-weight: 700;
+  color: var(--text);
+  letter-spacing: -0.01em;
+}
+.parity-tenor-anchor.lead .parity-tenor-anchor-rate { color: var(--accent); }
+.parity-tenor-anchor-meta {
+  font-size: 0.78rem;          /* ~12.5px (was 10.5px) */
+  color: var(--text-muted);
+  text-align: right;
+}
+.parity-tenor-range {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  padding: 10px 14px;
+  border-top: 1px solid var(--border-subtle);
+  font-size: 0.82rem;
+  background: var(--bg-subtle);
+}
+.parity-tenor-range-label {
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  font-weight: 600;
+  font-size: 0.74rem;          /* ~11.8px (was 10px) */
+}
+.parity-tenor-range-value {
+  color: var(--text);
+  font-weight: 600;
+  font-size: 0.86rem;
+}
+
+/* ── KPI strip second row (3 R² cells) + footnote ──────────────────────── */
+/* Border-top scoped to .parity-kpi-row-2 so the standalone foot-row
+   uses of .parity-kpi-grid-3 don't pick up the divider line. */
+.parity-kpi-row-2 {
+  border-top: 1px solid var(--border-subtle);
+}
+.parity-kpi-cell.small { padding: 12px 16px; }
+.parity-kpi-cell.small .parity-kpi-cell-value { font-size: 1.05rem; }
+.parity-kpi-row-2 .parity-kpi-cell.tone-warn .parity-kpi-cell-value { color: #d97706; }
+.parity-kpi-foot {
+  padding: 8px 16px 10px;
+  border-top: 1px solid var(--border-subtle);
+  font-size: 0.78rem;          /* ~12.5px (was 10.5px) */
+  color: var(--text-muted);
+  font-style: italic;
+}
+
+/* (Old .parity-meth-note styles removed — Methodology now uses the
+   standard .data-card chrome with a .parity-meth-list dl inside, so
+   it matches the rest of the parity tables and the rest of the app.) */
+
+/* ── Term Calibration: subtle reference note + source footer ──────────
+   Mirrors v7's small grey "note-box" — inline text, no big amber border
+   or icon panel. Just a one-paragraph context note at the top. */
+.parity-term-note {
+  font-size: 0.82rem;
+  color: var(--text-muted);
+  line-height: 1.55;
+  padding: 10px 14px;
+  background: var(--bg-subtle);
+  border: 1px solid var(--border-subtle);
+  border-radius: 8px;
+}
+.parity-term-note strong { color: var(--text); font-weight: 600; }
+
+.parity-term-source-foot {
+  font-size: 0.78rem;
+  color: var(--text-muted);
+  font-style: italic;
+  padding: 8px 4px 0;
+  line-height: 1.55;
+}
+
+/* ── Responsive tweaks ────────────────────────────────────────────────── */
+@media (max-width: 1240px) {
+  .parity-kpi-grid { grid-template-columns: repeat(3, 1fr); }
+}
+@media (max-width: 720px) {
+  .parity-kpi-grid { grid-template-columns: repeat(2, 1fr); }
+  .ip-card-front-rates { grid-template-columns: 1fr; }
+}

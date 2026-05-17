@@ -1,0 +1,504 @@
+/* ==========================================================================
+   05-vol-surface.css — Volatility & Surface Engine panel (CPI Kalshi only)
+   plus app-wide scrollbar styling, view transitions, and the
+   small-viewport topnav responsive overrides (which must come AFTER the
+   topnav base rules in 01-base.css to override them).
+   Loaded after 04-detail-cards.css.
+   ========================================================================== */
+
+/* ==========================================================================
+   Volatility & Surface Engine panel (CPI Kalshi only)
+   ========================================================================== */
+.volsurf {
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-radius: var(--r-lg);
+  box-shadow: var(--shadow-card);
+  display: flex;
+  flex-direction: column;
+}
+.volsurf-head {
+  padding: 14px 18px 12px;
+  border-bottom: 1px solid var(--border-subtle);
+}
+.volsurf-eyebrow {
+  font-size: 10.5px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--accent);
+  font-weight: 600;
+}
+.volsurf.accent-pink .volsurf-eyebrow { color: var(--pink); }
+.volsurf-title {
+  font-size: 14.5px;
+  font-weight: 650;
+  letter-spacing: -0.01em;
+  color: var(--text);
+  margin-top: 3px;
+}
+.volsurf-sub {
+  font-size: 11.5px;
+  color: var(--text-muted);
+  margin-top: 2px;
+  max-width: 720px;
+}
+
+/* KPI strip */
+.volsurf-kpi {
+  border-bottom: 1px solid var(--border-subtle);
+}
+.volsurf-kpi-ribbon {
+  padding: 7px 18px;
+  background: linear-gradient(90deg, var(--accent-soft) 0%, transparent 100%);
+  border-bottom: 1px solid var(--border-subtle);
+  font-size: 10.5px;
+  font-weight: 650;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--accent);
+}
+.volsurf-kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+}
+@media (max-width: 1100px) { .volsurf-kpi-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+@media (max-width: 600px)  { .volsurf-kpi-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+
+.volsurf-kpi-cell {
+  padding: 10px 16px;
+  border-right: 1px solid var(--border-subtle);
+}
+.volsurf-kpi-cell:last-child { border-right: none; }
+.volsurf-kpi-label {
+  font-size: 9.5px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  font-weight: 600;
+  color: var(--text-muted);
+}
+.volsurf-kpi-value {
+  font-size: 18px;
+  font-weight: 700;
+  letter-spacing: -0.018em;
+  font-variant-numeric: tabular-nums;
+  font-family: 'JetBrains Mono', monospace;
+  color: var(--text);
+  margin-top: 3px;
+}
+.volsurf-kpi-value.accent { color: var(--accent); }
+.volsurf-kpi-value.warn   { color: var(--warning); }
+
+/* Sub-tabs */
+.volsurf-tabs {
+  display: flex;
+  border-bottom: 1px solid var(--border);
+  padding: 0 8px;
+  gap: 0;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+.volsurf-tabs::-webkit-scrollbar { display: none; }
+.volsurf-tab {
+  padding: 9px 14px;
+  font-size: 12.5px;
+  font-weight: 550;
+  color: var(--text-muted);
+  background: transparent;
+  border: 0;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -1px;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: color var(--t-fast), border-color var(--t-fast);
+}
+.volsurf-tab:hover { color: var(--text); }
+.volsurf-tab.active {
+  color: var(--accent);
+  border-bottom-color: var(--accent);
+  font-weight: 650;
+}
+.volsurf.accent-pink .volsurf-tab.active {
+  color: var(--pink);
+  border-bottom-color: var(--pink);
+}
+
+.volsurf-body { padding: 14px 16px; }
+.volsurf-foot {
+  padding: 9px 18px;
+  border-top: 1px solid var(--border-subtle);
+  font-size: 11px;
+  color: var(--text-muted);
+  background: #FBFCFE;
+}
+
+.volsurf-tab-content {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  width: 100%;
+}
+
+/* Side-by-side chart + table layout: chart fills 60%, table 40% */
+.volsurf-split {
+  display: grid;
+  grid-template-columns: minmax(0, 1.55fr) minmax(0, 1fr);
+  gap: 12px;
+  align-items: stretch;
+}
+.volsurf-split > .volsurf-card { display: flex; flex-direction: column; }
+.volsurf-split > .volsurf-card .volsurf-chart { flex: 1 1 auto; min-height: 220px; }
+.volsurf-split > .volsurf-tbl-wrap {
+  background: var(--bg);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--r-md);
+  overflow: hidden;
+}
+@media (max-width: 900px) {
+  .volsurf-split { grid-template-columns: 1fr; }
+}
+
+/* Hover tooltips on Vol Surface charts. Sits ABOVE the chart top edge
+   (top is -10, transform translateY(-100%) lifts it fully above), so it
+   never overlaps the bars / line being plotted. Semi-transparent
+   background + backdrop blur keeps the chart faintly visible behind. */
+.volsurf-tip {
+  position: absolute;
+  pointer-events: none;
+  transform: translate(-50%, -100%);
+  background: rgba(255, 255, 255, 0.92);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow-card);
+  border-radius: 6px;
+  padding: 8px 10px;
+  z-index: 5;
+  min-width: 180px;
+  max-width: 240px;
+  font-size: 11.5px;
+}
+/* Allow the chart card to show tooltips that extend beyond its bounds */
+.volsurf-card { overflow: visible !important; }
+.volsurf-chart { overflow: visible; }
+.volsurf-tip-row {
+  display: grid;
+  grid-template-columns: 9px 1fr auto;
+  gap: 6px;
+  align-items: center;
+  padding: 1px 0;
+}
+.volsurf-tip-row.title {
+  grid-template-columns: 1fr;
+  font-weight: 700;
+  font-size: 11.5px;
+  color: var(--text);
+  border-bottom: 1px solid var(--border-subtle);
+  padding-bottom: 4px;
+  margin-bottom: 3px;
+}
+.volsurf-tip-swatch {
+  width: 9px; height: 9px;
+  border-radius: 2px;
+  display: inline-block;
+}
+.volsurf-tip-row.title .volsurf-tip-swatch { display: none; }
+.volsurf-tip-label { color: var(--text-muted); font-size: 11px; }
+.volsurf-tip-value { color: var(--text); font-weight: 650; font-size: 11.5px; text-align: right; }
+
+/* Maturity picker on the Front-Maturity hero tab */
+.herochart-mat-pick {
+  display: inline-flex; align-items: center; gap: 6px;
+  font-size: 11.5px; color: var(--text-muted);
+  margin-right: 14px;
+}
+.herochart-mat-select {
+  height: 24px; padding: 0 8px;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11.5px;
+  color: var(--text);
+  cursor: pointer;
+}
+
+/* Chart card (title + legend strip + plot) — mirrors v7 plotly legend convention */
+.volsurf-card {
+  background: var(--bg);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--r-md);
+  overflow: hidden;
+}
+.volsurf-card-tight { background: var(--bg-elevated); }
+.volsurf-card-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--border-subtle);
+  background: var(--bg-elevated);
+  flex-wrap: wrap;
+}
+.volsurf-card-title {
+  font-size: 11.5px;
+  font-weight: 650;
+  color: var(--text);
+  letter-spacing: -0.005em;
+}
+.volsurf-card-legend {
+  display: inline-flex;
+  align-items: center;
+  gap: 14px;
+  flex-wrap: wrap;
+}
+.volsurf-legend-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+.volsurf-legend-bar {
+  width: 14px; height: 9px;
+  border-radius: 2px;
+  border: 1px solid;
+  display: inline-block;
+}
+.volsurf-legend-line {
+  position: relative;
+  width: 22px; height: 10px;
+  display: inline-block;
+}
+.volsurf-legend-line-bar {
+  position: absolute; left: 0; top: 50%;
+  width: 100%; height: 2px;
+  transform: translateY(-50%);
+  border-radius: 1px;
+}
+.volsurf-legend-line-dot {
+  position: absolute; left: 50%; top: 50%;
+  width: 8px; height: 8px;
+  border-radius: 50%;
+  background: white;
+  border: 2px solid currentColor;
+  transform: translate(-50%, -50%);
+  box-sizing: border-box;
+}
+.volsurf-legend-dash {
+  display: inline-block;
+  width: 18px; height: 0;
+  border-top: 2px dashed;
+}
+.volsurf-legend-grad {
+  display: inline-block;
+  width: 36px; height: 9px;
+  border-radius: 2px;
+  background: linear-gradient(90deg,
+    rgba(45, 91, 255, 0.06) 0%,
+    rgba(45, 91, 255, 0.71) 100%);
+}
+.volsurf-legend-label { color: var(--text-muted); }
+
+.volsurf-chart {
+  position: relative;
+  width: 100%;
+}
+.volsurf-chart svg { display: block; width: 100%; }
+
+.volsurf-tbl-wrap {
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--r-md);
+  overflow: auto;
+  max-height: 320px;
+  scrollbar-gutter: stable;
+}
+.volsurf-tbl-wrap .data-table thead th {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  background: var(--bg-elevated);
+  box-shadow: inset 0 -1px 0 var(--border-subtle);
+}
+.volsurf-tbl-scroll {
+  max-height: 240px;
+  overflow-y: auto;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--r-md);
+  background: var(--bg-elevated);
+}
+.volsurf-tbl-scroll .volsurf-tbl-wrap { border: 0; border-radius: 0; }
+
+/* Sticky header for tables inside scrollable regions */
+.volsurf-sticky-tbl thead th {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  background: var(--bg-elevated);
+  box-shadow: inset 0 -1px 0 var(--border-subtle);
+}
+
+/* Card sections (used inside a single card to group sub-blocks) */
+.volsurf-card-section {
+  padding: 10px 12px 12px;
+  border-top: 1px solid var(--border-subtle);
+}
+.volsurf-card-section:first-of-type { border-top: 0; }
+.volsurf-card-section-tbl { padding: 10px 12px; }
+.volsurf-section-eyebrow {
+  font-size: 10px;
+  font-weight: 650;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text-muted);
+  margin-bottom: 8px;
+}
+
+/* Sensitivity heatmap */
+.volsurf-scn-controls {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+.volsurf-scn-label {
+  font-size: 10.5px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  font-weight: 600;
+  color: var(--text-muted);
+}
+.volsurf-scn-select {
+  height: 28px;
+  padding: 0 10px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12px;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  color: var(--text);
+  cursor: pointer;
+}
+
+.volsurf-heatmap { overflow-x: auto; }
+.volsurf-heatmap-tbl {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 2px;
+  background: var(--border-subtle);
+  table-layout: fixed;
+}
+.volsurf-heatmap-tbl th {
+  background: var(--bg-elevated);
+  padding: 5px 6px;
+  font-size: 10.5px;
+  font-weight: 650;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  text-align: center;
+}
+.volsurf-heatmap-tbl th:first-child { width: 110px; }
+.volsurf-heatmap-row-label {
+  background: var(--bg-elevated);
+  padding: 5px 8px;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-muted);
+  font-family: 'JetBrains Mono', monospace;
+  white-space: nowrap;
+  text-align: center;
+}
+.volsurf-heatmap-cell {
+  padding: 6px 6px;
+  text-align: center;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11.5px;
+  font-weight: 650;
+  color: var(--text);
+}
+
+/* Component framework */
+.volsurf-comp {
+  display: grid;
+  grid-template-columns: minmax(0, 240px) minmax(0, 1fr);
+  gap: 16px;
+}
+@media (max-width: 800px) {
+  .volsurf-comp { grid-template-columns: 1fr; }
+}
+.volsurf-comp-eyebrow {
+  font-size: 10.5px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  font-weight: 600;
+  color: var(--text-muted);
+  margin-bottom: 8px;
+}
+.volsurf-slider {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 6px 0;
+  border-bottom: 1px solid var(--border-subtle);
+}
+.volsurf-slider:last-child { border-bottom: none; }
+.volsurf-slider-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 11.5px;
+  color: var(--text-muted);
+}
+.volsurf-slider input[type="range"] {
+  width: 100%;
+  accent-color: var(--accent);
+  cursor: pointer;
+}
+.volsurf.accent-pink .volsurf-slider input[type="range"] { accent-color: var(--pink); }
+
+.volsurf-comp-legend {
+  display: flex;
+  gap: 14px;
+  padding: 6px 12px 0;
+  flex-wrap: wrap;
+}
+.volsurf-comp-legend-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  color: var(--text-muted);
+}
+.volsurf-comp-legend-dot {
+  width: 8px; height: 8px; border-radius: 50%;
+  display: inline-block;
+}
+
+/* ===== Scrollbar (subtle) ===== */
+::-webkit-scrollbar { width: 10px; height: 10px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--border-strong); border-radius: 10px; border: 2px solid var(--bg); }
+::-webkit-scrollbar-thumb:hover { background: var(--text-subtle); }
+
+/* ===== View transition ===== */
+@keyframes slideUp { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+.view { animation: slideUp 240ms cubic-bezier(0.16, 1, 0.3, 1); }
+
+/* ===== Responsive shrink (narrow viewports / Streamlit iframe) ===== */
+@media (max-width: 1100px) {
+  .topnav-bar { padding: 0 18px; gap: 10px; }
+  .topnav-tabs { padding: 0 12px; }
+  .topnav-tab { padding: 0 12px; }
+  .topnav-clock { display: none; }
+}
+@media (max-width: 880px) {
+  .topnav-brand-tag { display: none; }
+  .topnav-tab { padding: 0 10px; font-size: 12px; }
+  .topnav-pill.demo { display: none; }
+}
+@media (max-width: 640px) {
+  .topnav-pill.mute, .topnav-pill.warn, .topnav-pill.live { display: none; }
+  .topnav-bar { padding: 0 14px; }
+  .topnav-tabs { padding: 0 8px; }
+}

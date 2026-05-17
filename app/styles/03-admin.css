@@ -1,0 +1,616 @@
+/* ==========================================================================
+   03-admin.css — Index Administrator section.
+
+   Layout:
+     .admin-view              outer wrapper
+     .admin-sticky-head       toolbar + KPI + tab bar pinned to top
+     .admin-tab-body          scrollable per-tab content
+
+   Each sub-tab uses standard primitives (.idx-kpi, .data-card,
+   .herochart-card) so the admin view looks like every other index tab.
+   ========================================================================== */
+
+.admin-view {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+/* ── Sticky head (matches .detail-sticky-head from 06-perp.css) ──────── */
+.admin-sticky-head {
+  position: sticky;
+  top: calc(var(--header-bar-h) + var(--header-tabs-h));
+  z-index: 10;
+  background: var(--bg);
+  border-bottom: 1px solid var(--border-subtle);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding-top: 18px;
+  padding-bottom: 10px;
+  contain: layout;
+}
+.main > .content:has(.admin-view) {
+  padding-top: 0;
+}
+
+.admin-tab-body {
+  padding: 16px 0 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+/* ── Toolbar — card-style header (matches the polished chrome of the
+     KPI strip below: bg-elevated background, full border, soft shadow).
+     Single-row layout: icon + title + sub + chips on the left, controls
+     on the right. */
+.admin-toolbar-card {
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  box-shadow: var(--shadow-card);
+  padding: 14px 18px;
+}
+.admin-toolbar-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+  flex-wrap: wrap;
+}
+.admin-toolbar-left {
+  display: inline-flex;
+  align-items: center;
+  gap: 14px;
+  flex-wrap: wrap;
+  min-width: 0;
+}
+.admin-toolbar-icon {
+  flex: none;
+  width: 38px;
+  height: 38px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--accent-soft);
+  color: var(--accent);
+  border-radius: 9px;
+}
+.admin-toolbar-titleblock {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+}
+.admin-toolbar-title {
+  font-size: 1.10rem;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  color: var(--text);
+  line-height: 1.15;
+}
+.admin-toolbar-sub {
+  font-size: 0.78rem;
+  color: var(--text-muted);
+  line-height: 1.3;
+}
+.admin-toolbar-chips {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+.admin-toolbar-chip {
+  display: inline-flex;
+  align-items: center;
+  padding: 3px 9px;
+  border-radius: 12px;
+  background: var(--bg-subtle);
+  border: 1px solid var(--border-subtle);
+  font-size: 0.74rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  font-family: 'JetBrains Mono', monospace;
+  letter-spacing: 0.02em;
+}
+.admin-toolbar-chip.accent {
+  background: var(--accent-soft);
+  border-color: rgba(45, 91, 255, 0.20);
+  color: var(--accent);
+}
+.admin-toolbar-chip.warn {
+  background: rgba(245, 158, 11, 0.10);
+  border-color: rgba(245, 158, 11, 0.25);
+  color: #b45309;
+  font-family: inherit;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+.admin-toolbar-right {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.admin-control {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+.admin-control-label {
+  font-size: 0.74rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text-muted);
+}
+.admin-select {
+  height: 32px;
+  padding: 0 28px 0 12px;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 7px;
+  font-size: 0.82rem;
+  color: var(--text);
+  font-family: 'JetBrains Mono', monospace;
+  appearance: none;
+  -webkit-appearance: none;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 24 24' fill='none' stroke='%235A6478' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><polyline points='6 9 12 15 18 9'/></svg>");
+  background-repeat: no-repeat;
+  background-position: right 9px center;
+  cursor: pointer;
+}
+.admin-select:hover { border-color: var(--border-strong); }
+.admin-select:focus { outline: none; border-color: var(--accent); box-shadow: var(--shadow-focus); }
+
+.admin-export-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 32px;
+  padding: 0 14px;
+  background: var(--accent);
+  color: white;
+  border: 1px solid var(--accent);
+  border-radius: 7px;
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background var(--t-fast);
+}
+.admin-export-btn:hover { background: var(--accent-hover); border-color: var(--accent-hover); }
+
+/* ── KPI strip (uses .idx-kpi shell) ──────────────────────────────────── */
+.admin-kpi { padding: 0; }
+.admin-kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+}
+.admin-kpi-cell {
+  padding: 14px 16px;
+  border-right: 1px solid var(--border-subtle);
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+.admin-kpi-cell:last-child { border-right: 0; }
+.admin-kpi-cell.lead {
+  background: linear-gradient(180deg, rgba(45, 91, 255, 0.05), transparent);
+}
+.admin-kpi-cell.tone-success .admin-kpi-cell-value { color: var(--success); }
+.admin-kpi-cell.tone-danger  .admin-kpi-cell-value { color: var(--danger); }
+.admin-kpi-cell.tone-warning .admin-kpi-cell-value { color: #d97706; }
+.admin-kpi-cell-label {
+  font-size: 0.74rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text-muted);
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.admin-kpi-cell-value {
+  font-size: 1.20rem;
+  font-weight: 700;
+  color: var(--text);
+  line-height: 1.15;
+  letter-spacing: -0.01em;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.admin-kpi-cell.lead .admin-kpi-cell-value { font-size: 1.40rem; }
+.admin-kpi-cell.small .admin-kpi-cell-value { font-size: 0.92rem; }
+.admin-kpi-cell-sub {
+  font-size: 0.78rem;
+  color: var(--text-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+@media (max-width: 1240px) { .admin-kpi-grid { grid-template-columns: repeat(3, 1fr); } }
+@media (max-width: 720px)  { .admin-kpi-grid { grid-template-columns: repeat(2, 1fr); } }
+
+/* ── Sub-tab bar — same underline style as .detail-tabbar so admin
+   matches every other index sub-tab visually (consistent design
+   language across the app). */
+.admin-tabs {
+  display: flex;
+  align-items: stretch;
+  gap: 0;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-radius: var(--r-lg);
+  box-shadow: var(--shadow-card);
+  overflow-x: auto;
+  overflow-y: hidden;
+  scrollbar-width: thin;
+}
+.admin-tab {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 10px 16px;
+  font-size: 12.5px;
+  font-weight: 550;
+  color: var(--text-muted);
+  background: transparent;
+  border: 0;
+  border-bottom: 2px solid transparent;
+  cursor: pointer;
+  transition: color var(--t-fast), border-color var(--t-fast), background var(--t-fast);
+  letter-spacing: -0.005em;
+  white-space: nowrap;
+}
+.admin-tab svg { color: currentColor; opacity: 0.7; transition: opacity var(--t-fast); }
+.admin-tab:hover {
+  color: var(--text);
+  background: var(--bg-subtle);
+}
+.admin-tab:hover svg { opacity: 0.9; }
+.admin-tab.active {
+  color: var(--accent);
+  border-bottom-color: var(--accent);
+  font-weight: 650;
+}
+.admin-tab.active svg { opacity: 1; }
+
+/* ── Layout grids per tab ────────────────────────────────────────────────
+   align-items: start so each card takes its NATURAL content height —
+   no empty stretching inside cards. Columns may have different bottoms
+   but no card has wasted vertical space. */
+.admin-grid-2 {
+  display: grid;
+  grid-template-columns: minmax(0, 1.1fr) minmax(0, 1.5fr);
+  gap: 14px;
+  align-items: start;
+}
+@media (max-width: 1100px) { .admin-grid-2 { grid-template-columns: 1fr; } }
+
+.admin-pub {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+.admin-pub-row {
+  display: grid;
+  grid-template-columns: minmax(0, 2.2fr) minmax(0, 1fr);
+  gap: 14px;
+  align-items: start;
+}
+.admin-pub-rail {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+@media (max-width: 1100px) { .admin-pub-row { grid-template-columns: 1fr; } }
+
+.admin-calc {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+.admin-calc-top {
+  display: grid;
+  grid-template-columns: 1fr 1.1fr;
+  gap: 14px;
+  align-items: stretch;            /* charts SHOULD match heights */
+}
+.admin-calc-top > .herochart-card {
+  min-height: 380px;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+@media (max-width: 1100px) { .admin-calc-top { grid-template-columns: 1fr; } }
+
+.admin-audit {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+.admin-audit-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr);
+  gap: 14px;
+  align-items: start;
+}
+@media (max-width: 1100px) { .admin-audit-row { grid-template-columns: 1fr; } }
+
+/* ── Card body padding override for admin (some sections) ─────────────── */
+.admin-card-body {
+  padding: 16px 20px;
+}
+.data-card-section-head {
+  padding: 10px 20px;
+  border-top: 1px solid var(--border-subtle);
+  border-bottom: 1px solid var(--border-subtle);
+  background: var(--bg-subtle);
+  font-size: 0.78rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text-muted);
+}
+
+/* ── Deflist (Benchmark Overview / Methodology / etc.) ────────────────── */
+.admin-deflist {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: 0;
+}
+.admin-deflist-row {
+  display: grid;
+  grid-template-columns: minmax(150px, auto) minmax(0, 1fr) auto;
+  gap: 14px;
+  align-items: baseline;
+  padding: 6px 0;
+  border-bottom: 1px dashed var(--border-subtle);
+}
+.admin-deflist-row:last-child { border-bottom: 0; padding-bottom: 0; }
+.admin-deflist-row dt {
+  font-size: 0.78rem;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  font-weight: 600;
+  white-space: nowrap;
+}
+.admin-deflist-row dd {
+  margin: 0;
+  font-size: 0.88rem;
+  color: var(--text);
+  font-weight: 600;
+  word-break: break-word;
+}
+/* Sub now sits on the SAME row as the value (3rd grid column),
+   right-aligned in muted text — no extra row, no extra height. */
+.admin-deflist-row dd.admin-deflist-sub {
+  font-size: 0.76rem;
+  font-weight: 400;
+  color: var(--text-muted);
+  text-align: right;
+  white-space: nowrap;
+}
+
+/* ── Methodology summary text ─────────────────────────────────────────── */
+.admin-meth-text {
+  margin: 0 0 8px;
+  font-size: 0.86rem;
+  line-height: 1.5;
+  color: var(--text);
+}
+.admin-meth-foot {
+  margin: 0;
+  font-size: 0.78rem;
+  line-height: 1.5;
+  color: var(--text-muted);
+}
+
+/* ── Inputs tab — filter row + table ──────────────────────────────────── */
+.admin-inputs-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+.admin-inputs-filters {
+  display: inline-flex;
+  align-items: center;
+  gap: 14px;
+  flex-wrap: wrap;
+}
+.admin-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.82rem;
+  color: var(--text);
+  font-weight: 500;
+  cursor: pointer;
+}
+.admin-toggle input[type="checkbox"] {
+  width: 14px;
+  height: 14px;
+  cursor: pointer;
+}
+.admin-inputs-foot {
+  padding: 8px 18px;
+  font-size: 0.78rem;
+  color: var(--text-muted);
+  border-top: 1px solid var(--border-subtle);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* ── Tables — sticky header, NO inner vertical scroll. The page itself
+   scrolls; nested scrollbars (page + card) are confusing UX. The table
+   grows to its natural row-count height; the .data-card grows with it.
+   Horizontal scroll is preserved for very wide tables (e.g. the 14-col
+   observations table). */
+.admin-table-scroll {
+  width: 100%;
+  overflow-x: auto;
+  overflow-y: visible;
+}
+.admin-table-scroll table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.82rem;
+}
+.admin-table-scroll thead th {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  background: var(--accent-soft);
+  padding: 10px 14px;
+  font-size: 0.74rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  font-weight: 600;
+  text-align: left;
+  border-bottom: 1px solid var(--border);
+  white-space: nowrap;
+}
+.admin-table-scroll thead th.num { text-align: right; }
+.admin-table-scroll tbody td {
+  padding: 9px 14px;
+  border-bottom: 1px solid var(--border-subtle);
+  white-space: nowrap;
+  color: var(--text);
+  font-size: 0.82rem;
+}
+.admin-table-scroll tbody td.num { text-align: right; }
+.admin-table-scroll tbody td.small { font-size: 0.78rem; color: var(--text-muted); }
+.admin-table-scroll tbody tr:last-child td { border-bottom: 0; }
+.admin-table-scroll tbody tr:hover td { background: var(--accent-soft); }
+.admin-table-scroll tbody tr.admin-row-flagged td { background: rgba(255, 107, 107, 0.05); }
+.admin-table-scroll tbody tr.admin-row-flagged:hover td { background: rgba(255, 107, 107, 0.10); }
+.admin-table-scroll tbody td.empty-row {
+  text-align: center;
+  padding: 24px;
+  color: var(--text-muted);
+  font-style: italic;
+}
+
+/* ── Calculation tab — chart canvas + legend ──────────────────────────── */
+.admin-chart-canvas {
+  position: relative;
+  flex: 1;
+  min-height: 280px;
+  width: 100%;
+}
+.admin-chart-canvas svg {
+  position: absolute;
+  top: 0; left: 0;
+  width: 100% !important;
+  height: 100% !important;
+  display: block;
+}
+
+/* ── Admin chart tooltip (matches the parity tooltip styling — clean
+   white card with title + key/value rows · same in every chart) ── */
+.admin-tooltip {
+  position: absolute;
+  transform: translate(-50%, -100%);
+  background: var(--bg-elevated, white);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 10px 12px;
+  font-size: 0.82rem;
+  min-width: 200px;
+  box-shadow: var(--shadow-pop, 0 8px 28px rgba(0, 0, 0, 0.14));
+  pointer-events: none;
+  z-index: 20;
+}
+.admin-tooltip-title {
+  font-size: 0.84rem;
+  font-weight: 700;
+  color: var(--text);
+  margin-bottom: 6px;
+  border-bottom: 1px solid var(--border-subtle);
+  padding-bottom: 5px;
+}
+.admin-tooltip-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 14px;
+  font-size: 0.78rem;
+  color: var(--text-muted);
+  margin-top: 4px;
+}
+.admin-tooltip-row.total {
+  margin-top: 6px;
+  padding-top: 5px;
+  border-top: 1px solid var(--border-subtle);
+}
+.admin-tooltip-key {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  text-transform: capitalize;
+}
+.admin-tooltip-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  display: inline-block;
+}
+.admin-tooltip-val {
+  color: var(--text);
+  font-weight: 700;
+}
+.admin-chart-legend {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.admin-chart-legend-bottom {
+  position: absolute;
+  bottom: 4px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 14px;
+}
+.admin-chart-legend-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 0.74rem;
+  color: var(--text-muted);
+  text-transform: capitalize;
+}
+.admin-chart-swatch {
+  width: 12px;
+  height: 8px;
+  border-radius: 2px;
+  display: inline-block;
+}
+.admin-chart-swatch.market  { background: repeating-linear-gradient(90deg, var(--text-muted) 0 4px, transparent 4px 7px); height: 2px; }
+.admin-chart-swatch.blended { background: var(--accent); height: 3px; }
+.admin-chart-swatch.fv      { background: #f59e0b; height: 2px; }
+
+/* ── Tone helpers reused by admin (dt/dd values, rows, etc.) ──────────── */
+.tone-success { color: var(--success); }
+.tone-warning { color: var(--warning, #d97706); }
+.tone-danger  { color: var(--danger); }
+
+/* ── Empty-row state for inputs filter ────────────────────────────────── */
+.empty-row {
+  text-align: center;
+  padding: 24px;
+  color: var(--text-muted);
+  font-style: italic;
+}
