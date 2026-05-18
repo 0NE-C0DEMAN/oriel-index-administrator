@@ -98,12 +98,19 @@ html, body { height: 100%; }
 /* zoom: 0.8 scales the entire app down by 20% — equivalent to the user
    browsing at Chrome's 80% zoom. Done at root so every px-based size
    (paddings, gaps, fonts, card heights) scales proportionally without
-   touching individual rules. */
+   touching individual rules.
+
+   Width compensation: the `zoom` property scales the rendered size of
+   an element but does NOT change the viewport's logical width. So a body
+   that's `100vw` wide visually shrinks to 80vw, leaving a 20% empty band
+   on the right. To fill the viewport we make the body 125vw logically,
+   which renders at 125 × 0.8 = 100vw visually — perfectly flush. */
 html { font-size: 14px; overflow-x: hidden; zoom: 0.8; }
 body {
   overflow-x: hidden;
-  max-width: 100vw;
-  min-width: 0;
+  width: 125vw;
+  max-width: 125vw;
+  min-width: 125vw;
   /* Reserve the vertical scrollbar gutter even when content fits — without
      this, the scrollbar appearing/disappearing on scroll changes content
      width by ~10px, which causes sticky elements to shake horizontally. */
