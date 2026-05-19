@@ -370,11 +370,9 @@ def _render_login():
             color: #5A6478;
             margin: 0 0 16px 0;
           }}
-          /* Secure-workspace chip is dropped in the no-scroll layout.
-             The 'Secure admin access' chip at the top of the form and
-             the 'All systems operational' pill in the bottombar already
-             carry the security + status signal, so this row was
-             redundant ballast. */
+          /* Secure-workspace foot chip is dropped in the no-scroll layout.
+             The 'Secure admin access' chip at the top of the form already
+             carries the security signal. */
           .oriel-form-foot {{ display: none !important; }}
           /* What-Oriel-enables stack below the form. Compact section
              header + vertically stacked horizontal cards. Lives directly
@@ -474,16 +472,17 @@ def _render_login():
             text-transform: uppercase !important;
             margin-bottom: 4px !important;
           }}
-          /* Input shell. Only the OUTERMOST wrapper (.stTextInput > div > div)
-             gets the visible border, background, and shadow. The BaseWeb
-             nested wrappers ([data-baseweb="input"], [data-baseweb="base-input"])
+          /* Input shell. Only the OUTERMOST wrapper gets the visible
+             border, background, and shadow. The BaseWeb nested wrappers
              are stripped flat so they do not paint a second concentric
-             rectangle inside the shell. Without this, the password input
-             rendered an extra bordered box around the eye icon. */
+             rectangle inside the shell. Border at #B8C2D4 reads clearly
+             against the off-white #F5F7FB background even on a bright
+             monitor — the previous #DCE2EB on #FAFBFD was almost
+             invisible. */
           [data-testid="stForm"] .stTextInput > div > div,
           [data-testid="stForm"] [data-testid="stTextInputRootElement"] {{
-            background: #FAFBFD !important;
-            border: 1.5px solid #DCE2EB !important;
+            background: #F5F7FB !important;
+            border: 1.5px solid #B8C2D4 !important;
             border-radius: 10px !important;
             box-shadow: inset 0 1px 0 rgba(15, 23, 42, 0.02) !important;
             color: #0E1733 !important;
@@ -505,7 +504,7 @@ def _render_login():
             padding: 0 !important;
           }}
           [data-testid="stForm"] .stTextInput > div > div:hover {{
-            border-color: #B8C2D4 !important;
+            border-color: #8A93A6 !important;
             background: #FFFFFF !important;
           }}
           [data-testid="stForm"] .stTextInput > div > div:focus-within {{
@@ -542,7 +541,7 @@ def _render_login():
           [data-testid="stForm"] input:-webkit-autofill:hover,
           [data-testid="stForm"] input:-webkit-autofill:focus {{
             -webkit-text-fill-color: #0E1733 !important;
-            -webkit-box-shadow: 0 0 0 1000px #FAFBFD inset !important;
+            -webkit-box-shadow: 0 0 0 1000px #F5F7FB inset !important;
             transition: background-color 5000s ease-in-out 0s !important;
           }}
           /* Password reveal eye button — replace dark Streamlit default */
