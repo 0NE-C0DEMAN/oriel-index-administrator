@@ -867,7 +867,7 @@
       status: { variant: 'warning', label: 'Sample' },
       feed:   { variant: 'warn',    label: 'Sample · Illustrative ladder' },
       description:
-        'Medical CPI vs. CPI-U spread markets — a first prediction-market basis view on healthcare inflation.',
+        'Medical CPI vs. CPI-U spread markets - a first prediction-market basis view on healthcare inflation.',
       bullets: [
         'YES/NO threshold ladder',
         'Implied bucket distribution',

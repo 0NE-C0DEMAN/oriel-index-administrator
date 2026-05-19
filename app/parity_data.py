@@ -9,7 +9,7 @@ Mirrors v7 tabs/parity_tab.py 1:1 in DATA:
     • term       — DTCC live term calibration (NOT parity, reference only)
     • tight      — Reference OTC benchmark vs Oriel curve
     • dtcc       — DTCC SDR Calibration Sample vs Oriel curve
-    • neg        — Out-of-Tolerance Stress Case (negative control)
+    • neg        - Publish-Block Stress Test (negative control)
 
 Parity body for tight / dtcc / neg:
     summary       — {overall_status, basis_gate_status, shape_gate_status,
@@ -214,7 +214,7 @@ def _build_parity_bundle() -> Dict[str, Any] | None:
     benchmarks = [
         ("tight", mods["TIGHTER_BENCHMARK_PATH"], False, "Reference OTC Benchmark"),
         ("dtcc",  mods["DTCC_BENCHMARK_PATH"],   True,  "DTCC SDR Calibration Sample"),
-        ("neg",   mods["NEGATIVE_CONTROL_PATH"], False, "Out-of-Tolerance Stress Case"),
+        ("neg",   mods["NEGATIVE_CONTROL_PATH"], False, "Publish-Block Stress Test"),
     ]
     for key, path, is_dtcc, label in benchmarks:
         try:

@@ -50,19 +50,19 @@
   flex-wrap: wrap;
 }
 
-/* Product framing line — sits between the summary stats and the tile grid.
-   Single sentence positioning Oriel for someone arriving from a
-   ForecastEx / ForecastTrader context. Ksenia copy. */
+/* Product framing line - sits between the summary stats and the tile grid.
+   Plain typography on purpose; no callout box, no left-border tag, no
+   tinted background. The app has its own information surfaces (cards,
+   ribbons, KPI strips); this is a single sentence positioning Oriel and
+   does not need its own box to compete with them. */
 .indices-headline {
-  margin: 0 4px 18px;
-  padding: 14px 16px;
-  border-left: 3px solid var(--accent);
-  background: var(--accent-soft, rgba(45, 91, 255, 0.05));
-  color: var(--text);
+  margin: 0 4px 22px;
+  color: var(--text-muted);
   font-size: 14px;
-  line-height: 1.5;
-  border-radius: 0 var(--r-md) var(--r-md) 0;
+  line-height: 1.55;
+  font-weight: 500;
   max-width: 920px;
+  letter-spacing: -0.005em;
 }
 
 /* Tile grid */

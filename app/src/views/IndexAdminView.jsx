@@ -234,7 +234,7 @@
                 <thead>
                   <tr>
                     <th>Month</th>
-                    <th className="num">Pub score</th>
+                    <th className="num">Publishability Score</th>
                     <th>Fallback</th>
                     <th>Decision</th>
                   </tr>
@@ -790,7 +790,7 @@
                style={{ left: `${(hover.cx / layout.w) * 100}%`, top: `${hover.top - 14}px` }}>
             <div className="admin-tooltip-title">{hover.month}</div>
             <div className="admin-tooltip-row">
-              <span className="admin-tooltip-key">Pub score</span>
+              <span className="admin-tooltip-key">Publishability score</span>
               <span className="admin-tooltip-val font-mono">{fmt4(hover.publishabilityScore)}</span>
             </div>
             <div className="admin-tooltip-row">
