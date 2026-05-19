@@ -107,17 +107,47 @@
   filter: invert(0.25);
 }
 
-/* Live-data toggle (CPI tabs / Perp). Switch-style, visible in the ribbon
-   right edge next to the valuation date picker. */
+/* Live-data toggle pill (CPI tabs / Perp). Shares the 34px rhythm with
+   the valuation-date and maturity chips so all three ribbon controls
+   read as a connected pill set. Idle: bg-elevated with neutral track.
+   On: success-light tint with a green track + green label so the
+   "live feed engaged" state is unmistakable at a glance. */
 .idx-kpi-ribbon-toggle {
   display: inline-flex;
   align-items: center;
-  gap: 8px;
+  gap: 10px;
   cursor: pointer;
   user-select: none;
   font-family: 'Inter', system-ui;
   margin-left: 0;
-  margin-right: 4px;
+  margin-right: 6px;
+  height: 34px;
+  padding: 0 10px 0 12px;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  transition: background var(--t-fast), border-color var(--t-fast), box-shadow var(--t-fast);
+}
+.idx-kpi-ribbon-toggle:hover {
+  background: var(--bg);
+  border-color: var(--border-strong);
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.05);
+}
+.idx-kpi-ribbon-toggle:focus-within {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px rgba(45, 91, 255, 0.14);
+}
+.idx-kpi-ribbon-toggle.on {
+  background: var(--success-light);
+  border-color: rgba(22, 163, 74, 0.30);
+}
+.idx-kpi-ribbon-toggle.on:hover {
+  background: rgba(22, 163, 74, 0.16);
+  border-color: rgba(22, 163, 74, 0.45);
+}
+.idx-kpi-ribbon-toggle.on:focus-within {
+  border-color: var(--success);
+  box-shadow: 0 0 0 3px rgba(22, 163, 74, 0.18);
 }
 .idx-kpi-ribbon-toggle input[type="checkbox"] {
   position: absolute;
@@ -125,8 +155,8 @@
   pointer-events: none;
 }
 .idx-kpi-ribbon-toggle-track {
-  width: 28px;
-  height: 16px;
+  width: 32px;
+  height: 18px;
   background: var(--bg-subtle);
   border: 1px solid var(--border);
   border-radius: 999px;
@@ -138,11 +168,11 @@
   position: absolute;
   top: 1px;
   left: 1px;
-  width: 12px;
-  height: 12px;
+  width: 14px;
+  height: 14px;
   background: white;
   border-radius: 50%;
-  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.2);
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.22);
   transition: transform var(--t-fast);
 }
 .idx-kpi-ribbon-toggle.on .idx-kpi-ribbon-toggle-track {
@@ -150,13 +180,16 @@
   border-color: var(--success);
 }
 .idx-kpi-ribbon-toggle.on .idx-kpi-ribbon-toggle-thumb {
-  transform: translateX(12px);
+  transform: translateX(14px);
 }
 .idx-kpi-ribbon-toggle-label {
+  font-family: 'Inter', system-ui;
   font-size: 10.5px;
-  font-weight: 600;
-  letter-spacing: 0.005em;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
   color: var(--text-muted);
+  white-space: nowrap;
 }
 .idx-kpi-ribbon-toggle.on .idx-kpi-ribbon-toggle-label { color: var(--success); }
 .idx-kpi.accent-pink .idx-kpi-ribbon {
