@@ -36,7 +36,8 @@
    The whole label is clickable (calls openDatePicker on the input). */
 .idx-kpi-ribbon-time,
 .idx-kpi-ribbon-date {
-  margin-left: auto;
+  /* margin-left: auto is no longer needed (the .idx-kpi-ribbon-desc
+     above now uses flex: 1 to push every post-desc control right). */
   display: inline-flex;
   align-items: center;
   gap: 8px;
@@ -228,6 +229,15 @@
 .idx-kpi-ribbon-desc {
   color: var(--text-muted);
   font-size: 11.5px;
+  /* Expand to fill the row so every control after this (live toggle,
+     maturity pick, valuation date) is pushed to the right edge and
+     reads as a single right-aligned control cluster. Used to be
+     achieved with margin-left: auto on the date alone, which only
+     pushed the date away; the live toggle and maturity selector
+     were left stranded in the middle of the ribbon next to the
+     description. */
+  flex: 1 1 0;
+  min-width: 0;
 }
 
 .idx-kpi-grid {
