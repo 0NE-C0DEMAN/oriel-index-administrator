@@ -218,94 +218,17 @@ def _render_login():
             width: 50% !important;
             max-width: none !important;
             min-height: 100vh !important;
-            /* Top padding clears the absolute-positioned brand strip
-               (top 22 + height ~23 = 45), bottom padding clears the
-               absolute-positioned status pill (bottom 22 + height ~26 = 48). */
-            padding: 50px 48px 54px !important;
+            padding: 24px 48px !important;
             box-sizing: border-box !important;
             display: flex !important;
             flex-direction: column !important;
-            /* `safe center` keeps the form vertically centered when the
-               viewport has room, but falls back to flex-start the moment
-               content gets taller than the viewport so the eyebrow chip
-               at the top is never pushed off-screen. */
             justify-content: safe center !important;
-            background:
-              radial-gradient(circle at 88% 8%, rgba(45, 91, 255, 0.04) 0%, transparent 38%),
-              radial-gradient(circle at 12% 96%, rgba(45, 91, 255, 0.03) 0%, transparent 40%),
-              #FCFCFE !important;
-          }}
-          [data-testid="stMainBlockContainer"]::before {{
-            content: '';
-            position: absolute; inset: 0;
-            background-image:
-              radial-gradient(circle at 1px 1px, rgba(15, 23, 42, 0.035) 1px, transparent 1px);
-            background-size: 22px 22px;
-            mask-image: linear-gradient(180deg, transparent 0%, black 18%, black 82%, transparent 100%);
-            -webkit-mask-image: linear-gradient(180deg, transparent 0%, black 18%, black 82%, transparent 100%);
-            pointer-events: none;
-            z-index: 0;
+            background: #FFFFFF !important;
           }}
           [data-testid="stMainBlockContainer"] > div {{
-            position: relative;
-            z-index: 1;
             width: 100% !important;
             max-width: 440px !important;
             margin: 0 auto !important;
-          }}
-          /* ── Right pane: top brand strip + bottom status strip ──────────
-             Both are absolutely positioned to the corners of the right
-             pane so they anchor the page without competing with the
-             centered form. Mirrors the hero's logo-top / pill-bottom
-             rhythm on the left. */
-          .oriel-form-topbar {{
-            position: absolute; top: 22px; right: 32px;
-            display: flex; align-items: center; gap: 10px;
-            z-index: 2;
-            font-size: 10.5px; font-weight: 700;
-            letter-spacing: 0.18em; text-transform: uppercase;
-            color: #8A93A6;
-          }}
-          .oriel-form-topbar-mark {{
-            color: #2D5BFF; font-weight: 800;
-          }}
-          .oriel-form-topbar-sep {{
-            width: 14px; height: 1px; background: #CFD5E1;
-          }}
-          .oriel-form-topbar-chip {{
-            padding: 3px 9px;
-            border: 1px solid #E3E7EF;
-            border-radius: 999px;
-            background: #FFFFFF;
-            font-size: 9.5px; letter-spacing: 0.14em;
-            color: #5A6478;
-          }}
-          .oriel-form-bottombar {{
-            position: absolute; bottom: 22px; right: 32px; left: 32px;
-            display: flex; align-items: center; justify-content: space-between;
-            z-index: 2;
-            font-size: 10.5px; font-weight: 500;
-            color: #8A93A6;
-          }}
-          .oriel-form-bottombar-left {{
-            display: inline-flex; align-items: center; gap: 6px;
-            letter-spacing: 0.02em;
-          }}
-          .oriel-form-bottombar-pill {{
-            display: inline-flex; align-items: center; gap: 7px;
-            padding: 4px 11px 4px 9px;
-            background: #FFFFFF;
-            border: 1px solid #E3E7EF;
-            border-radius: 999px;
-            font-size: 10px; font-weight: 600;
-            letter-spacing: 0.08em; text-transform: uppercase;
-            color: #1F8A47;
-          }}
-          .oriel-form-bottombar-pill .live-dot {{
-            width: 6px; height: 6px; border-radius: 50%;
-            background: #22C55E;
-            box-shadow: 0 0 0 3px rgba(34, 197, 94, 0.18);
-            animation: oriel-pulse-dot 2.4s ease-in-out infinite;
           }}
           /* ── LEFT pane: fixed accent-gradient hero ───────────────────── */
           .oriel-login-hero {{
@@ -504,23 +427,6 @@ def _render_login():
             transform: translateY(-1px);
             box-shadow: 0 4px 12px rgba(15, 23, 42, 0.06);
           }}
-          /* Decorative accent arrow that fades into the right edge of
-             the card on hover. Signals interactivity without competing
-             with the icon on the left. */
-          .oriel-form-feature::after {{
-            content: '\\2192'; /* right arrow */
-            position: absolute;
-            right: 14px; top: 50%;
-            font-size: 14px; font-weight: 600;
-            color: #2D5BFF;
-            opacity: 0;
-            transform: translate(-4px, -50%);
-            transition: opacity 0.18s ease, transform 0.18s ease;
-          }}
-          .oriel-form-feature:hover::after {{
-            opacity: 1;
-            transform: translate(0, -50%);
-          }}
           .oriel-form-feature-icon {{
             flex: none;
             width: 30px; height: 30px;
@@ -695,24 +601,6 @@ def _render_login():
             color: #FFFFFF !important;
             font-weight: 650 !important;
             margin: 0 !important;
-            display: inline-flex !important;
-            align-items: center;
-            gap: 8px;
-          }}
-          /* Slide-in arrow on hover. The arrow exists at all times so
-             the button has a stable visual rhythm, but it's masked off
-             at rest and only translates into view on hover. */
-          [data-testid="stForm"] [data-testid="stFormSubmitButton"] button p::after {{
-            content: '\\2192'; /* right arrow */
-            font-size: 16px;
-            font-weight: 600;
-            transform: translateX(-4px);
-            opacity: 0.55;
-            transition: transform 0.18s ease, opacity 0.18s ease;
-          }}
-          [data-testid="stForm"] [data-testid="stFormSubmitButton"] button:hover p::after {{
-            transform: translateX(2px);
-            opacity: 1;
           }}
           /* Field spacing inside the form */
           [data-testid="stForm"] [data-testid="stElementContainer"] {{
@@ -831,11 +719,6 @@ def _render_login():
             <span class="oriel-hero-foot-pill"><span class="live-dot"></span> Live workspace</span>
           </div>
         </aside>
-        <div class="oriel-form-topbar">
-          <span class="oriel-form-topbar-mark">ORIEL</span>
-          <span class="oriel-form-topbar-sep"></span>
-          <span class="oriel-form-topbar-chip">v7.0</span>
-        </div>
         <div class="oriel-form-eyebrow">
           <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
           Secure admin access
@@ -929,15 +812,6 @@ def _render_login():
         """      </div>"""
         """    </div>"""
         """  </div>"""
-        """</div>"""
-        """<div class="oriel-form-bottombar">"""
-        """  <span class="oriel-form-bottombar-left">"""
-        """    <svg width="11" height="11" viewBox="0 0 24 24" fill="none" """
-        """         stroke="currentColor" stroke-width="2" stroke-linecap="round" """
-        """         stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>"""
-        """    Oriel · v7.0"""
-        """  </span>"""
-        """  <span class="oriel-form-bottombar-pill"><span class="live-dot"></span>All systems operational</span>"""
         """</div>""",
         unsafe_allow_html=True,
     )
