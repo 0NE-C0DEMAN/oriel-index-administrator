@@ -285,7 +285,9 @@
   align-items: center;
   gap: 7px;
   padding: 10px 16px;
-  font-size: 12.5px;
+  /* Readability bump (was 12.5px). The generous 10px vertical padding
+     keeps the admin sub-tab row at the same total height. */
+  font-size: 13.5px;
   font-weight: 550;
   color: var(--text-muted);
   background: transparent;

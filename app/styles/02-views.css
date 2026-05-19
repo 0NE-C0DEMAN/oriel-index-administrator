@@ -818,7 +818,8 @@
 }
 .dist-card-tab {
   padding: 5px 12px;
-  font-size: 12px;
+  /* Readability bump (was 12px). Same family as .herochart-tab. */
+  font-size: 13px;
   font-weight: 550;
   border-radius: 6px;
   color: var(--text-muted);

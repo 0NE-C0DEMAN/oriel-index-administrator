@@ -425,7 +425,9 @@
 }
 .herochart-tab {
   padding: 5px 12px;
-  font-size: 12px;
+  /* Readability bump (was 12px). Inner chart-tab pills - "Forward
+     curve / Front maturity / Ladder / Distribution / Basis curve" etc. */
+  font-size: 13px;
   font-weight: 550;
   border-radius: 6px;
   color: var(--text-muted);
@@ -1040,7 +1042,9 @@
   align-items: center;
   gap: 7px;
   padding: 8px 14px;
-  font-size: 12.5px;
+  /* Readability bump (was 12.5px). Vertical padding (8px) + line-height
+     absorbs the ~1px font growth without changing the tab-bar height. */
+  font-size: 13.5px;
   font-weight: 550;
   color: var(--text-muted);
   background: transparent;
