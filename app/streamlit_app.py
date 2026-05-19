@@ -220,7 +220,7 @@ def _render_login():
           }}
           [data-testid="stMainBlockContainer"] > div {{
             width: 100% !important;
-            max-width: 400px !important;
+            max-width: 440px !important;
             margin: 0 auto !important;
           }}
           /* ── LEFT pane: fixed accent-gradient hero ───────────────────── */
@@ -364,6 +364,69 @@ def _render_login():
             font-weight: 500;
           }}
           .oriel-form-foot svg {{ color: #8A93A6; flex: none; }}
+          /* Inside-your-workspace mini-grid below the form. Same card
+             vocabulary used everywhere else in the app (soft fill, subtle
+             border, rounded, hover lift), just compact. Gives the right
+             pane something that competes visually with the gradient hero
+             on the left without crowding the form. */
+          .oriel-form-features {{
+            margin-top: 28px;
+            padding-top: 22px;
+            border-top: 1px solid #EEF1F6;
+          }}
+          .oriel-form-features-eyebrow {{
+            font-size: 10px; font-weight: 700;
+            letter-spacing: 0.16em; text-transform: uppercase;
+            color: #8A93A6;
+            margin-bottom: 12px;
+            display: flex; align-items: center; gap: 8px;
+          }}
+          .oriel-form-features-eyebrow::before {{
+            content: ''; display: inline-block;
+            width: 18px; height: 1px; background: #CFD5E1;
+          }}
+          .oriel-form-features-grid {{
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+          }}
+          .oriel-form-feature {{
+            background: #F8FAFD;
+            border: 1px solid #EEF1F6;
+            border-radius: 10px;
+            padding: 12px 11px;
+            transition: border-color 0.15s ease, background 0.15s ease,
+                        transform 0.15s ease, box-shadow 0.15s ease;
+          }}
+          .oriel-form-feature:hover {{
+            background: #FFFFFF;
+            border-color: #CFD5E1;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(15, 23, 42, 0.06);
+          }}
+          .oriel-form-feature-icon {{
+            width: 30px; height: 30px;
+            background: linear-gradient(135deg, #E0E7FF 0%, #C7D2FE 100%);
+            border-radius: 8px;
+            display: inline-flex; align-items: center; justify-content: center;
+            color: #2D5BFF;
+            margin-bottom: 9px;
+          }}
+          .oriel-form-feature-icon svg {{ width: 15px; height: 15px; }}
+          .oriel-form-feature-label {{
+            font-size: 12px; font-weight: 700;
+            color: #0E1733;
+            letter-spacing: -0.005em;
+            line-height: 1.25;
+            margin-bottom: 2px;
+          }}
+          .oriel-form-feature-sub {{
+            font-size: 10.5px;
+            color: #8A93A6;
+            font-weight: 500;
+            letter-spacing: 0.01em;
+            line-height: 1.35;
+          }}
           /* ── Streamlit form polish — light theme bulletproof ─────────── */
           [data-testid="stForm"] {{
             background: transparent !important;
@@ -653,7 +716,45 @@ def _render_login():
         """stroke="currentColor" stroke-width="2" stroke-linecap="round" """
         """stroke-linejoin="round"><circle cx="12" cy="12" r="10"/>"""
         """<polyline points="12 6 12 12 16 14"/></svg>"""
-        """Secure workspace · session ends when you close this tab.</div>""",
+        """Secure workspace · session ends when you close this tab.</div>"""
+        """<div class="oriel-form-features">"""
+        """  <div class="oriel-form-features-eyebrow">Inside your workspace</div>"""
+        """  <div class="oriel-form-features-grid">"""
+        """    <div class="oriel-form-feature">"""
+        """      <div class="oriel-form-feature-icon">"""
+        """        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" """
+        """             stroke-width="2" stroke-linecap="round" stroke-linejoin="round">"""
+        """          <polygon points="12 2 2 7 12 12 22 7 12 2"/>"""
+        """          <polyline points="2 17 12 22 22 17"/>"""
+        """          <polyline points="2 12 12 17 22 12"/>"""
+        """        </svg>"""
+        """      </div>"""
+        """      <div class="oriel-form-feature-label">Reference curves</div>"""
+        """      <div class="oriel-form-feature-sub">CPI · healthcare · validation</div>"""
+        """    </div>"""
+        """    <div class="oriel-form-feature">"""
+        """      <div class="oriel-form-feature-icon">"""
+        """        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" """
+        """             stroke-width="2" stroke-linecap="round" stroke-linejoin="round">"""
+        """          <polyline points="3 12 7 12 10 6 14 18 17 12 21 12"/>"""
+        """        </svg>"""
+        """      </div>"""
+        """      <div class="oriel-form-feature-label">Live venue feeds</div>"""
+        """      <div class="oriel-form-feature-sub">Kalshi · ForecastEx · Polymarket</div>"""
+        """    </div>"""
+        """    <div class="oriel-form-feature">"""
+        """      <div class="oriel-form-feature-icon">"""
+        """        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" """
+        """             stroke-width="2" stroke-linecap="round" stroke-linejoin="round">"""
+        """          <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>"""
+        """          <polyline points="9 12 11 14 15 10"/>"""
+        """        </svg>"""
+        """      </div>"""
+        """      <div class="oriel-form-feature-label">Audit traceability</div>"""
+        """      <div class="oriel-form-feature-sub">Governed publication controls</div>"""
+        """    </div>"""
+        """  </div>"""
+        """</div>""",
         unsafe_allow_html=True,
     )
 

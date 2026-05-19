@@ -225,8 +225,10 @@ table { border-collapse: collapse; width: 100%; }
 }
 
 /* Row 1: brand on the left, actions on the right */
-/* Top nav bar — slightly taller in feel via a subtle gradient and a
-   sharper bottom border so the whole header reads as a single unit. */
+/* Top nav bar — depth-rich header: vertical gradient base, soft bottom
+   shadow, and a thin accent hairline at the very bottom so the header
+   reads as elevated above the content rather than as a flat strip.
+   Matches the "embedded card" treatment used throughout the app. */
 .topnav-bar {
   height: var(--header-bar-h);
   display: flex;
@@ -234,10 +236,24 @@ table { border-collapse: collapse; width: 100%; }
   padding: 0 24px;
   gap: 16px;
   border-bottom: 1px solid var(--border);
-  background: linear-gradient(180deg, var(--bg-elevated) 0%, var(--bg) 100%);
+  background:
+    linear-gradient(180deg, #FFFFFF 0%, var(--bg-elevated) 60%, var(--bg) 100%);
   width: 100%;
   min-width: 0;
   position: relative;
+  box-shadow: 0 1px 0 var(--border), 0 4px 12px -8px rgba(15, 23, 42, 0.08);
+}
+.topnav-bar::after {
+  content: '';
+  position: absolute;
+  left: 0; right: 0; bottom: -1px;
+  height: 1px;
+  background: linear-gradient(90deg,
+    transparent 0%,
+    rgba(45, 91, 255, 0.18) 18%,
+    rgba(45, 91, 255, 0.18) 82%,
+    transparent 100%);
+  pointer-events: none;
 }
 .topnav-bar-spacer { flex: 1 1 auto; }
 
@@ -280,27 +296,32 @@ table { border-collapse: collapse; width: 100%; }
   display: inline-block;
 }
 
-/* Index Administrator tag — breadcrumb-style nav link. Uses the icon
-   as a visual cue + label. Hover shows a soft pill background; active
-   state lights up with the accent color. */
+/* Index Administrator tag — breadcrumb-style nav link. Has a soft idle
+   pill background (so it is always discoverable, not bare gray text),
+   crisper hover state, and a clear active state that lights up with
+   the accent color. */
 .topnav-tag-link {
   display: inline-flex;
   align-items: center;
-  gap: 7px;
+  gap: 8px;
   height: 32px;
-  padding: 0 12px;
-  background: transparent;
-  border: 1px solid transparent;
+  padding: 0 14px;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
   border-radius: 8px;
   cursor: pointer;
   font-family: inherit;
-  color: var(--text-muted);
+  color: var(--text);
   transition: all var(--t-fast);
   position: relative;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.03);
 }
 .topnav-tag-link:hover {
-  background: var(--bg-subtle);
+  background: var(--bg);
+  border-color: var(--border-strong);
   color: var(--text);
+  box-shadow: 0 2px 6px rgba(15, 23, 42, 0.06);
+  transform: translateY(-1px);
 }
 .topnav-tag-link:focus-visible {
   outline: 2px solid var(--accent);

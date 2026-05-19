@@ -17,24 +17,51 @@
 
 .mb-kpi-strip.accent-pink .idx-kpi-mono.lead { color: var(--pink); }
 
-/* Compact maturity selector inside the ribbon. */
-.mb-mat-pick { cursor: default; margin-right: 4px; }
-.mb-mat-select {
-  height: 22px;
-  padding: 0 6px;
+/* Maturity selector inside the ribbon. Sits as a pill of the same
+   visual rhythm as the valuation-date chip so the two ribbon controls
+   read as a matched pair. */
+.mb-mat-pick {
+  margin-right: 6px;
+  cursor: pointer;
+  height: 34px;
+  padding: 0 12px 0 11px;
   background: var(--bg-elevated);
   border: 1px solid var(--border);
-  border-radius: 5px;
+  border-radius: 8px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  transition: background var(--t-fast), border-color var(--t-fast), box-shadow var(--t-fast);
+}
+.mb-mat-pick:hover {
+  background: var(--bg);
+  border-color: var(--border-strong);
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.05);
+}
+.mb-mat-pick:focus-within {
+  border-color: var(--pink);
+  box-shadow: 0 0 0 3px rgba(20, 184, 166, 0.14);
+}
+.mb-mat-pick svg {
+  color: var(--pink);
+  opacity: 0.85;
+  flex-shrink: 0;
+}
+.mb-mat-select {
+  height: 30px;
+  padding: 0 4px;
+  background: transparent;
+  border: 0;
   color: var(--text);
   font-family: 'JetBrains Mono', monospace;
-  font-size: 11px;
+  font-size: 13px;
+  font-weight: 600;
   letter-spacing: 0.01em;
   cursor: pointer;
+  font-variant-numeric: tabular-nums;
 }
 .mb-mat-select:focus {
   outline: none;
-  border-color: var(--pink);
-  box-shadow: 0 0 0 2px rgba(20, 184, 166, 0.18);
 }
 
 /* ── Overview body wrapper + section spacing ───────────────────────── */

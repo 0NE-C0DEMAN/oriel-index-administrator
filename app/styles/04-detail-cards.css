@@ -30,48 +30,81 @@
   color: var(--text);
   line-height: 1.4;
 }
+/* Valuation-date / time chip in the index ribbon. Wrapped as a real
+   "pill" container (matching the topnav-clock visual rhythm) so the
+   input is unmissable rather than tucked away as 10px-tall text.
+   The whole label is clickable (calls openDatePicker on the input). */
 .idx-kpi-ribbon-time,
 .idx-kpi-ribbon-date {
   margin-left: auto;
   display: inline-flex;
   align-items: center;
-  gap: 6px;
+  gap: 8px;
   font-family: 'JetBrains Mono', monospace;
-  font-size: 10.5px;
   color: var(--text-muted);
   letter-spacing: 0.005em;
   flex-shrink: 0;
+  height: 34px;
+  padding: 0 12px 0 11px;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background var(--t-fast), border-color var(--t-fast), box-shadow var(--t-fast);
+}
+.idx-kpi-ribbon-time:hover,
+.idx-kpi-ribbon-date:hover {
+  background: var(--bg);
+  border-color: var(--border-strong);
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.05);
+}
+.idx-kpi-ribbon-time:focus-within,
+.idx-kpi-ribbon-date:focus-within {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px rgba(45, 91, 255, 0.14);
 }
 .idx-kpi-ribbon-time svg,
-.idx-kpi-ribbon-date svg { color: var(--text-subtle); }
+.idx-kpi-ribbon-date svg {
+  color: var(--accent);
+  opacity: 0.85;
+  flex-shrink: 0;
+}
 .idx-kpi-ribbon-date-label {
   font-family: 'Inter', system-ui;
-  font-size: 9.5px;
-  font-weight: 600;
+  font-size: 10.5px;
+  font-weight: 700;
   text-transform: uppercase;
-  letter-spacing: 0.06em;
+  letter-spacing: 0.08em;
   color: var(--text-muted);
+  white-space: nowrap;
 }
 .idx-kpi-ribbon-date-input {
   font-family: 'JetBrains Mono', monospace;
-  font-size: 11px;
-  height: 22px;
-  padding: 0 6px;
-  background: var(--bg-elevated);
-  border: 1px solid var(--border);
-  border-radius: 5px;
+  font-size: 13px;
+  height: 30px;
+  padding: 0 4px;
+  background: transparent;
+  border: 0;
   color: var(--text);
+  font-weight: 600;
   letter-spacing: 0.01em;
   cursor: pointer;
+  font-variant-numeric: tabular-nums;
 }
 .idx-kpi-ribbon-date-input:focus {
   outline: none;
-  border-color: var(--accent);
-  box-shadow: 0 0 0 2px rgba(45, 91, 255, 0.18);
 }
 .idx-kpi-ribbon-date-input::-webkit-calendar-picker-indicator {
   cursor: pointer;
   filter: invert(0.45);
+  margin-left: 4px;
+  width: 16px;
+  height: 16px;
+  opacity: 0.8;
+}
+.idx-kpi-ribbon-date-input::-webkit-calendar-picker-indicator:hover {
+  opacity: 1;
+  filter: invert(0.25);
 }
 
 /* Live-data toggle (CPI tabs / Perp). Switch-style, visible in the ribbon
