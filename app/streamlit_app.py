@@ -571,13 +571,12 @@ def _render_login():
             text-transform: uppercase !important;
             margin-bottom: 8px !important;
           }}
-          /* Input shells — every nesting Streamlit might wrap with.
-             Slightly stronger border + a hint of inner shadow so the
-             field reads as a real input rather than a flat tinted box;
-             focus state lights the border in accent blue with a soft
-             glow ring and the field opens up to white. */
-          [data-testid="stForm"] [data-baseweb="input"],
-          [data-testid="stForm"] [data-baseweb="base-input"],
+          /* Input shell. Only the OUTERMOST wrapper (.stTextInput > div > div)
+             gets the visible border, background, and shadow. The BaseWeb
+             nested wrappers ([data-baseweb="input"], [data-baseweb="base-input"])
+             are stripped flat so they do not paint a second concentric
+             rectangle inside the shell. Without this, the password input
+             rendered an extra bordered box around the eye icon. */
           [data-testid="stForm"] .stTextInput > div > div,
           [data-testid="stForm"] [data-testid="stTextInputRootElement"] {{
             background: #FAFBFD !important;
@@ -586,17 +585,26 @@ def _render_login():
             box-shadow: inset 0 1px 0 rgba(15, 23, 42, 0.02) !important;
             color: #0E1733 !important;
             min-height: 50px !important;
+            overflow: hidden !important;
             transition: border-color 0.15s ease, background 0.15s ease,
                         box-shadow 0.15s ease !important;
           }}
-          [data-testid="stForm"] [data-baseweb="input"]:hover,
-          [data-testid="stForm"] [data-baseweb="base-input"]:hover,
+          /* Inner BaseWeb wrappers: fully transparent, no border, no
+             radius. They exist only to host the input + endEnhancer. */
+          [data-testid="stForm"] [data-baseweb="input"],
+          [data-testid="stForm"] [data-baseweb="base-input"] {{
+            background: transparent !important;
+            background-color: transparent !important;
+            border: 0 !important;
+            border-radius: 0 !important;
+            box-shadow: none !important;
+            min-height: 0 !important;
+            padding: 0 !important;
+          }}
           [data-testid="stForm"] .stTextInput > div > div:hover {{
             border-color: #B8C2D4 !important;
             background: #FFFFFF !important;
           }}
-          [data-testid="stForm"] [data-baseweb="input"]:focus-within,
-          [data-testid="stForm"] [data-baseweb="base-input"]:focus-within,
           [data-testid="stForm"] .stTextInput > div > div:focus-within {{
             background: #FFFFFF !important;
             border-color: #2D5BFF !important;
