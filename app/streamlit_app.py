@@ -472,18 +472,33 @@ def _render_login():
             text-transform: uppercase !important;
             margin-bottom: 4px !important;
           }}
-          /* Input shell. Only the OUTERMOST wrapper gets the visible
-             border, background, and shadow. The BaseWeb nested wrappers
-             are stripped flat so they do not paint a second concentric
-             rectangle inside the shell. Border at #B8C2D4 reads clearly
-             against the off-white #F5F7FB background even on a bright
-             monitor. min-height 48 leaves enough room for the input
-             text line plus padding without the descenders/ascenders
-             getting clipped by the rounded shell. */
+          /* Outer BaseWeb wrapper + Streamlit's own root element get
+             flattened to invisible — no border, no background, no
+             radius. They're just structural. */
           [data-testid="stForm"] .stTextInput > div > div,
-          [data-testid="stForm"] [data-testid="stTextInputRootElement"] {{
+          [data-testid="stForm"] [data-testid="stTextInputRootElement"],
+          [data-testid="stForm"] [data-baseweb="input"] {{
+            background: transparent !important;
+            background-color: transparent !important;
+            border-width: 0 !important;
+            border-style: none !important;
+            border-radius: 0 !important;
+            box-shadow: none !important;
+            min-height: 0 !important;
+            padding: 0 !important;
+          }}
+          /* The visible input shell is [data-baseweb="base-input"]. This
+             is the element Streamlit already paints a 0.8px border on
+             via its emotion-cache stylesheet, so we override on the SAME
+             element rather than fighting specificity from a different
+             selector (which is why earlier passes only swapped the
+             border color and not its width). */
+          [data-testid="stForm"] [data-baseweb="base-input"] {{
             background: #F5F7FB !important;
-            border: 1.5px solid #B8C2D4 !important;
+            background-color: #F5F7FB !important;
+            border-width: 1.5px !important;
+            border-style: solid !important;
+            border-color: #B8C2D4 !important;
             border-radius: 10px !important;
             box-shadow: inset 0 1px 0 rgba(15, 23, 42, 0.02) !important;
             color: #0E1733 !important;
@@ -491,24 +506,12 @@ def _render_login():
             transition: border-color 0.15s ease, background 0.15s ease,
                         box-shadow 0.15s ease !important;
           }}
-          /* Inner BaseWeb wrappers: fully transparent, no border, no
-             radius. They exist only to host the input + endEnhancer. */
-          [data-testid="stForm"] [data-baseweb="input"],
-          [data-testid="stForm"] [data-baseweb="base-input"] {{
-            background: transparent !important;
-            background-color: transparent !important;
-            border: 0 !important;
-            border-radius: 0 !important;
-            box-shadow: none !important;
-            min-height: 0 !important;
-            padding: 0 !important;
-          }}
-          [data-testid="stForm"] .stTextInput > div > div:hover {{
+          [data-testid="stForm"] [data-baseweb="base-input"]:hover {{
             border-color: #8A93A6 !important;
-            background: #FFFFFF !important;
+            background-color: #FFFFFF !important;
           }}
-          [data-testid="stForm"] .stTextInput > div > div:focus-within {{
-            background: #FFFFFF !important;
+          [data-testid="stForm"] [data-baseweb="base-input"]:focus-within {{
+            background-color: #FFFFFF !important;
             border-color: #2D5BFF !important;
             box-shadow:
               0 0 0 4px rgba(45, 91, 255, 0.12),
