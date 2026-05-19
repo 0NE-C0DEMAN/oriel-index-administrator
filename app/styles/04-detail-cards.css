@@ -112,14 +112,18 @@
    the valuation-date and maturity chips so all three ribbon controls
    read as a connected pill set.
 
-   Both states are themed - neither reads as default-white-Streamlit:
-   * Off (sample): warning-light amber tint + amber track + amber label.
-     "you're looking at sample data" is now obvious at a glance.
-   * On (live):    success-light green tint + green track + green label.
+   Both states are themed - the track is fully filled in BOTH states
+   (was: white track when off, green when on - the off track was
+   nearly invisible against the pill background). State semantics:
+   * Off (sample): slate-light tint, filled slate-blue track, slate
+     label. Neutral "you're on demo data" read - not an alert.
+   * On  (live):   success-light tint, filled green track, green label.
 
-   Width is locked: the label has a min-width that accommodates the
-   wider "SAMPLE DATA" string so the pill does not jump in size when
-   the user flips the switch. */
+   The outer border picks up the tab's accent color (see the
+   .idx-kpi.accent-* rules further down) so the pills are also
+   distinguishable per tab without losing the state colour. Width is
+   locked via a min-width on the label so flipping the toggle doesn't
+   reflow the rest of the ribbon. */
 .idx-kpi-ribbon-toggle {
   display: inline-flex;
   align-items: center;
@@ -131,27 +135,27 @@
   margin-right: 6px;
   height: 34px;
   padding: 0 10px 0 12px;
-  background: var(--warning-light);
-  border: 1px solid rgba(217, 119, 6, 0.32);
+  background: #F1F5F9;                       /* slate-100 */
+  border: 1px solid rgba(100, 116, 139, 0.36); /* slate-500 / 36% */
   border-radius: 8px;
   transition: background var(--t-fast), border-color var(--t-fast), box-shadow var(--t-fast);
 }
 .idx-kpi-ribbon-toggle:hover {
-  background: rgba(217, 119, 6, 0.16);
-  border-color: rgba(217, 119, 6, 0.46);
-  box-shadow: 0 1px 3px rgba(217, 119, 6, 0.10);
+  background: #E2E8F0;                       /* slate-200 */
+  border-color: rgba(71, 85, 105, 0.50);
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.08);
 }
 .idx-kpi-ribbon-toggle:focus-within {
-  border-color: var(--warning);
-  box-shadow: 0 0 0 3px rgba(217, 119, 6, 0.18);
+  border-color: #475569;                     /* slate-600 */
+  box-shadow: 0 0 0 3px rgba(100, 116, 139, 0.20);
 }
 .idx-kpi-ribbon-toggle.on {
   background: var(--success-light);
-  border-color: rgba(22, 163, 74, 0.30);
+  border-color: rgba(22, 163, 74, 0.32);
 }
 .idx-kpi-ribbon-toggle.on:hover {
   background: rgba(22, 163, 74, 0.16);
-  border-color: rgba(22, 163, 74, 0.45);
+  border-color: rgba(22, 163, 74, 0.46);
   box-shadow: 0 1px 3px rgba(22, 163, 74, 0.10);
 }
 .idx-kpi-ribbon-toggle.on:focus-within {
@@ -166,8 +170,8 @@
 .idx-kpi-ribbon-toggle-track {
   width: 32px;
   height: 18px;
-  background: rgba(255, 255, 255, 0.78);
-  border: 1px solid rgba(217, 119, 6, 0.35);
+  background: #94A3B8;                       /* slate-400, filled */
+  border: 1px solid rgba(71, 85, 105, 0.42);
   border-radius: 999px;
   position: relative;
   transition: background var(--t-fast), border-color var(--t-fast);
@@ -197,12 +201,46 @@
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.08em;
-  color: var(--warning);
+  color: #475569;                            /* slate-600 */
   white-space: nowrap;
   min-width: 84px;          /* width of "SAMPLE DATA" at this size; */
   text-align: left;         /* keeps the pill the same width on flip. */
 }
 .idx-kpi-ribbon-toggle.on .idx-kpi-ribbon-toggle-label { color: var(--success); }
+
+/* Per-tab accent on the ribbon control pills. Each kpi-strip carries
+   a .accent-accent (blue family - CPI Kalshi / ForecastEx / Polymarket
+   / Validation / Admin) or .accent-pink (teal family - Healthcare
+   Trend / Reference, CPI Basis Engine, Medical CPI Basis) modifier on
+   its root. The pills inherit that tab's accent on their borders so
+   the user can tell at a glance which tab they are on - while the
+   internal fill (slate vs green) still communicates the toggle's
+   on/off state. The .on state keeps its green border because "live
+   feed engaged" should dominate any tab-accent signal. */
+.idx-kpi.accent-accent .idx-kpi-ribbon-date,
+.idx-kpi.accent-accent .idx-kpi-ribbon-time,
+.idx-kpi.accent-accent .idx-kpi-ribbon-toggle:not(.on),
+.idx-kpi.accent-accent .mb-mat-pick {
+  border-color: rgba(45, 91, 255, 0.34);
+}
+.idx-kpi.accent-accent .idx-kpi-ribbon-date:hover,
+.idx-kpi.accent-accent .idx-kpi-ribbon-time:hover,
+.idx-kpi.accent-accent .idx-kpi-ribbon-toggle:not(.on):hover,
+.idx-kpi.accent-accent .mb-mat-pick:hover {
+  border-color: rgba(45, 91, 255, 0.55);
+}
+.idx-kpi.accent-pink .idx-kpi-ribbon-date,
+.idx-kpi.accent-pink .idx-kpi-ribbon-time,
+.idx-kpi.accent-pink .idx-kpi-ribbon-toggle:not(.on),
+.idx-kpi.accent-pink .mb-mat-pick {
+  border-color: rgba(20, 184, 166, 0.40);
+}
+.idx-kpi.accent-pink .idx-kpi-ribbon-date:hover,
+.idx-kpi.accent-pink .idx-kpi-ribbon-time:hover,
+.idx-kpi.accent-pink .idx-kpi-ribbon-toggle:not(.on):hover,
+.idx-kpi.accent-pink .mb-mat-pick:hover {
+  border-color: rgba(20, 184, 166, 0.60);
+}
 .idx-kpi.accent-pink .idx-kpi-ribbon {
   background: linear-gradient(90deg, var(--pink-light) 0%, transparent 100%);
 }

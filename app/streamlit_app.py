@@ -211,12 +211,16 @@ def _render_login():
             width: 50% !important;
             max-width: none !important;
             min-height: 100vh !important;
-            padding: 48px 56px !important;
+            /* Tighter vertical padding so the form + Inside-your-workspace
+               feature grid + security note all fit inside one viewport,
+               no scroll on standard laptop / Chrome window heights. */
+            padding: 24px 48px !important;
             box-sizing: border-box !important;
             display: flex !important;
             flex-direction: column !important;
             justify-content: center !important;
             background: #FFFFFF !important;
+            overflow: hidden !important;
           }}
           [data-testid="stMainBlockContainer"] > div {{
             width: 100% !important;
@@ -258,7 +262,7 @@ def _render_login():
             position: relative; z-index: 2;
           }}
           .oriel-hero-mark img {{
-            height: 56px; width: auto;
+            height: 88px; width: auto;
             filter: brightness(0) invert(1); opacity: 0.96;
           }}
           .oriel-hero-mark-tag {{
@@ -353,12 +357,12 @@ def _render_login():
             margin: 0 0 10px 0;
           }}
           .oriel-form-sub {{
-            font-size: 14.5px; line-height: 1.55;
+            font-size: 14px; line-height: 1.5;
             color: #5A6478;
-            margin: 0 0 24px 0;
+            margin: 0 0 16px 0;
           }}
           .oriel-form-foot {{
-            margin-top: 22px;
+            margin-top: 14px;
             display: flex; align-items: center; gap: 8px;
             font-size: 11.5px; color: #8A93A6;
             font-weight: 500;
@@ -370,15 +374,15 @@ def _render_login():
              pane something that competes visually with the gradient hero
              on the left without crowding the form. */
           .oriel-form-features {{
-            margin-top: 28px;
-            padding-top: 22px;
+            margin-top: 16px;
+            padding-top: 14px;
             border-top: 1px solid #EEF1F6;
           }}
           .oriel-form-features-eyebrow {{
             font-size: 10px; font-weight: 700;
             letter-spacing: 0.16em; text-transform: uppercase;
             color: #8A93A6;
-            margin-bottom: 12px;
+            margin-bottom: 8px;
             display: flex; align-items: center; gap: 8px;
           }}
           .oriel-form-features-eyebrow::before {{
@@ -394,7 +398,7 @@ def _render_login():
             background: #F8FAFD;
             border: 1px solid #EEF1F6;
             border-radius: 10px;
-            padding: 12px 11px;
+            padding: 10px 10px 11px;
             transition: border-color 0.15s ease, background 0.15s ease,
                         transform 0.15s ease, box-shadow 0.15s ease;
           }}
@@ -405,12 +409,12 @@ def _render_login():
             box-shadow: 0 4px 12px rgba(15, 23, 42, 0.06);
           }}
           .oriel-form-feature-icon {{
-            width: 30px; height: 30px;
+            width: 28px; height: 28px;
             background: linear-gradient(135deg, #E0E7FF 0%, #C7D2FE 100%);
             border-radius: 8px;
             display: inline-flex; align-items: center; justify-content: center;
             color: #2D5BFF;
-            margin-bottom: 9px;
+            margin-bottom: 7px;
           }}
           .oriel-form-feature-icon svg {{ width: 15px; height: 15px; }}
           .oriel-form-feature-label {{
