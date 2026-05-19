@@ -975,12 +975,19 @@
   align-self: flex-start;
 }
 
+/* Calculator / advanced-controls trigger button. Matches the 34px
+   pill rhythm used by the ribbon controls (.idx-kpi-ribbon-date,
+   .idx-kpi-ribbon-toggle, .mb-mat-pick) so all interactive surfaces
+   on the page read as one design language. Border colour reflects
+   the parent's accent (blue for CPI-family, teal for healthcare-
+   family) via the .accent-pink override below. */
 .perp-controls-trigger {
   display: inline-flex;
   align-items: center;
   gap: 10px;
-  padding: 8px 12px;
-  border: 1px solid var(--border);
+  height: 34px;
+  padding: 0 12px;
+  border: 1px solid rgba(45, 91, 255, 0.34);  /* blue accent default */
   border-radius: 8px;
   background: var(--bg-elevated);
   color: var(--text);
@@ -990,22 +997,40 @@
   box-shadow: 0 1px 2px rgba(15, 23, 51, 0.04);
 }
 .perp-controls-trigger:hover {
+  border-color: rgba(45, 91, 255, 0.55);
+  background: var(--bg);
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.06);
+}
+.perp-controls-trigger.accent-pink {
+  border-color: rgba(20, 184, 166, 0.40);     /* teal accent */
+}
+.perp-controls-trigger.accent-pink:hover {
+  border-color: rgba(20, 184, 166, 0.60);
+}
+.perp-controls-trigger.open {
   border-color: var(--accent);
   background: var(--accent-soft);
+  box-shadow: 0 0 0 3px rgba(45, 91, 255, 0.14);
 }
-.perp-controls-trigger.open,
 .perp-controls-trigger.accent-pink.open {
   border-color: var(--pink);
   background: var(--pink-light);
+  box-shadow: 0 0 0 3px rgba(20, 184, 166, 0.16);
 }
-.perp-controls-trigger-label { font-weight: 600; letter-spacing: 0.005em; }
+.perp-controls-trigger-label {
+  font-weight: 700;
+  letter-spacing: 0.005em;
+  font-size: 12px;
+}
 .perp-controls-trigger-summary {
   color: var(--text-muted);
   font-size: 11.5px;
   padding-left: 8px;
   border-left: 1px solid var(--border-subtle);
+  font-family: 'JetBrains Mono', monospace;
+  font-variant-numeric: tabular-nums;
 }
-.perp-controls-trigger svg { color: currentColor; opacity: 0.85; }
+.perp-controls-trigger svg { color: currentColor; opacity: 0.85; flex-shrink: 0; }
 
 /* Popover */
 .perp-controls-pop {

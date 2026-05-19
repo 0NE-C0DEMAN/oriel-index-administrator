@@ -220,7 +220,6 @@ def _render_login():
             flex-direction: column !important;
             justify-content: center !important;
             background: #FFFFFF !important;
-            overflow: hidden !important;
           }}
           [data-testid="stMainBlockContainer"] > div {{
             width: 100% !important;
@@ -262,7 +261,7 @@ def _render_login():
             position: relative; z-index: 2;
           }}
           .oriel-hero-mark img {{
-            height: 88px; width: auto;
+            height: 104px; width: auto;
             filter: brightness(0) invert(1); opacity: 0.96;
           }}
           .oriel-hero-mark-tag {{
@@ -351,10 +350,10 @@ def _render_login():
             display: flex; align-items: center; gap: 8px;
           }}
           .oriel-form-title {{
-            font-size: 32px; font-weight: 700;
+            font-size: 30px; font-weight: 700;
             letter-spacing: -0.02em; line-height: 1.15;
             color: #0E1733;
-            margin: 0 0 10px 0;
+            margin: 0 0 18px 0;
           }}
           .oriel-form-sub {{
             font-size: 14px; line-height: 1.5;
@@ -688,7 +687,6 @@ def _render_login():
           Secure admin access
         </div>
         <h1 class="oriel-form-title">Welcome back.</h1>
-        <p class="oriel-form-sub">Sign in to your private workspace to publish, review, and audit governed reference indices.</p>
         """
     _login_html = _tw_login.dedent(_login_html)
     _login_html = _re_login.sub(r"\n[ \t]*\n+", "\n", _login_html)

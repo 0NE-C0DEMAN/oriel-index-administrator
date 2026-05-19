@@ -134,53 +134,82 @@
   flex-wrap: wrap;
 }
 
+/* Admin control = a label + a select pair, themed to match the
+   ribbon-pill rhythm on the index detail pages so the whole app
+   reads as one design language. The label sits to the left of the
+   pill and the select itself is a 34px accent-bordered pill, same
+   height as .idx-kpi-ribbon-date / .idx-kpi-ribbon-toggle. */
 .admin-control {
   display: inline-flex;
   align-items: center;
   gap: 8px;
 }
 .admin-control-label {
-  font-size: 0.74rem;
-  font-weight: 600;
+  font-size: 10.5px;
+  font-weight: 700;
   text-transform: uppercase;
-  letter-spacing: 0.06em;
+  letter-spacing: 0.08em;
   color: var(--text-muted);
 }
 .admin-select {
-  height: 32px;
-  padding: 0 28px 0 12px;
-  background: var(--bg);
-  border: 1px solid var(--border);
-  border-radius: 7px;
-  font-size: 0.82rem;
+  height: 34px;
+  padding: 0 30px 0 12px;
+  background: var(--bg-elevated);
+  border: 1px solid rgba(45, 91, 255, 0.34);
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 600;
   color: var(--text);
   font-family: 'JetBrains Mono', monospace;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.01em;
   appearance: none;
   -webkit-appearance: none;
-  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 24 24' fill='none' stroke='%235A6478' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><polyline points='6 9 12 15 18 9'/></svg>");
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%232D5BFF' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'><polyline points='6 9 12 15 18 9'/></svg>");
   background-repeat: no-repeat;
-  background-position: right 9px center;
+  background-position: right 10px center;
   cursor: pointer;
+  transition: background var(--t-fast), border-color var(--t-fast), box-shadow var(--t-fast);
 }
-.admin-select:hover { border-color: var(--border-strong); }
-.admin-select:focus { outline: none; border-color: var(--accent); box-shadow: var(--shadow-focus); }
+.admin-select:hover {
+  background: var(--bg);
+  border-color: rgba(45, 91, 255, 0.55);
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.05);
+}
+.admin-select:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px rgba(45, 91, 255, 0.18);
+}
 
 .admin-export-btn {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
-  height: 32px;
-  padding: 0 14px;
+  gap: 7px;
+  height: 34px;
+  padding: 0 16px;
   background: var(--accent);
   color: white;
   border: 1px solid var(--accent);
-  border-radius: 7px;
-  font-size: 0.82rem;
+  border-radius: 8px;
+  font-size: 12.5px;
   font-weight: 600;
+  letter-spacing: 0.005em;
   cursor: pointer;
-  transition: background var(--t-fast);
+  transition: background var(--t-fast), border-color var(--t-fast),
+              box-shadow var(--t-fast), transform var(--t-fast);
+  box-shadow: 0 1px 2px rgba(45, 91, 255, 0.18);
 }
-.admin-export-btn:hover { background: var(--accent-hover); border-color: var(--accent-hover); }
+.admin-export-btn:hover {
+  background: var(--accent-hover);
+  border-color: var(--accent-hover);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(45, 91, 255, 0.26);
+}
+.admin-export-btn:active {
+  transform: translateY(0);
+  box-shadow: 0 1px 2px rgba(45, 91, 255, 0.18);
+}
 
 /* ── KPI strip (uses .idx-kpi shell) ──────────────────────────────────── */
 .admin-kpi { padding: 0; }
