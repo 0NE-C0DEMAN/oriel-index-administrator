@@ -397,7 +397,7 @@ def _render_login():
             background: #F8FAFD;
             border: 1px solid #EEF1F6;
             border-radius: 10px;
-            padding: 10px 10px 11px;
+            padding: 10px 11px 12px;
             transition: border-color 0.15s ease, background 0.15s ease,
                         transform 0.15s ease, box-shadow 0.15s ease;
           }}
@@ -417,18 +417,22 @@ def _render_login():
           }}
           .oriel-form-feature-icon svg {{ width: 15px; height: 15px; }}
           .oriel-form-feature-label {{
-            font-size: 12px; font-weight: 700;
+            font-size: 12.5px; font-weight: 700;
             color: #0E1733;
             letter-spacing: -0.005em;
             line-height: 1.25;
-            margin-bottom: 2px;
+            margin-bottom: 4px;
           }}
+          /* Body copy on the three cards. Holds 1-2 sentences of real
+             prose, not a meta chip — slightly larger and looser than the
+             pre-CEO-pass version so the wrap is comfortable in the
+             ~140px-wide card column. */
           .oriel-form-feature-sub {{
-            font-size: 10.5px;
-            color: #8A93A6;
+            font-size: 11px;
+            color: #5C6680;
             font-weight: 500;
-            letter-spacing: 0.01em;
-            line-height: 1.35;
+            letter-spacing: 0.005em;
+            line-height: 1.4;
           }}
           /* ── Streamlit form polish — light theme bulletproof ─────────── */
           [data-testid="stForm"] {{
@@ -656,15 +660,12 @@ def _render_login():
         <div class="oriel-login-boot" aria-hidden="true">
           <div class="oriel-login-boot-spin"></div>
           <div class="oriel-login-boot-text">Loading Oriel</div>
-          <div class="oriel-login-boot-sub">Index Administrator</div>
         </div>
         <aside class="oriel-login-hero">
           <div class="oriel-hero-mark">
             {logo_html}
-            <span class="oriel-hero-mark-tag">Index Administrator</span>
           </div>
           <div class="oriel-hero-body">
-            <div class="oriel-hero-eyebrow">ORIEL</div>
             <div class="oriel-hero-title">Trade the dislocation.<br /><em>Trust the reference.</em></div>
             <div class="oriel-hero-sub">Oriel turns fragmented prediction-market pricing into reference curves, fair value, and execution intelligence - helping users identify market dislocations and act with greater confidence.</div>
             <div class="oriel-hero-tags">
@@ -677,7 +678,7 @@ def _render_login():
           <div class="oriel-hero-foot">
             <div class="oriel-hero-foot-left">
               <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
-              Oriel · Index Administrator v7.0
+              Oriel v7.0
             </div>
             <span class="oriel-hero-foot-pill"><span class="live-dot"></span> Live workspace</span>
           </div>
@@ -720,7 +721,7 @@ def _render_login():
         """<polyline points="12 6 12 12 16 14"/></svg>"""
         """Secure workspace · session ends when you close this tab.</div>"""
         """<div class="oriel-form-features">"""
-        """  <div class="oriel-form-features-eyebrow">Inside your workspace</div>"""
+        """  <div class="oriel-form-features-eyebrow">What Oriel enables</div>"""
         """  <div class="oriel-form-features-grid">"""
         """    <div class="oriel-form-feature">"""
         """      <div class="oriel-form-feature-icon">"""
@@ -731,29 +732,41 @@ def _render_login():
         """          <polyline points="2 12 12 17 22 12"/>"""
         """        </svg>"""
         """      </div>"""
-        """      <div class="oriel-form-feature-label">Reference curves</div>"""
-        """      <div class="oriel-form-feature-sub">CPI · healthcare · validation</div>"""
+        """      <div class="oriel-form-feature-label">Build the reference</div>"""
+        """      <div class="oriel-form-feature-sub">Turn fragmented market pricing into comparable fair value, forward curves, and trusted market surfaces.</div>"""
         """    </div>"""
         """    <div class="oriel-form-feature">"""
         """      <div class="oriel-form-feature-icon">"""
         """        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" """
         """             stroke-width="2" stroke-linecap="round" stroke-linejoin="round">"""
-        """          <polyline points="3 12 7 12 10 6 14 18 17 12 21 12"/>"""
+        """          <circle cx="12" cy="12" r="9"/>"""
+        """          <line x1="12" y1="2" x2="12" y2="6"/>"""
+        """          <line x1="12" y1="18" x2="12" y2="22"/>"""
+        """          <line x1="2" y1="12" x2="6" y2="12"/>"""
+        """          <line x1="18" y1="12" x2="22" y2="12"/>"""
+        """          <circle cx="12" cy="12" r="2.2"/>"""
         """        </svg>"""
         """      </div>"""
-        """      <div class="oriel-form-feature-label">Live venue feeds</div>"""
-        """      <div class="oriel-form-feature-sub">Kalshi · ForecastEx · Polymarket</div>"""
+        """      <div class="oriel-form-feature-label">Surface the dislocation</div>"""
+        """      <div class="oriel-form-feature-sub">Compare venues, detect curve-relative mispricing, and identify cross-market basis opportunities in real time.</div>"""
         """    </div>"""
         """    <div class="oriel-form-feature">"""
         """      <div class="oriel-form-feature-icon">"""
         """        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" """
         """             stroke-width="2" stroke-linecap="round" stroke-linejoin="round">"""
-        """          <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>"""
-        """          <polyline points="9 12 11 14 15 10"/>"""
+        """          <line x1="3" y1="6" x2="14" y2="6"/>"""
+        """          <line x1="18" y1="6" x2="21" y2="6"/>"""
+        """          <circle cx="16" cy="6" r="2"/>"""
+        """          <line x1="3" y1="12" x2="7" y2="12"/>"""
+        """          <line x1="11" y1="12" x2="21" y2="12"/>"""
+        """          <circle cx="9" cy="12" r="2"/>"""
+        """          <line x1="3" y1="18" x2="16" y2="18"/>"""
+        """          <line x1="20" y1="18" x2="21" y2="18"/>"""
+        """          <circle cx="18" cy="18" r="2"/>"""
         """        </svg>"""
         """      </div>"""
-        """      <div class="oriel-form-feature-label">Audit traceability</div>"""
-        """      <div class="oriel-form-feature-sub">Governed publication controls</div>"""
+        """      <div class="oriel-form-feature-label">Simulate the response</div>"""
+        """      <div class="oriel-form-feature-sub">Test quoting, inventory, and edge posture as market conditions shift — before turning signals into execution.</div>"""
         """    </div>"""
         """  </div>"""
         """</div>""",
