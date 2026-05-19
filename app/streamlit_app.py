@@ -477,8 +477,9 @@ def _render_login():
              are stripped flat so they do not paint a second concentric
              rectangle inside the shell. Border at #B8C2D4 reads clearly
              against the off-white #F5F7FB background even on a bright
-             monitor — the previous #DCE2EB on #FAFBFD was almost
-             invisible. */
+             monitor. min-height 48 leaves enough room for the input
+             text line plus padding without the descenders/ascenders
+             getting clipped by the rounded shell. */
           [data-testid="stForm"] .stTextInput > div > div,
           [data-testid="stForm"] [data-testid="stTextInputRootElement"] {{
             background: #F5F7FB !important;
@@ -486,8 +487,7 @@ def _render_login():
             border-radius: 10px !important;
             box-shadow: inset 0 1px 0 rgba(15, 23, 42, 0.02) !important;
             color: #0E1733 !important;
-            min-height: 44px !important;
-            overflow: hidden !important;
+            min-height: 48px !important;
             transition: border-color 0.15s ease, background 0.15s ease,
                         box-shadow 0.15s ease !important;
           }}
@@ -514,7 +514,11 @@ def _render_login():
               0 0 0 4px rgba(45, 91, 255, 0.12),
               0 1px 2px rgba(45, 91, 255, 0.08) !important;
           }}
-          /* The actual <input> — strip native bg/border, set color */
+          /* The actual <input> — strip native bg/border, set color.
+             Explicit line-height matches the visible cap-height so the
+             text sits centered in the 48px shell without the bottom of
+             descenders (g, p, y) getting clipped against the inner
+             border radius. */
           [data-testid="stForm"] input,
           [data-testid="stForm"] input[type="text"],
           [data-testid="stForm"] input[type="password"] {{
@@ -528,7 +532,8 @@ def _render_login():
             font-size: 14px !important;
             font-weight: 500 !important;
             letter-spacing: -0.005em !important;
-            padding: 11px 14px !important;
+            line-height: 20px !important;
+            padding: 12px 14px !important;
             caret-color: #2D5BFF !important;
           }}
           [data-testid="stForm"] input::placeholder {{
