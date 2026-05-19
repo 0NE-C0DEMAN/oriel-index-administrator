@@ -218,9 +218,10 @@ def _render_login():
             width: 50% !important;
             max-width: none !important;
             min-height: 100vh !important;
-            /* Top padding clears the absolute-positioned brand strip,
-               bottom padding clears the absolute-positioned status pill. */
-            padding: 60px 48px 60px !important;
+            /* Top padding clears the absolute-positioned brand strip
+               (top 22 + height ~23 = 45), bottom padding clears the
+               absolute-positioned status pill (bottom 22 + height ~26 = 48). */
+            padding: 50px 48px 54px !important;
             box-sizing: border-box !important;
             display: flex !important;
             flex-direction: column !important;
@@ -424,65 +425,45 @@ def _render_login():
           /* ── RIGHT pane content (above the Streamlit form) ───────────── */
           .oriel-form-eyebrow {{
             display: inline-flex; align-items: center; gap: 7px;
-            padding: 5px 11px 5px 9px;
+            padding: 4px 10px 4px 8px;
             background: rgba(45, 91, 255, 0.08);
             border: 1px solid rgba(45, 91, 255, 0.18);
             border-radius: 999px;
-            font-size: 10.5px; font-weight: 700;
+            font-size: 10px; font-weight: 700;
             letter-spacing: 0.14em; text-transform: uppercase;
             color: #2D5BFF;
-            margin-bottom: 14px;
+            margin-bottom: 10px;
           }}
           .oriel-form-eyebrow svg {{ color: #2D5BFF; }}
           .oriel-form-title {{
-            font-size: 28px; font-weight: 700;
-            letter-spacing: -0.02em; line-height: 1.15;
+            font-size: 24px; font-weight: 700;
+            letter-spacing: -0.02em; line-height: 1.1;
             color: #0E1733;
-            margin: 0 0 4px 0;
+            margin: 0 0 14px 0;
           }}
-          .oriel-form-subtitle {{
-            font-size: 13.5px; line-height: 1.5;
-            color: #5A6478;
-            margin: 0 0 16px 0;
-          }}
+          .oriel-form-subtitle {{ display: none; }}
           .oriel-form-sub {{
             font-size: 14px; line-height: 1.5;
             color: #5A6478;
             margin: 0 0 16px 0;
           }}
-          /* Secure-workspace badge under the form. Was a plain grey row
-             with a clock icon; promoted to a real chip so it stops
-             reading like a Streamlit default 'help text' line. */
-          .oriel-form-foot {{
-            margin-top: 16px;
-            display: inline-flex; align-items: center; gap: 8px;
-            padding: 7px 12px 7px 10px;
-            background: #F7FAFE;
-            border: 1px solid #E3E7EF;
-            border-radius: 999px;
-            font-size: 11.5px; color: #5A6478;
-            font-weight: 500;
-          }}
-          .oriel-form-foot svg {{ color: #2D5BFF; flex: none; }}
-          .oriel-form-foot::after {{
-            content: '';
-            width: 6px; height: 6px; border-radius: 50%;
-            background: #22C55E;
-            box-shadow: 0 0 0 3px rgba(34, 197, 94, 0.18);
-            margin-left: 4px;
-            animation: oriel-pulse-dot 2.4s ease-in-out infinite;
-          }}
+          /* Secure-workspace chip is dropped in the no-scroll layout.
+             The 'Secure admin access' chip at the top of the form and
+             the 'All systems operational' pill in the bottombar already
+             carry the security + status signal, so this row was
+             redundant ballast. */
+          .oriel-form-foot {{ display: none !important; }}
           /* What-Oriel-enables stack below the form. Compact section
              header + vertically stacked horizontal cards. Lives directly
              under the form so the right pane has two visual halves: the
              auth block on top, the capability block below. */
           .oriel-form-features {{
-            margin-top: 14px;
-            padding-top: 12px;
+            margin-top: 10px;
+            padding-top: 10px;
             border-top: 1px solid #EEF1F6;
           }}
           .oriel-form-features-eyebrow {{
-            font-size: 10px; font-weight: 700;
+            font-size: 9.5px; font-weight: 700;
             letter-spacing: 0.16em; text-transform: uppercase;
             color: #8A93A6;
             margin-bottom: 6px;
@@ -503,17 +484,17 @@ def _render_login():
           .oriel-form-features-grid {{
             display: flex;
             flex-direction: column;
-            gap: 8px;
+            gap: 5px;
           }}
           .oriel-form-feature {{
             position: relative;
             display: flex;
             align-items: center;
-            gap: 12px;
+            gap: 10px;
             background: #F8FAFD;
             border: 1px solid #EEF1F6;
             border-radius: 10px;
-            padding: 10px 14px 10px 12px;
+            padding: 7px 14px 7px 10px;
             transition: border-color 0.15s ease, background 0.15s ease,
                         transform 0.15s ease, box-shadow 0.15s ease;
           }}
@@ -542,29 +523,29 @@ def _render_login():
           }}
           .oriel-form-feature-icon {{
             flex: none;
-            width: 36px; height: 36px;
+            width: 30px; height: 30px;
             background: linear-gradient(135deg, #E0E7FF 0%, #C7D2FE 100%);
-            border-radius: 9px;
+            border-radius: 8px;
             display: inline-flex; align-items: center; justify-content: center;
             color: #2D5BFF;
           }}
-          .oriel-form-feature-icon svg {{ width: 18px; height: 18px; }}
+          .oriel-form-feature-icon svg {{ width: 15px; height: 15px; }}
           .oriel-form-feature-body {{
             min-width: 0;
             flex: 1;
             padding-right: 18px;
           }}
           .oriel-form-feature-label {{
-            font-size: 13px; font-weight: 700;
+            font-size: 12.5px; font-weight: 700;
             color: #0E1733;
             letter-spacing: -0.005em;
             line-height: 1.25;
-            margin-bottom: 2px;
+            margin-bottom: 1px;
           }}
           /* Body copy on the three cards. Full sentence per card, with
              the full form column to wrap in — never gets squeezed. */
           .oriel-form-feature-sub {{
-            font-size: 11.5px;
+            font-size: 10.5px;
             color: #5C6680;
             font-weight: 500;
             letter-spacing: 0.005em;
@@ -580,12 +561,12 @@ def _render_login():
           /* Field labels */
           [data-testid="stForm"] .stTextInput label,
           [data-testid="stForm"] .stTextInput label p {{
-            font-size: 11px !important;
+            font-size: 10.5px !important;
             font-weight: 700 !important;
             color: #5A6478 !important;
             letter-spacing: 0.10em !important;
             text-transform: uppercase !important;
-            margin-bottom: 8px !important;
+            margin-bottom: 4px !important;
           }}
           /* Input shell. Only the OUTERMOST wrapper (.stTextInput > div > div)
              gets the visible border, background, and shadow. The BaseWeb
@@ -600,7 +581,7 @@ def _render_login():
             border-radius: 10px !important;
             box-shadow: inset 0 1px 0 rgba(15, 23, 42, 0.02) !important;
             color: #0E1733 !important;
-            min-height: 50px !important;
+            min-height: 44px !important;
             overflow: hidden !important;
             transition: border-color 0.15s ease, background 0.15s ease,
                         box-shadow 0.15s ease !important;
@@ -639,10 +620,10 @@ def _render_login():
             box-shadow: none !important;
             color: #0E1733 !important;
             -webkit-text-fill-color: #0E1733 !important;
-            font-size: 15px !important;
+            font-size: 14px !important;
             font-weight: 500 !important;
             letter-spacing: -0.005em !important;
-            padding: 14px 16px !important;
+            padding: 11px 14px !important;
             caret-color: #2D5BFF !important;
           }}
           [data-testid="stForm"] input::placeholder {{
@@ -690,13 +671,13 @@ def _render_login():
             background-color: #2D5BFF !important;
             color: #FFFFFF !important;
             font-weight: 650 !important;
-            font-size: 14.5px !important;
+            font-size: 14px !important;
             letter-spacing: 0.01em !important;
-            padding: 14px 18px !important;
-            height: 50px !important;
+            padding: 11px 18px !important;
+            height: 44px !important;
             border-radius: 10px !important;
             border: 0 !important;
-            margin-top: 14px !important;
+            margin-top: 8px !important;
             box-shadow:
               0 4px 14px rgba(45, 91, 255, 0.32),
               inset 0 1px 0 rgba(255,255,255,0.16) !important;
@@ -735,7 +716,7 @@ def _render_login():
           }}
           /* Field spacing inside the form */
           [data-testid="stForm"] [data-testid="stElementContainer"] {{
-            margin-bottom: 12px !important;
+            margin-bottom: 8px !important;
           }}
           /* Error alert tint */
           [data-testid="stAlert"] {{
