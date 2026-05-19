@@ -24,9 +24,9 @@
       <div className="view">
         <div className="indices-summary">
           <div className="indices-summary-stats">
-            <SummaryStat label="Indices" value={summary.total} />
+            <SummaryStat label="Index & basis views" value={summary.total} />
             <SummaryStat label="Live engines" value={summary.live} accent="success" />
-            <SummaryStat label="Sample data" value={summary.sample} />
+            <SummaryStat label="Sample modules" value={summary.sample} />
           </div>
           <div className="indices-summary-families">
             {summary.families.map((f) => (
@@ -34,6 +34,11 @@
             ))}
           </div>
         </div>
+
+        <p className="indices-headline">
+          Oriel converts prediction-market prices and public reference data into
+          publishable curves, basis signals, and market-ready benchmarks.
+        </p>
 
         <div className="indices-grid">
           {LIST.map((idx) => (

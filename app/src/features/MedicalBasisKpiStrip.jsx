@@ -94,14 +94,14 @@
                 value={<span className="idx-kpi-mono">{fmtPct100(sel.probabilityGt200)}</span>}
                 sub="YES price proxy"
                 lead />
-          <Cell label="Settlement Example"
+          <Cell label="Illustrative Settlement"
                 value={<span className={cn('idx-kpi-pub', settle.settlesYes ? 'ok' : 'no')}>
                   <Icon name={settle.settlesYes ? 'check' : 'info'} size={13} />
                   {settle.settlesYes ? 'YES / $1.00' : 'NO / $0.00'}
                 </span>}
                 sub={`${settle.medicalCpiYoyPct.toFixed(1)}% medical vs ${settle.cpiYoyPct.toFixed(1)}% CPI`}
                 highlight={settle.settlesYes ? 'pub-ok' : 'pub-no'} />
-          <Cell label="Ladder Thresholds"
+          <Cell label="Contract Thresholds"
                 value={<span className="idx-kpi-mono">{`${low}–${high} bps`}</span>}
                 sub="Spread > threshold contracts" />
         </div>

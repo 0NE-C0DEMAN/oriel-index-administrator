@@ -34,8 +34,8 @@
 
   const seriesColors = (accent) => ({
     lead:        accent === 'pink' ? 'var(--pink)'        : 'var(--accent)',
-    band:        accent === 'pink' ? 'rgba(236, 72, 153, 0.12)' : 'rgba(45, 91, 255, 0.10)',
-    bandStroke:  accent === 'pink' ? 'rgba(236, 72, 153, 0.25)' : 'rgba(45, 91, 255, 0.25)',
+    band:        accent === 'pink' ? 'rgba(20, 184, 166, 0.12)' : 'rgba(45, 91, 255, 0.10)',
+    bandStroke:  accent === 'pink' ? 'rgba(20, 184, 166, 0.25)' : 'rgba(45, 91, 255, 0.25)',
     secondary:   'var(--text-muted)',
   });
 
@@ -125,7 +125,7 @@
     return (
       <section className={cn('info-card mb-spotlight', `accent-${accent}`)}>
         <header className="info-card-head">
-          <span className="info-card-eyebrow">Maturity Spotlight</span>
+          <span className="info-card-eyebrow">Selected Maturity: {sel.year}</span>
           <span className="mb-spotlight-year">
             <Icon name="layers" size={11} /> {sel.year}
           </span>
@@ -841,7 +841,7 @@
             <div className="mb-flow-num">1</div>
             <div className="mb-flow-text">
               <div className="mb-flow-title">Binary spread contracts</div>
-              <div className="mb-flow-sub">YES prices by threshold</div>
+              <div className="mb-flow-sub">YES prices across thresholds</div>
             </div>
           </div>
           <Icon name="arrow-right" size={18} className="mb-flow-arrow" />
@@ -849,7 +849,7 @@
             <div className="mb-flow-num">2</div>
             <div className="mb-flow-text">
               <div className="mb-flow-title">Oriel reference engine</div>
-              <div className="mb-flow-sub">normalize · repair · infer</div>
+              <div className="mb-flow-sub">Normalize, repair, infer</div>
             </div>
           </div>
           <Icon name="arrow-right" size={18} className="mb-flow-arrow" />
@@ -857,7 +857,7 @@
             <div className="mb-flow-num">3</div>
             <div className="mb-flow-text">
               <div className="mb-flow-title">Market-implied basis curve</div>
-              <div className="mb-flow-sub">hedges · perps · notes</div>
+              <div className="mb-flow-sub">Basis, hedges, perp wrappers</div>
             </div>
           </div>
         </div>

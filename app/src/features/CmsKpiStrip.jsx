@@ -64,7 +64,7 @@
 
         {/* 6-cell grid (override of the standard 5-col idx-kpi-grid). */}
         <div className="idx-kpi-grid cms-kpi-grid-6">
-          <Cell label="Medical CPI"
+          <Cell label="Public Medical CPI"
                 value={fmtPct(k.medicalCpiPct)}
                 sub="BLS public rail" />
           <Cell label="Oriel Healthcare Spot"
@@ -75,11 +75,11 @@
                 value={<span className="idx-kpi-mono back">{fmtPct(k.cmsAnchorPct)}</span>}
                 sub="Latest official print"
                 lead />
-          <Cell label="Public-Print Basis"
+          <Cell label="Public-to-Oriel Basis"
                 value={<span className={cn('idx-kpi-mono', `tone-${tonePct(k.publicBasisBp)}`)}>{fmtBp(k.publicBasisBp)}</span>}
                 sub="Rail vs Oriel translation"
                 lead />
-          <Cell label="Expected Convergence"
+          <Cell label="Expected Catch-Up"
                 value={<span className="idx-kpi-mono lead">{k.convergenceShort}</span>}
                 sub="Releases to convergence"
                 lead />

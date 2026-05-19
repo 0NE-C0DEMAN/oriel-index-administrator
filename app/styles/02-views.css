@@ -50,6 +50,21 @@
   flex-wrap: wrap;
 }
 
+/* Product framing line — sits between the summary stats and the tile grid.
+   Single sentence positioning Oriel for someone arriving from a
+   ForecastEx / ForecastTrader context. Ksenia copy. */
+.indices-headline {
+  margin: 0 4px 18px;
+  padding: 14px 16px;
+  border-left: 3px solid var(--accent);
+  background: var(--accent-soft, rgba(45, 91, 255, 0.05));
+  color: var(--text);
+  font-size: 14px;
+  line-height: 1.5;
+  border-radius: 0 var(--r-md) var(--r-md) 0;
+  max-width: 920px;
+}
+
 /* Tile grid */
 .indices-grid {
   display: grid;
@@ -168,7 +183,7 @@
 }
 .index-card-metric.pink {
   background: var(--pink-light);
-  border-color: rgba(236, 72, 153, 0.20);
+  border-color: rgba(20, 184, 166, 0.20);
 }
 .index-card-metric-value {
   font-size: 19px;
@@ -582,7 +597,7 @@
 }
 .method-steps.accent-pink .method-step:hover {
   background: var(--pink-light);
-  border-color: rgba(236, 72, 153, 0.22);
+  border-color: rgba(20, 184, 166, 0.22);
 }
 .method-step-num {
   width: 22px;
@@ -980,7 +995,7 @@
 }
 .basis-bar.highlighted .basis-bar-cap { color: white; }
 .basis-bar.highlighted.accent-pink .basis-bar-fill {
-  background: linear-gradient(180deg, var(--pink) 0%, rgba(236, 72, 153, 0.50) 100%);
+  background: linear-gradient(180deg, var(--pink) 0%, rgba(20, 184, 166, 0.50) 100%);
   border-color: var(--pink);
 }
 

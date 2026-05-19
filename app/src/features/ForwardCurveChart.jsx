@@ -93,7 +93,7 @@
 
     const stroke = accent === 'pink' ? 'var(--pink)' : 'var(--accent)';
     const fill   = accent === 'pink' ? 'var(--pink-light)' : 'var(--accent-soft)';
-    const band   = accent === 'pink' ? 'rgba(236, 72, 153, 0.10)' : 'rgba(45, 91, 255, 0.10)';
+    const band   = accent === 'pink' ? 'rgba(20, 184, 166, 0.10)' : 'rgba(45, 91, 255, 0.10)';
 
     const fmt = (v) => `${v.toFixed(precision)}${unit}`;
     const hover = hoverIdx !== null ? layout.points[hoverIdx] : null;

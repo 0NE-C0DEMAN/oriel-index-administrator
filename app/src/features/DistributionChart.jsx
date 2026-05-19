@@ -122,8 +122,8 @@
     // pink/blue here per index family); other bars are muted slate so the
     // peak reads as the modal mass at a glance.
     const peakStroke   = accent === 'pink' ? 'var(--pink)'                        : 'var(--accent)';
-    const peakFillTop  = accent === 'pink' ? 'rgba(236, 72, 153, 0.90)'           : 'rgba(45, 91, 255, 0.90)';
-    const peakFillBot  = accent === 'pink' ? 'rgba(236, 72, 153, 0.50)'           : 'rgba(45, 91, 255, 0.50)';
+    const peakFillTop  = accent === 'pink' ? 'rgba(20, 184, 166, 0.90)'           : 'rgba(45, 91, 255, 0.90)';
+    const peakFillBot  = accent === 'pink' ? 'rgba(20, 184, 166, 0.50)'           : 'rgba(45, 91, 255, 0.50)';
     const otherStroke  = '#94A3B8';
     const otherFillTop = 'rgba(148, 163, 184, 0.55)';
     const otherFillBot = 'rgba(148, 163, 184, 0.25)';

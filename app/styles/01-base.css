@@ -48,8 +48,13 @@
   --danger-light: #FEE2E2;
   --info: #0284C7;
   --info-light: #E0F2FE;
-  --pink: #EC4899;
-  --pink-light: #FCE7F3;
+  /* Healthcare accent family. Originally pink/magenta; Ksenia replaced this
+     with a teal/aqua palette so healthcare reads as a category, not a warning.
+     The variable names are kept (--pink, --pink-light) and the .accent-pink /
+     .badge-pink / .index-card-icon.pink classes are kept so we did not have
+     to touch every consumer; only the color values changed. */
+  --pink: #14B8A6;       /* teal-500 (was #EC4899 pink) */
+  --pink-light: #CCFBF1; /* teal-100 mint (was #FCE7F3 pink-light) */
 
   /* ---- Shadows ---- */
   --shadow-xs: 0 1px 2px rgba(15, 23, 42, 0.04);

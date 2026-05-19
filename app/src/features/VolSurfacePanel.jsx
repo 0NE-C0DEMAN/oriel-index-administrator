@@ -27,7 +27,7 @@
   // SERIES_MUTE (Shelter CPI) → muted text
   const C = {
     gold:        'var(--pink)',
-    goldFill:    'rgba(236, 72, 153, 0.42)',
+    goldFill:    'rgba(20, 184, 166, 0.42)',
     accent:      'var(--accent)',
     accentFill:  'rgba(45, 91, 255, 0.42)',
     danger:      'var(--danger)',

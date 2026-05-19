@@ -598,14 +598,14 @@ def _render_login():
             <span class="oriel-hero-mark-tag">Index Administrator</span>
           </div>
           <div class="oriel-hero-body">
-            <div class="oriel-hero-eyebrow">A governed reference platform</div>
-            <div class="oriel-hero-title">Reference indices,<br /><em>built for capital markets.</em></div>
-            <div class="oriel-hero-sub">Healthcare cost benchmarks, CPI forwards, and parity-validated settlement curves — auditable, fallback-safe, and ready for the next era of structured contracts.</div>
+            <div class="oriel-hero-eyebrow">ORIEL</div>
+            <div class="oriel-hero-title">Trade the dislocation.<br /><em>Trust the reference.</em></div>
+            <div class="oriel-hero-sub">Oriel turns fragmented prediction-market pricing into reference curves, fair value, and execution intelligence - helping users identify market dislocations and act with greater confidence.</div>
             <div class="oriel-hero-tags">
-              <span class="oriel-hero-tag">CPI Forwards</span>
-              <span class="oriel-hero-tag">Healthcare</span>
-              <span class="oriel-hero-tag">Parity Validation</span>
-              <span class="oriel-hero-tag">Tier-1 Basis</span>
+              <span class="oriel-hero-tag">Reference Curves</span>
+              <span class="oriel-hero-tag">Fair Value</span>
+              <span class="oriel-hero-tag">Basis Signals</span>
+              <span class="oriel-hero-tag">Execution Intelligence</span>
             </div>
           </div>
           <div class="oriel-hero-foot">

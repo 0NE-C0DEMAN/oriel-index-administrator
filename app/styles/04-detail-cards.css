@@ -142,7 +142,7 @@
 }
 .idx-kpi.accent-pink .idx-kpi-ribbon-tag {
   color: var(--pink);
-  border-color: rgba(236, 72, 153, 0.30);
+  border-color: rgba(20, 184, 166, 0.30);
 }
 .idx-kpi-ribbon-venue {
   font-weight: 600;
@@ -847,8 +847,8 @@
   border-color: var(--pink);
 }
 .data-tabs.accent-pink .data-tabs-csv:hover {
-  background: #DB2777;
-  border-color: #DB2777;
+  background: #0F766E;
+  border-color: #0F766E;
 }
 
 .data-tabs-table-scroll {
@@ -874,11 +874,11 @@
   background: rgba(45, 91, 255, 0.06);
 }
 .data-tabs.accent-pink .data-tabs-row-sigma {
-  background: rgba(236, 72, 153, 0.06);
+  background: rgba(20, 184, 166, 0.06);
 }
 .data-tabs-row-sigma:hover { background: rgba(45, 91, 255, 0.10) !important; }
 .data-tabs.accent-pink .data-tabs-row-sigma:hover {
-  background: rgba(236, 72, 153, 0.10) !important;
+  background: rgba(20, 184, 166, 0.10) !important;
 }
 .data-tabs-sigma-flag {
   color: var(--accent);

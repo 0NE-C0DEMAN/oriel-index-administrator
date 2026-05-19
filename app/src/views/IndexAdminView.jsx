@@ -174,8 +174,8 @@
         <div className="admin-kpi-grid">
           <KpiCell label="Methodology"        value={def.methodologyVersion} sub={`${def.publicationCadence} · effective ${def.effectiveDate}`} mono />
           <KpiCell label="Publication status" value={record.publicationStatus} sub={`As of ${fmtIsoShort(record.asOf)}`} tone={pubColor} />
-          <KpiCell label="Published buckets"  value={`${publishedN} / ${totalN}`} sub={`${heldN} held`} tone={bucketTone} mono lead />
-          <KpiCell label="Avg publishability" value={avgPub.toFixed(2)} sub={`Across ${totalN} buckets · 0–1 scale`} tone={pubScoreTone} mono lead />
+          <KpiCell label="Eligible maturities published" value={`${publishedN} / ${totalN}`} sub={`${heldN} held`} tone={bucketTone} mono lead />
+          <KpiCell label="Average publishability score" value={avgPub.toFixed(2)} sub={`Across ${totalN} buckets · 0–1 scale`} tone={pubScoreTone} mono lead />
           <KpiCell label="Latest run"         value={fmtIsoShort(record.asOf)} sub={record.runId} mono small />
         </div>
       </section>
@@ -525,7 +525,7 @@
                     <th>Top Source</th>
                     <th>Fallback</th>
                     <th>Fallback Level</th>
-                    <th className="num">Pub Score</th>
+                    <th className="num">Publishability Score</th>
                     <th>Decision</th>
                   </tr>
                 </thead>
@@ -1008,7 +1008,7 @@
                       <th className="num">Source Div.</th>
                       <th className="num">Continuity</th>
                       <th className="num">Fallback Pen.</th>
-                      <th className="num">Pub Score</th>
+                      <th className="num">Publishability Score</th>
                       <th>Decision</th>
                       <th>Reason Codes</th>
                     </tr>

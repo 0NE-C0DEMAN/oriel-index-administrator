@@ -17,18 +17,18 @@
   //   'index'    → IndexDetailView with INDICES.byKey(key)
   //   'admin'    → IndexAdminView
   const TABS = [
-    { key: 'overview', label: 'Overview',         kind: 'overview', icon: 'layers'      },
-    { key: 'hc',       label: 'Healthcare Trend', kind: 'index',    icon: 'heart'       },
-    { key: 'cpi',      label: 'CPI · Kalshi',      kind: 'index',    icon: 'trending-up' },
-    { key: 'fx',       label: 'CPI · ForecastEx',  kind: 'index',    icon: 'bar-chart'   },
-    { key: 'poly',     label: 'CPI · Polymarket',  kind: 'index',    icon: 'globe'       },
-    { key: 'perp',     label: 'CPI Basis',         kind: 'index',    icon: 'activity'    },
-    { key: 'cms',      label: 'Healthcare Ref',    kind: 'index',    icon: 'shield'      },
+    { key: 'overview', label: 'Overview',           kind: 'overview', icon: 'layers'      },
+    { key: 'hc',       label: 'Healthcare Trend',   kind: 'index',    icon: 'heart'       },
+    { key: 'cpi',      label: 'CPI · Kalshi',       kind: 'index',    icon: 'trending-up' },
+    { key: 'fx',       label: 'CPI · ForecastEx',   kind: 'index',    icon: 'bar-chart'   },
+    { key: 'poly',     label: 'CPI · Polymarket',   kind: 'index',    icon: 'globe'       },
+    { key: 'perp',     label: 'CPI Basis Engine',   kind: 'index',    icon: 'activity'    },
+    { key: 'cms',      label: 'Healthcare Reference', kind: 'index',  icon: 'shield'      },
     // ForecastEx Medical Basis — pinned beside the other Healthcare-family
     // tabs so related work groups together in the top strip.
-    { key: 'mb',       label: 'Medical Basis',     kind: 'index',    icon: 'activity'    },
-    { key: 'parity',   label: 'Parity',            kind: 'index',    icon: 'sliders'     },
-    { key: 'admin',    label: 'Admin',             kind: 'admin',    icon: 'shield'      },
+    { key: 'mb',       label: 'Medical CPI Basis',  kind: 'index',    icon: 'activity'    },
+    { key: 'parity',   label: 'Validation',         kind: 'index',    icon: 'sliders'     },
+    { key: 'admin',    label: 'Admin',              kind: 'admin',    icon: 'shield'      },
   ];
 
   function findTab(key) {

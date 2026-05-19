@@ -13,17 +13,17 @@
       key: 'hc',
       name: 'CareFi Healthcare Trend Index',
       family: 'Healthcare',
-      venue: 'Healthcare / Scalar buckets',
+      venue: 'Prediction-market healthcare trend curve',
       icon: 'heart',
       accent: 'pink',
       status: { variant: 'success', label: 'Active' },
       feed: { variant: 'mute',  label: 'Sample' },
       description:
-        'Implied US healthcare cost trend, derived from prediction-market scalar bucket contracts.',
+        'Market-implied U.S. healthcare cost trend derived from scalar bucket pricing.',
       bullets: [
-        'Probability-weighted bucket midpoints',
-        'Three maturity anchors (Jun / Sep / Dec 2026)',
-        'Front anchor normalized to base 100',
+        'Probability-weighted expected trend',
+        'Three maturity anchors: Jun, Sep, Dec 2026',
+        'Front anchor indexed to 100',
       ],
       metric: { label: 'Front anchor', value: '4.08%', sub: 'YoY · Jun 2026' },
       risk:   { variant: 'warning', label: 'Moderate' },
@@ -335,17 +335,17 @@
       key: 'fx',
       name: 'Oriel CPI Forward Index (ForecastEx-style)',
       family: 'CPI Forward',
-      venue: 'ForecastEx-style binary thresholds',
+      venue: 'ForecastEx-style CPI forward curve',
       icon: 'bar-chart',
       accent: 'accent',
       status: { variant: 'success', label: 'Live' },
       feed: { variant: 'live', label: 'Live · ForecastEx' },
       description:
-        'US CPI YoY from ForecastEx binary threshold contracts (CFTC-regulated).',
+        'Market-implied U.S. CPI YoY curve from ForecastEx-style binary threshold contracts.',
       bullets: [
-        'CFTC-regulated event contracts',
-        'Binary threshold structure',
-        'Multi-tenor maturity grid',
+        'Binary threshold market inputs',
+        'Multi-tenor forward curve',
+        'Regulated event-contract source',
       ],
       metric: { label: 'Front anchor', value: '3.41%', sub: 'YoY · Mar 2026' },
       risk:   { variant: 'success', label: 'Low' },
@@ -459,17 +459,17 @@
       key: 'poly',
       name: 'Oriel CPI Forward Index (Polymarket-style)',
       family: 'CPI Forward',
-      venue: 'Polymarket-style threshold contracts',
+      venue: 'On-chain CPI forward curve',
       icon: 'globe',
       accent: 'accent',
       status: { variant: 'success', label: 'Live' },
       feed: { variant: 'live', label: 'Live · Polymarket' },
       description:
-        'US CPI YoY from Polymarket on-chain threshold contracts.',
+        'Market-implied U.S. CPI YoY curve from on-chain threshold markets.',
       bullets: [
-        'On-chain threshold markets',
+        'On-chain threshold pricing',
         'Off-grid maturity coverage',
-        'Decentralized price discovery',
+        'Cross-venue price discovery',
       ],
       metric: { label: 'Front anchor', value: '3.28%', sub: 'YoY · Mar 2026' },
       risk:   { variant: 'success', label: 'Low' },
@@ -579,19 +579,19 @@
     },
     {
       key: 'perp',
-      name: 'Oriel CPI Basis',
+      name: 'Oriel CPI Basis Engine',
       family: 'Analytics',
-      venue: 'Tier 1 · Spot / FV / Carry / Basis',
+      venue: 'Fair value, carry, and tradable basis signals',
       icon: 'layers',
       accent: 'pink',
       status: { variant: 'success', label: 'Live' },
       feed: { variant: 'live', label: 'Live engine' },
       description:
-        'CPI perp readiness — fair-value engine with carry and basis decomposition.',
+        'CPI basis engine for fair value, carry, and perp-relative dislocation analysis.',
       bullets: [
-        'Cash-and-carry fair value',
-        'Roll & funding decomposition',
-        'Basis vs. OTC swap curve',
+        'Fair-value reference curve',
+        'Carry, roll, and funding decomposition',
+        'Basis vs. OTC and perp wrappers',
       ],
       metric: { label: 'Implied basis', value: '−12 bps', sub: '3M tenor' },
       risk:   { variant: 'warning', label: 'Moderate' },
@@ -754,11 +754,11 @@
       status: { variant: 'success', label: 'Live' },
       feed: { variant: 'live', label: 'Live · CMS feed' },
       description:
-        'Healthcare cost translation layer — CMS schedules → market-implied basis.',
+        'Translates public healthcare cost rails into an Oriel spot reference and tradable basis view.',
       bullets: [
-        'CMS lag-engine translation',
-        'Episode-level cost mapping',
-        'Reference-rate publication',
+        'Public-print to market-reference translation',
+        'Service-line and episode-level mapping',
+        'Publishable healthcare reference rate',
       ],
       metric: { label: 'Reference rate', value: '5.42%', sub: 'YoY · Mar 2026' },
       risk:   { variant: 'success', label: 'Low' },
@@ -859,7 +859,7 @@
     },
     {
       key: 'mb',
-      name: 'ForecastEx Medical Basis',
+      name: 'ForecastEx Medical CPI Basis',
       family: 'Healthcare',
       venue: 'ForecastEx-style binary thresholds',
       icon: 'activity',
@@ -867,7 +867,7 @@
       status: { variant: 'warning', label: 'Sample' },
       feed:   { variant: 'warn',    label: 'Sample · Illustrative ladder' },
       description:
-        'Medical CPI vs CPI-U basis contract — first prediction-market spread on healthcare inflation.',
+        'Medical CPI vs. CPI-U spread markets — a first prediction-market basis view on healthcare inflation.',
       bullets: [
         'YES/NO threshold ladder',
         'Implied bucket distribution',
@@ -1997,7 +1997,7 @@
         };
         summarize('tight', 'Reference OTC Benchmark',       tight);
         summarize('dtcc',  'DTCC SDR Calibration Sample',   dtcc);
-        summarize('neg',   'Out-of-Tolerance Stress Case',  neg);
+        summarize('neg',   'Publish-Block Stress Test',     neg);
         if (term && term.aggregates) {
           benchRows.push({
             ticker: 'DTCC_TERM_LIVE',

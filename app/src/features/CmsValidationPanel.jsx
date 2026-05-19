@@ -35,9 +35,9 @@
 
   const seriesColors = (accent) => ({
     lead:        accent === 'pink' ? 'var(--pink)'        : 'var(--accent)',
-    leadDarker:  accent === 'pink' ? '#DB2777'            : 'var(--accent-active)',
-    band:        accent === 'pink' ? 'rgba(236, 72, 153, 0.12)' : 'rgba(45, 91, 255, 0.10)',
-    bandStroke:  accent === 'pink' ? 'rgba(236, 72, 153, 0.25)' : 'rgba(45, 91, 255, 0.25)',
+    leadDarker:  accent === 'pink' ? '#0F766E'            : 'var(--accent-active)',
+    band:        accent === 'pink' ? 'rgba(20, 184, 166, 0.12)' : 'rgba(45, 91, 255, 0.10)',
+    bandStroke:  accent === 'pink' ? 'rgba(20, 184, 166, 0.25)' : 'rgba(45, 91, 255, 0.25)',
     public:      'var(--text-muted)',
     cms:         'var(--text-subtle)',
   });
@@ -120,7 +120,7 @@
           <section key={i} className={cn('info-card cms-lens-cell', c.lead && 'lead')}>
             <header className="info-card-head">
               <span className="info-card-eyebrow">{c.title}</span>
-              {c.lead && <span className="feed-pill feed-pill-success cms-lens-tag">Primary lens</span>}
+              {c.lead && <span className="feed-pill feed-pill-success cms-lens-tag">Market read</span>}
             </header>
             <div className="cms-lens-body">
               <div className="cms-lens-primary">{c.primary}</div>

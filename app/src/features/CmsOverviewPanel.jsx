@@ -107,9 +107,9 @@
      ForwardCurveChart on every other accent-pink tab. */
   const seriesColors = (accent) => ({
     lead:        accent === 'pink' ? 'var(--pink)'        : 'var(--accent)',
-    leadDarker:  accent === 'pink' ? '#DB2777'            : 'var(--accent-active)',
-    band:        accent === 'pink' ? 'rgba(236, 72, 153, 0.12)' : 'rgba(45, 91, 255, 0.10)',
-    bandStroke:  accent === 'pink' ? 'rgba(236, 72, 153, 0.25)' : 'rgba(45, 91, 255, 0.25)',
+    leadDarker:  accent === 'pink' ? '#0F766E'            : 'var(--accent-active)',
+    band:        accent === 'pink' ? 'rgba(20, 184, 166, 0.12)' : 'rgba(45, 91, 255, 0.10)',
+    bandStroke:  accent === 'pink' ? 'rgba(20, 184, 166, 0.25)' : 'rgba(45, 91, 255, 0.25)',
     public:      'var(--text-muted)',
     cms:         'var(--text-subtle)',
   });
@@ -435,7 +435,7 @@
     return (
       <section className={cn('ip-card', `accent-${accent}`)}>
         <header className="ip-card-head">
-          <span className="ip-card-eyebrow">Basis &amp; Action</span>
+          <span className="ip-card-eyebrow">Basis Signal</span>
           <span className={cn('ip-card-status', confTone === 'success' ? 'ok' : 'no')}>
             <span className="ip-status-dot" />
             {r.signalConfidence} confidence
@@ -453,9 +453,9 @@
 
         <dl className="ip-card-rows">
           <Row label="Historical Positioning" value={`${r.historicalPct.toFixed(0)}th pct`} mono />
-          <Row label="Convergence Window"     value={r.convergenceWindow} />
-          <Row label="Primary Lens"           value={r.tradingLens} tone="warning" strong />
-          <Row label="Public-Print Basis"     value={fmtBp(r.publicBasisBp)}
+          <Row label="Expected Catch-Up"      value={r.convergenceWindow} />
+          <Row label="Market Read"            value="Oriel spot priced above public CPI rail" tone="warning" strong />
+          <Row label="Public-to-Oriel Basis"  value={fmtBp(r.publicBasisBp)}
                mono tone={tonePct(r.publicBasisBp)} strong />
         </dl>
       </section>
@@ -479,15 +479,15 @@
     return (
       <section className={cn('mvs-card', `accent-${accent}`)}>
         <header className="mvs-card-head">
-          <span className="mvs-card-eyebrow">Crosswalk Decomposition</span>
+          <span className="mvs-card-eyebrow">Basis Drivers</span>
         </header>
         <ul className="mvs-card-rows">
-          <MvsRow label="Avg Service-Line Gap" value={fmtBp(meanGap)}
+          <MvsRow label="Average service-line gap" value={fmtBp(meanGap)}
                   valueTone={tonePct(meanGap)} signal="Cross-venue avg" />
-          <MvsRow label="Largest RV Sleeve"
+          <MvsRow label="Largest relative-value sleeve"
                   value={top ? titleCaseSnake(top.serviceLine) : '—'}
                   signal="Top signal" signalTone="warning" />
-          <MvsRow label="Public-Print Basis" value={fmtBp(r.publicBasisBp)}
+          <MvsRow label="Public-to-Oriel basis" value={fmtBp(r.publicBasisBp)}
                   valueTone={tonePct(r.publicBasisBp)} signal="Rail vs translation" />
           <MvsRow label="Signal Confidence" value={r.signalConfidence}
                   valueTone={toneConf(r.signalConfidence)} signal="Composite score" />

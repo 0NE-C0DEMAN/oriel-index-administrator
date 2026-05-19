@@ -247,7 +247,15 @@
       { label: 'Index R² (Dense Grid)', value: fmtR2(sm.curve_r2_index),  sub: `Need ≥ ${thr.min_index_curve_r2?.toFixed(2)} · primary`,  mono: true, tone: cs.curve_index_r2_sufficient ? 'pass' : 'warn' },
       { label: 'Rate R² (Diagnostic)',  value: fmtR2(s.r_squared),         sub: 'Secondary diagnostic only',                              mono: true },
     ];
-    const ribbonText = `${blob.benchmark.label} · ${blob.benchmark.file} · tolerance ±${tol.toFixed(0)} bp`;
+    // Per Ksenia's UI pass: on the stress sub-view the raw CSV filename
+    // (otc_cpi_quotes_negative_control.csv) was being read by external
+    // viewers as the failure cause rather than as the deliberate negative
+    // control. Replace it with the human-readable "OTC control file" tag
+    // so the ribbon communicates intent (this is a publish-block scenario)
+    // instead of just file plumbing. Real benchmark sub-views keep their
+    // CSV filename so reviewers can still trace the source.
+    const fileTag = variant === 'stress' ? 'OTC control file' : blob.benchmark.file;
+    const ribbonText = `${blob.benchmark.label} · ${fileTag} · tolerance ±${tol.toFixed(0)} bp`;
     return (
       <section className={cn('idx-kpi parity-kpi', `accent-${accent}`)}>
         <div className="idx-kpi-ribbon">
@@ -291,7 +299,7 @@
   }
   function tonePass(status) { return status === 'PASS' ? 'pass' : (status === 'FAIL' ? 'fail' : null); }
   function labelOf(variant) {
-    return ({ tight: 'REFERENCE OTC', dtcc: 'DTCC SDR', stress: 'STRESS CASE' })[variant] || 'PARITY';
+    return ({ tight: 'OTC PARITY', dtcc: 'SDR CROSS-CHECK', stress: 'STRESS TEST' })[variant] || 'VALIDATION';
   }
 
   /* ── Chart card with INNER TABS [Rates / Index Path] ── */
@@ -578,7 +586,7 @@
     return (
       <section className={cn('ip-card', `accent-${accent}`)}>
         <header className="ip-card-head">
-          <span className="ip-card-eyebrow">Parity Print</span>
+          <span className="ip-card-eyebrow">Validation Result</span>
           <span className={cn('ip-card-status', ok ? 'ok' : 'no')}>
             <span className="ip-status-dot" />
             {ok ? 'Publishable' : 'Blocked'}

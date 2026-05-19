@@ -79,10 +79,10 @@
   //   v7 pt_dtcc  → DTCC SDR Sample   (static dtcc demo)
   //   v7 pt_neg   → Stress Case       (negative control)
   const PARITY_EXTRA_TABS = [
-    { key: 'parity-term',   label: 'Term Calibration', icon: 'database' },
-    { key: 'parity-tight',  label: 'Reference OTC',    icon: 'check' },
-    { key: 'parity-dtcc',   label: 'DTCC SDR',         icon: 'shield' },
-    { key: 'parity-stress', label: 'Stress Case',      icon: 'info' },
+    { key: 'parity-term',   label: 'Curve Calibration', icon: 'database' },
+    { key: 'parity-tight',  label: 'OTC Parity',        icon: 'check' },
+    { key: 'parity-dtcc',   label: 'SDR Cross-Check',   icon: 'shield' },
+    { key: 'parity-stress', label: 'Stress Test',       icon: 'info' },
   ];
 
   // Per-index tab visibility overrides. Constituents stays visible whenever
@@ -137,13 +137,19 @@
       const overviewIdx = base.findIndex((t) => t.key === 'overview');
       base.splice(overviewIdx + 1, 0, { key: 'cms-validation', label: 'Validation', icon: 'sparkles' });
     }
-    // Parity — splice the 4 v7 parity sub-views as their own top-level
-    // tabs (Term Calibration · Reference OTC · DTCC SDR · Stress Case).
-    // Same pattern as perp: each gets a focused page rather than being
-    // crammed into a single dense scroll.
+    // Parity / Validation — splice the 4 v7 parity sub-views as their own
+    // top-level tabs (Curve Calibration · OTC Parity · SDR Cross-Check ·
+    // Stress Test). Same pattern as perp: each gets a focused page rather
+    // than being crammed into a single dense scroll. Per Ksenia's nav
+    // pass, on this index the "Constituents" tab is relabelled "Inputs"
+    // because the data is venue source inputs (DTCC + OTC + control file),
+    // not formal published index constituents — kept "Constituents"
+    // elsewhere where the original meaning still fits.
     if (index.key === 'parity' && d.parity) {
       const overviewIdx = base.findIndex((t) => t.key === 'overview');
       base.splice(overviewIdx + 1, 0, ...PARITY_EXTRA_TABS);
+      const cIdx = base.findIndex((t) => t.key === 'constituents');
+      if (cIdx >= 0) base[cIdx] = { ...base[cIdx], label: 'Inputs' };
     }
     return base;
   }
