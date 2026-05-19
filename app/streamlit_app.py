@@ -118,22 +118,27 @@ st.set_page_config(
 )
 
 # ── Auth gate ────────────────────────────────────────────────────────────────
-# Single admin login. Credentials live in Streamlit secrets when deployed to
-# Hugging Face (Settings → Secrets → ORIEL_ADMIN_USERNAME / ORIEL_ADMIN_PASSWORD),
-# with a built-in fallback so local dev still works.
+# Single admin login. Credentials come from env vars when deployed to Hugging
+# Face (Space Settings -> Secrets -> ORIEL_ADMIN_USERNAME / ORIEL_ADMIN_PASSWORD,
+# which HF surfaces as plain environment variables), with a built-in fallback
+# so local dev still works.
 #
-# Session is held in st.session_state for the duration of the browser tab —
-# no cookies, no JWT. Closing the tab logs the user out.
+# We deliberately do NOT touch st.secrets here. Without a secrets.toml on disk
+# st.secrets.get raises StreamlitSecretNotFoundError whose message lists local
+# file paths like ".streamlit/secrets.toml", and Streamlit surfaces that error
+# in the UI even if we catch the exception in Python. Reading os.environ has
+# no side-effects and works identically on HF and locally.
+#
+# Session is held in st.session_state for the duration of the browser tab.
+# No cookies, no JWT. Closing the tab logs the user out.
 import hmac
+import os
 
 def _admin_credentials() -> tuple[str, str]:
-    """Pull the admin credentials. Secrets win over the in-file default."""
-    try:
-        u = st.secrets.get("ORIEL_ADMIN_USERNAME", "Chris")
-        p = st.secrets.get("ORIEL_ADMIN_PASSWORD", "Oriel2026@123!")
-        return str(u), str(p)
-    except Exception:
-        return "Chris", "Oriel2026@123!"
+    """Pull the admin credentials. Env vars win over the in-file default."""
+    u = os.environ.get("ORIEL_ADMIN_USERNAME", "Chris")
+    p = os.environ.get("ORIEL_ADMIN_PASSWORD", "Oriel2026@123!")
+    return u, p
 
 def _check_credentials(username: str, password: str) -> bool:
     expected_u, expected_p = _admin_credentials()
@@ -451,30 +456,38 @@ def _render_login():
             text-transform: uppercase !important;
             margin-bottom: 8px !important;
           }}
-          /* Input shells — every nesting Streamlit might wrap with */
+          /* Input shells — every nesting Streamlit might wrap with.
+             Slightly stronger border + a hint of inner shadow so the
+             field reads as a real input rather than a flat tinted box;
+             focus state lights the border in accent blue with a soft
+             glow ring and the field opens up to white. */
           [data-testid="stForm"] [data-baseweb="input"],
           [data-testid="stForm"] [data-baseweb="base-input"],
           [data-testid="stForm"] .stTextInput > div > div,
           [data-testid="stForm"] [data-testid="stTextInputRootElement"] {{
-            background: #F8FAFD !important;
-            border: 1.5px solid #E3E7EF !important;
+            background: #FAFBFD !important;
+            border: 1.5px solid #DCE2EB !important;
             border-radius: 10px !important;
-            box-shadow: none !important;
+            box-shadow: inset 0 1px 0 rgba(15, 23, 42, 0.02) !important;
             color: #0E1733 !important;
-            min-height: 48px !important;
-            transition: border-color 0.15s ease, background 0.15s ease, box-shadow 0.15s ease !important;
+            min-height: 50px !important;
+            transition: border-color 0.15s ease, background 0.15s ease,
+                        box-shadow 0.15s ease !important;
           }}
           [data-testid="stForm"] [data-baseweb="input"]:hover,
           [data-testid="stForm"] [data-baseweb="base-input"]:hover,
           [data-testid="stForm"] .stTextInput > div > div:hover {{
-            border-color: #CFD5E1 !important;
+            border-color: #B8C2D4 !important;
+            background: #FFFFFF !important;
           }}
           [data-testid="stForm"] [data-baseweb="input"]:focus-within,
           [data-testid="stForm"] [data-baseweb="base-input"]:focus-within,
           [data-testid="stForm"] .stTextInput > div > div:focus-within {{
             background: #FFFFFF !important;
             border-color: #2D5BFF !important;
-            box-shadow: 0 0 0 4px rgba(45, 91, 255, 0.10) !important;
+            box-shadow:
+              0 0 0 4px rgba(45, 91, 255, 0.12),
+              0 1px 2px rgba(45, 91, 255, 0.08) !important;
           }}
           /* The actual <input> — strip native bg/border, set color */
           [data-testid="stForm"] input,
@@ -487,21 +500,23 @@ def _render_login():
             box-shadow: none !important;
             color: #0E1733 !important;
             -webkit-text-fill-color: #0E1733 !important;
-            font-size: 14.5px !important;
+            font-size: 15px !important;
             font-weight: 500 !important;
-            padding: 13px 15px !important;
+            letter-spacing: -0.005em !important;
+            padding: 14px 16px !important;
             caret-color: #2D5BFF !important;
           }}
           [data-testid="stForm"] input::placeholder {{
-            color: #B4BAC8 !important; font-weight: 400 !important;
-            -webkit-text-fill-color: #B4BAC8 !important;
+            color: #A8B0BF !important; font-weight: 400 !important;
+            -webkit-text-fill-color: #A8B0BF !important;
+            letter-spacing: 0 !important;
           }}
-          /* Kill Chrome autofill yellow bg */
+          /* Kill Chrome autofill yellow bg — match the input shell tint */
           [data-testid="stForm"] input:-webkit-autofill,
           [data-testid="stForm"] input:-webkit-autofill:hover,
           [data-testid="stForm"] input:-webkit-autofill:focus {{
             -webkit-text-fill-color: #0E1733 !important;
-            -webkit-box-shadow: 0 0 0 1000px #F8FAFD inset !important;
+            -webkit-box-shadow: 0 0 0 1000px #FAFBFD inset !important;
             transition: background-color 5000s ease-in-out 0s !important;
           }}
           /* Password reveal eye button — replace dark Streamlit default */
@@ -620,11 +635,6 @@ def _render_login():
           .oriel-login-boot-text {{
             font-size: 13px; font-weight: 600; letter-spacing: 0.02em;
             opacity: 0.92;
-          }}
-          .oriel-login-boot-sub {{
-            font-size: 11px; font-weight: 500; letter-spacing: 0.08em;
-            text-transform: uppercase;
-            opacity: 0.62;
           }}
           /* ── Suppress every Streamlit default loading indicator ─────── */
           [data-testid="stStatusWidget"],
