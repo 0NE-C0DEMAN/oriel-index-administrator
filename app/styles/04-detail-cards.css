@@ -109,9 +109,16 @@
 
 /* Live-data toggle pill (CPI tabs / Perp). Shares the 34px rhythm with
    the valuation-date and maturity chips so all three ribbon controls
-   read as a connected pill set. Idle: bg-elevated with neutral track.
-   On: success-light tint with a green track + green label so the
-   "live feed engaged" state is unmistakable at a glance. */
+   read as a connected pill set.
+
+   Both states are themed - neither reads as default-white-Streamlit:
+   * Off (sample): warning-light amber tint + amber track + amber label.
+     "you're looking at sample data" is now obvious at a glance.
+   * On (live):    success-light green tint + green track + green label.
+
+   Width is locked: the label has a min-width that accommodates the
+   wider "SAMPLE DATA" string so the pill does not jump in size when
+   the user flips the switch. */
 .idx-kpi-ribbon-toggle {
   display: inline-flex;
   align-items: center;
@@ -123,19 +130,19 @@
   margin-right: 6px;
   height: 34px;
   padding: 0 10px 0 12px;
-  background: var(--bg-elevated);
-  border: 1px solid var(--border);
+  background: var(--warning-light);
+  border: 1px solid rgba(217, 119, 6, 0.32);
   border-radius: 8px;
   transition: background var(--t-fast), border-color var(--t-fast), box-shadow var(--t-fast);
 }
 .idx-kpi-ribbon-toggle:hover {
-  background: var(--bg);
-  border-color: var(--border-strong);
-  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.05);
+  background: rgba(217, 119, 6, 0.16);
+  border-color: rgba(217, 119, 6, 0.46);
+  box-shadow: 0 1px 3px rgba(217, 119, 6, 0.10);
 }
 .idx-kpi-ribbon-toggle:focus-within {
-  border-color: var(--accent);
-  box-shadow: 0 0 0 3px rgba(45, 91, 255, 0.14);
+  border-color: var(--warning);
+  box-shadow: 0 0 0 3px rgba(217, 119, 6, 0.18);
 }
 .idx-kpi-ribbon-toggle.on {
   background: var(--success-light);
@@ -144,6 +151,7 @@
 .idx-kpi-ribbon-toggle.on:hover {
   background: rgba(22, 163, 74, 0.16);
   border-color: rgba(22, 163, 74, 0.45);
+  box-shadow: 0 1px 3px rgba(22, 163, 74, 0.10);
 }
 .idx-kpi-ribbon-toggle.on:focus-within {
   border-color: var(--success);
@@ -157,8 +165,8 @@
 .idx-kpi-ribbon-toggle-track {
   width: 32px;
   height: 18px;
-  background: var(--bg-subtle);
-  border: 1px solid var(--border);
+  background: rgba(255, 255, 255, 0.78);
+  border: 1px solid rgba(217, 119, 6, 0.35);
   border-radius: 999px;
   position: relative;
   transition: background var(--t-fast), border-color var(--t-fast);
@@ -188,8 +196,10 @@
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.08em;
-  color: var(--text-muted);
+  color: var(--warning);
   white-space: nowrap;
+  min-width: 84px;          /* width of "SAMPLE DATA" at this size; */
+  text-align: left;         /* keeps the pill the same width on flip. */
 }
 .idx-kpi-ribbon-toggle.on .idx-kpi-ribbon-toggle-label { color: var(--success); }
 .idx-kpi.accent-pink .idx-kpi-ribbon {
