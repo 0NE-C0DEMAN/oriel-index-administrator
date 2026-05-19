@@ -545,7 +545,14 @@
         </svg>
 
         {hover && (() => {
-          const topY = Math.min(hover.barY, layout.padT) - 16;
+          /* Pin tooltip 10 px above the hovered bar's own top edge.
+             Used to clamp via Math.min(hover.barY, layout.padT) which
+             pushed the tooltip to the chart's top padding for every
+             bar - so the label floated way above any short bar instead
+             of sitting next to it. Tooltip CSS already anchors at its
+             bottom-centre (transform: translate(-50%, -100%)), so this
+             top value is the bar-top minus a small gap. */
+          const topY = hover.barY - 10;
           return (
             <div className="forward-chart-tooltip"
                  style={{ left: `${(hover.cx / layout.w) * 100}%`, top: `${topY}px` }}>
@@ -662,7 +669,9 @@
           </text>
         </svg>
         {hover && (() => {
-          const topY = Math.min(hover.barY, layout.padT) - 16;
+          // Pin tooltip just above each bar's own top - see comment on
+          // the matching block ~120 lines up for the rationale.
+          const topY = hover.barY - 10;
           return (
             <div className="forward-chart-tooltip"
                  style={{ left: `${(hover.cx / layout.w) * 100}%`, top: `${topY}px` }}>
