@@ -386,13 +386,17 @@
    tone tokens, accessible focus rings, soft elevation.
    ============================================================================ */
 
-/* Hover tooltip — shared across all 4 perp charts */
+/* Hover tooltip — shared across all 4 perp charts. Semi-transparent
+   background + backdrop blur so the tooltip can overlap the hovered
+   bar (which happens when the bar is so tall that the JSX clamps the
+   tooltip's top to stay inside the chart) and the bar still reads
+   through. */
 .perp-tip {
   position: absolute;
   transform: translate(-50%, -100%);
-  background: rgba(255, 255, 255, 0.96);
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
+  background: rgba(255, 255, 255, 0.82);
+  backdrop-filter: blur(10px) saturate(140%);
+  -webkit-backdrop-filter: blur(10px) saturate(140%);
   border: 1px solid var(--border);
   border-radius: 8px;
   padding: 8px 10px;
@@ -1146,15 +1150,21 @@
    — otherwise inner spans (forward-chart-tooltip-mat / -val / -band) stay
    white-on-white and the tooltip looks empty even though it's mounted. */
 .forward-chart-tooltip {
-  background: rgba(255, 255, 255, 0.96);
+  background: rgba(255, 255, 255, 0.82);
   color: var(--text);
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
+  backdrop-filter: blur(10px) saturate(140%);
+  -webkit-backdrop-filter: blur(10px) saturate(140%);
   border: 1px solid var(--border);
   box-shadow: 0 6px 24px rgba(15, 23, 51, 0.12), 0 1px 3px rgba(15, 23, 51, 0.06);
   border-radius: 8px;
   padding: 9px 12px;
   min-width: 140px;
+  /* Cap the width so long basis strings on the translation chart
+     ("Basis +14.4 bp (rail) · -1.6 bp (anchor)") wrap to a second
+     line instead of pushing the tooltip past the chart's right edge
+     even after the JSX clamp. */
+  max-width: 260px;
+  white-space: normal;
   display: flex;
   flex-direction: column;
   gap: 2px;
