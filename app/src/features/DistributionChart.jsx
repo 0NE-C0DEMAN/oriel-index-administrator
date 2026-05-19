@@ -283,19 +283,26 @@
           )}
         </svg>
 
-        {hoverIdx !== null && (
-          <div
-            className="forward-chart-tooltip dist-tooltip"
-            style={{
-              left: `${((layout.x(hoverIdx) + layout.barW / 2) / layout.w) * 100}%`,
-              top:  `${layout.y(buckets[hoverIdx].prob) - 8}px`,
-            }}
-          >
-            <div className="forward-chart-tooltip-mat">{buckets[hoverIdx].label}</div>
-            <div className="forward-chart-tooltip-val">{fmtP(buckets[hoverIdx].prob)}</div>
-            <div className="forward-chart-tooltip-band">mid {fmtV(buckets[hoverIdx].mid)}</div>
-          </div>
-        )}
+        {hoverIdx !== null && (() => {
+          // Clamp horizontal centre so the tooltip can't clip past
+          // either chart edge (transform: translate(-50%, -100%)).
+          const HALF_W = 110;
+          const barCenterX = layout.x(hoverIdx) + layout.barW / 2;
+          const clampedCx = Math.max(HALF_W, Math.min(layout.w - HALF_W, barCenterX));
+          return (
+            <div
+              className="forward-chart-tooltip dist-tooltip"
+              style={{
+                left: `${clampedCx}px`,
+                top:  `${layout.y(buckets[hoverIdx].prob) - 8}px`,
+              }}
+            >
+              <div className="forward-chart-tooltip-mat">{buckets[hoverIdx].label}</div>
+              <div className="forward-chart-tooltip-val">{fmtP(buckets[hoverIdx].prob)}</div>
+              <div className="forward-chart-tooltip-band">mid {fmtV(buckets[hoverIdx].mid)}</div>
+            </div>
+          );
+        })()}
       </div>
     );
   }

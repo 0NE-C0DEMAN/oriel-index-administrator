@@ -26,9 +26,11 @@
   align-items: center;
   gap: 8px;
   flex-wrap: wrap;
-  /* Readability bump (was 11.5px). The ribbon carries the family
-     tag + venue + description, all inherited from this rule. Padding
-     stays at 7px so the 1px font bump is absorbed by line-height. */
+  /* Readability bump. The row's height is governed by the 34px
+     pills (date / maturity / live toggle) sitting on the same line,
+     so this 1px font bump cannot grow the row itself - confirmed by
+     leaving padding/line-height unchanged. Carries venue text +
+     description via inheritance. */
   font-size: 12.5px;
   color: var(--text);
   line-height: 1.4;
@@ -248,7 +250,9 @@
   background: linear-gradient(90deg, var(--pink-light) 0%, transparent 100%);
 }
 .idx-kpi-ribbon-tag {
-  /* HEALTHCARE / CPI FORWARD chip - bumped from 10px for readability. */
+  /* HEALTHCARE / CPI FORWARD chip - bumped for readability. Pill
+     height is dominated by 2px+2px padding + tag content; sits in
+     the 34px-tall ribbon row, so no overall row resize. */
   font-size: 11px;
   font-weight: 700;
   letter-spacing: 0.06em;
@@ -270,7 +274,9 @@
 .idx-kpi-ribbon-sep { color: var(--text-subtle); }
 .idx-kpi-ribbon-desc {
   color: var(--text-muted);
-  /* Description line - bumped from 11.5px for readability. */
+  /* Description line - bumped for readability. Inside the 34px
+     ribbon row dominated by pills, so font bump doesn't change
+     the row height. */
   font-size: 12.5px;
   /* Expand to fill the row so every control after this (live toggle,
      maturity pick, valuation date) is pushed to the right edge and
@@ -300,9 +306,7 @@
 }
 .idx-kpi-cell:last-child { border-right: none; }
 .idx-kpi-cell-label {
-  /* KPI cell uppercase label - bumped from 9.5px. The 10/11px cell
-     padding above the label absorbs the bump. */
-  font-size: 10.5px;
+  font-size: 9.5px;
   text-transform: uppercase;
   letter-spacing: 0.06em;
   font-weight: 600;
@@ -324,8 +328,7 @@
   line-height: 1.05;
 }
 .idx-kpi-cell-sub {
-  /* KPI cell sub-line under the big value - bumped from 10.5px. */
-  font-size: 11.5px;
+  font-size: 10.5px;
   color: var(--text-muted);
   margin-top: 1px;
   line-height: 1.3;
@@ -714,9 +717,7 @@
   border-bottom: 1px solid var(--border-subtle);
 }
 .info-card-eyebrow {
-  /* Card eyebrow label (Index Stats / Methodology / Live Feed Status
-     / Basis Signal / Basis Drivers etc.) - bumped 10.5 -> 11.5px. */
-  font-size: 11.5px;
+  font-size: 10.5px;
   text-transform: uppercase;
   letter-spacing: 0.06em;
   font-weight: 600;
@@ -760,8 +761,7 @@
 }
 .info-stat:nth-child(2n) { border-right: none; }
 .info-stat-label {
-  /* Info-card stat row label - bumped 10 -> 11px. */
-  font-size: 11px;
+  font-size: 10px;
   text-transform: uppercase;
   letter-spacing: 0.06em;
   font-weight: 600;
@@ -797,8 +797,7 @@
 }
 .info-kv-row:last-child { border-bottom: none; }
 .info-kv-key {
-  /* Methodology / Live Feed key column - bumped 11 -> 12px. */
-  font-size: 12px;
+  font-size: 11px;
   text-transform: uppercase;
   letter-spacing: 0.06em;
   font-weight: 600;

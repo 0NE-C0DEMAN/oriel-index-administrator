@@ -216,19 +216,27 @@
           })}
         </svg>
 
-        {hover && (
-          <div
-            className="forward-chart-tooltip"
-            style={{
-              left:  `${(hover.cx / layout.w) * 100}%`,
-              top:   `${hover.cy}px`,
-            }}
-          >
-            <div className="forward-chart-tooltip-mat">{hover.maturity}</div>
-            <div className="forward-chart-tooltip-val">{fmt(hover.expected)}</div>
-            <div className="forward-chart-tooltip-band">[{fmt(hover.lower)} – {fmt(hover.upper)}]</div>
-          </div>
-        )}
+        {hover && (() => {
+          /* Clamp the tooltip's centre so it always fits inside the
+             chart container - protects the leftmost / rightmost
+             curve points from clipping past the chart edge with the
+             default transform: translate(-50%, -100%) anchor. */
+          const HALF_W = 110;
+          const clampedCx = Math.max(HALF_W, Math.min(layout.w - HALF_W, hover.cx));
+          return (
+            <div
+              className="forward-chart-tooltip"
+              style={{
+                left: `${clampedCx}px`,
+                top:  `${hover.cy}px`,
+              }}
+            >
+              <div className="forward-chart-tooltip-mat">{hover.maturity}</div>
+              <div className="forward-chart-tooltip-val">{fmt(hover.expected)}</div>
+              <div className="forward-chart-tooltip-band">[{fmt(hover.lower)} – {fmt(hover.upper)}]</div>
+            </div>
+          );
+        })()}
       </div>
     );
   }

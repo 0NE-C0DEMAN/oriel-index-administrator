@@ -457,16 +457,22 @@
                   onMouseLeave={() => setHoverIdx(null)} />
           ))}
         </svg>
-        {hover && (
-          <div className="parity-tooltip"
-               style={{ left: `${(hover.cx / layout.w) * 100}%`,
-                        top: `${Math.min(hover.cy, otcHover?.cy ?? hover.cy) - 14}px` }}>
-            <div className="parity-tooltip-title">{hover.targetMonthLabel}</div>
-            <div className="parity-tooltip-row"><span>ORIEL</span><span className="font-mono">{fmtRate(hover.orielRatePct, 3)}</span></div>
-            <div className="parity-tooltip-row"><span>OTC</span><span className="font-mono">{fmtRate(hover.otcYoyRate, 3)}</span></div>
-            <div className="parity-tooltip-row"><span>Basis</span><span className={cn('font-mono', hover.withinTolerance ? 'tone-pass' : 'tone-fail')}>{fmtBp(hover.diffBps)}</span></div>
-          </div>
-        )}
+        {hover && (() => {
+          /* Clamp horizontal centre so the tooltip can't clip past
+             either chart edge (transform: translate(-50%, -100%)). */
+          const HALF_W = 110;
+          const clampedCx = Math.max(HALF_W, Math.min(layout.w - HALF_W, hover.cx));
+          return (
+            <div className="parity-tooltip"
+                 style={{ left: `${clampedCx}px`,
+                          top: `${Math.min(hover.cy, otcHover?.cy ?? hover.cy) - 14}px` }}>
+              <div className="parity-tooltip-title">{hover.targetMonthLabel}</div>
+              <div className="parity-tooltip-row"><span>ORIEL</span><span className="font-mono">{fmtRate(hover.orielRatePct, 3)}</span></div>
+              <div className="parity-tooltip-row"><span>OTC</span><span className="font-mono">{fmtRate(hover.otcYoyRate, 3)}</span></div>
+              <div className="parity-tooltip-row"><span>Basis</span><span className={cn('font-mono', hover.withinTolerance ? 'tone-pass' : 'tone-fail')}>{fmtBp(hover.diffBps)}</span></div>
+            </div>
+          );
+        })()}
       </div>
     );
   }
@@ -560,16 +566,20 @@
             </text>
           ))}
         </svg>
-        {hover && (
-          <div className="parity-tooltip"
-               style={{ left: `${(hover.cx / layout.w) * 100}%`,
-                        top: `${Math.min(hover.oy, hover.ty) - 14}px` }}>
-            <div className="parity-tooltip-title">{hover.targetMonthLabel}</div>
-            <div className="parity-tooltip-row"><span>ORIEL idx</span><span className="font-mono">{Number(hover.orielImpliedIndex).toFixed(3)}</span></div>
-            <div className="parity-tooltip-row"><span>OTC idx</span><span className="font-mono">{Number(hover.otcImpliedIndex).toFixed(3)}</span></div>
-            <div className="parity-tooltip-row"><span>Basis</span><span className={cn('font-mono', hover.withinTolerance ? 'tone-pass' : 'tone-fail')}>{fmtBp(hover.diffBps)}</span></div>
-          </div>
-        )}
+        {hover && (() => {
+          const HALF_W = 110;
+          const clampedCx = Math.max(HALF_W, Math.min(layout.w - HALF_W, hover.cx));
+          return (
+            <div className="parity-tooltip"
+                 style={{ left: `${clampedCx}px`,
+                          top: `${Math.min(hover.oy, hover.ty) - 14}px` }}>
+              <div className="parity-tooltip-title">{hover.targetMonthLabel}</div>
+              <div className="parity-tooltip-row"><span>ORIEL idx</span><span className="font-mono">{Number(hover.orielImpliedIndex).toFixed(3)}</span></div>
+              <div className="parity-tooltip-row"><span>OTC idx</span><span className="font-mono">{Number(hover.otcImpliedIndex).toFixed(3)}</span></div>
+              <div className="parity-tooltip-row"><span>Basis</span><span className={cn('font-mono', hover.withinTolerance ? 'tone-pass' : 'tone-fail')}>{fmtBp(hover.diffBps)}</span></div>
+            </div>
+          );
+        })()}
       </div>
     );
   }
@@ -1011,18 +1021,22 @@
             </text>
           ))}
         </svg>
-        {hover && (
-          <div className="parity-tooltip"
-               style={{ left: `${(hover.cx / layout.w) * 100}%`,
-                        top: `${Math.min(hover.nwavgY, hover.medY) - 14}px` }}>
-            <div className="parity-tooltip-title">{hover.tenorLabel} ({hover.tenorMonths} mo)</div>
-            <div className="parity-tooltip-row"><span>Wtd avg</span><span className="font-mono">{fmtRate(hover.notionalWeightedAvgPct)}</span></div>
-            <div className="parity-tooltip-row"><span>Median</span><span className="font-mono">{fmtRate(hover.medianRatePct)}</span></div>
-            <div className="parity-tooltip-row"><span>Range</span><span className="font-mono">{fmtRate(hover.minRatePct)} – {fmtRate(hover.maxRatePct)}</span></div>
-            <div className="parity-tooltip-row"><span>Trades</span><span className="font-mono">{fmtInt(hover.tradeCount)}</span></div>
-            <div className="parity-tooltip-row"><span>Notional</span><span className="font-mono">{fmtMn(hover.totalNotionalUsd)}</span></div>
-          </div>
-        )}
+        {hover && (() => {
+          const HALF_W = 110;
+          const clampedCx = Math.max(HALF_W, Math.min(layout.w - HALF_W, hover.cx));
+          return (
+            <div className="parity-tooltip"
+                 style={{ left: `${clampedCx}px`,
+                          top: `${Math.min(hover.nwavgY, hover.medY) - 14}px` }}>
+              <div className="parity-tooltip-title">{hover.tenorLabel} ({hover.tenorMonths} mo)</div>
+              <div className="parity-tooltip-row"><span>Wtd avg</span><span className="font-mono">{fmtRate(hover.notionalWeightedAvgPct)}</span></div>
+              <div className="parity-tooltip-row"><span>Median</span><span className="font-mono">{fmtRate(hover.medianRatePct)}</span></div>
+              <div className="parity-tooltip-row"><span>Range</span><span className="font-mono">{fmtRate(hover.minRatePct)} – {fmtRate(hover.maxRatePct)}</span></div>
+              <div className="parity-tooltip-row"><span>Trades</span><span className="font-mono">{fmtInt(hover.tradeCount)}</span></div>
+              <div className="parity-tooltip-row"><span>Notional</span><span className="font-mono">{fmtMn(hover.totalNotionalUsd)}</span></div>
+            </div>
+          );
+        })()}
       </div>
     );
   }

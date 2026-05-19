@@ -289,12 +289,16 @@
         </svg>
 
         {hover && (() => {
-          /* Pin tooltip above whichever line dot is higher at this year. */
+          /* Pin tooltip above whichever line dot is higher at this year,
+             and clamp the horizontal centre so the tooltip can't clip
+             past either edge of the chart. */
           const candidates = [hover.orielY, hover.cmsY].filter(Number.isFinite);
           const topY = (candidates.length ? Math.min(...candidates) : 0) - 16;
+          const HALF_W = 130;
+          const clampedCx = Math.max(HALF_W, Math.min(layout.w - HALF_W, hover.cx));
           return (
             <div className="forward-chart-tooltip"
-                 style={{ left: `${(hover.cx / layout.w) * 100}%`, top: `${topY}px` }}>
+                 style={{ left: `${clampedCx}px`, top: `${topY}px` }}>
               <div className="forward-chart-tooltip-mat">{hover.year}</div>
               <div className="forward-chart-tooltip-val">{fmtPct(hover.orielHealthcareSpot)}</div>
               <div className="forward-chart-tooltip-band">
@@ -433,13 +437,17 @@
 
         {hover && (() => {
           /* Bar TOP = min(barY, yZero). Pin tooltip 16 px above bar top
-             so the tooltip never overlaps the bar — works for both
+             so the tooltip never overlaps the bar - works for both
              positive bars (barY < yZero) and negative bars (barY >
-             yZero, so yZero is the bar's top edge). */
+             yZero, so yZero is the bar's top edge). Horizontal centre
+             is clamped so the tooltip never clips past the chart
+             container's edges. */
           const barTop = Math.min(hover.barY, layout.yZero);
+          const HALF_W = 110;
+          const clampedCx = Math.max(HALF_W, Math.min(layout.w - HALF_W, hover.cx));
           return (
             <div className="forward-chart-tooltip"
-                 style={{ left: `${(hover.cx / layout.w) * 100}%`, top: `${barTop - 16}px` }}>
+                 style={{ left: `${clampedCx}px`, top: `${barTop - 16}px` }}>
               <div className="forward-chart-tooltip-mat">{hover.year}</div>
               <div className="forward-chart-tooltip-val">{fmtBp(hover.predictionErrorBps)}</div>
               <div className="forward-chart-tooltip-band">

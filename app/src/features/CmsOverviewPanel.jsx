@@ -398,14 +398,18 @@
         {hover && (() => {
           /* Tooltip pins ABOVE the highest data point in this column
              (lowest Y in screen coords). Translation chart has 3 lines
-             — we take the min of all valid points and back off 16 px. */
+             - we take the min of all valid points and back off 16 px.
+             Horizontal position is clamped so the tooltip never clips
+             past the chart's left/right edges. */
           const candidates = [hover.orielY, hover.pubY, hover.cmsY].filter(Number.isFinite);
           const topY = (candidates.length ? Math.min(...candidates) : 0) - 16;
+          const HALF_W = 130;
+          const clampedCx = Math.max(HALF_W, Math.min(layout.w - HALF_W, hover.cx));
           return (
             <div
               className="forward-chart-tooltip"
               style={{
-                left: `${(hover.cx / layout.w) * 100}%`,
+                left: `${clampedCx}px`,
                 top:  `${topY}px`,
               }}
             >
@@ -771,11 +775,13 @@
             : Math.min(hover.publicY, layout.yZero);
           const lineY = hover.anchorY === null ? Infinity : hover.anchorY;
           const topY = Math.min(barTop, lineY) - 16;
+          const HALF_W = 110;
+          const clampedCx = Math.max(HALF_W, Math.min(layout.w - HALF_W, hover.cx));
           return (
             <div
               className="forward-chart-tooltip"
               style={{
-                left: `${(hover.cx / layout.w) * 100}%`,
+                left: `${clampedCx}px`,
                 top:  `${topY}px`,
               }}
             >
