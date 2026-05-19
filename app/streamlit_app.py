@@ -491,35 +491,35 @@ def _render_login():
             min-height: 0 !important;
             padding: 0 !important;
           }}
-          /* The visible input shell is [data-baseweb="base-input"]. This
-             is the element Streamlit already paints a 0.8px border on
-             via its emotion-cache stylesheet, so we override on the SAME
-             element rather than fighting specificity from a different
-             selector (which is why earlier passes only swapped the
-             border color and not its width). */
+          /* Visible input shell. Streamlit's emotion-cache stylesheet
+             clamps any border-width set on this element to ~0.8px
+             regardless of !important or inline overrides, so we draw
+             the "border" with an inset box-shadow instead. Same visual
+             result, completely outside Streamlit's border-width
+             pipeline. The second inset shadow is a one-pixel inner
+             highlight for depth. */
           [data-testid="stForm"] [data-baseweb="base-input"] {{
-            background: #F5F7FB !important;
             background-color: #F5F7FB !important;
-            border-width: 1.5px !important;
-            border-style: solid !important;
-            border-color: #B8C2D4 !important;
+            border-width: 0 !important;
             border-radius: 10px !important;
-            box-shadow: inset 0 1px 0 rgba(15, 23, 42, 0.02) !important;
+            box-shadow:
+              inset 0 0 0 1.5px #B8C2D4,
+              inset 0 1px 0 rgba(15, 23, 42, 0.02) !important;
             color: #0E1733 !important;
             min-height: 48px !important;
-            transition: border-color 0.15s ease, background 0.15s ease,
-                        box-shadow 0.15s ease !important;
+            transition: background-color 0.15s ease, box-shadow 0.15s ease !important;
           }}
           [data-testid="stForm"] [data-baseweb="base-input"]:hover {{
-            border-color: #8A93A6 !important;
             background-color: #FFFFFF !important;
+            box-shadow:
+              inset 0 0 0 1.5px #8A93A6,
+              inset 0 1px 0 rgba(15, 23, 42, 0.02) !important;
           }}
           [data-testid="stForm"] [data-baseweb="base-input"]:focus-within {{
             background-color: #FFFFFF !important;
-            border-color: #2D5BFF !important;
             box-shadow:
-              0 0 0 4px rgba(45, 91, 255, 0.12),
-              0 1px 2px rgba(45, 91, 255, 0.08) !important;
+              inset 0 0 0 1.5px #2D5BFF,
+              0 0 0 4px rgba(45, 91, 255, 0.12) !important;
           }}
           /* The actual <input> — strip native bg/border, set color.
              Explicit line-height matches the visible cap-height so the
