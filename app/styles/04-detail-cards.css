@@ -26,7 +26,10 @@
   align-items: center;
   gap: 8px;
   flex-wrap: wrap;
-  font-size: 11.5px;
+  /* Readability bump (was 11.5px). The ribbon carries the family
+     tag + venue + description, all inherited from this rule. Padding
+     stays at 7px so the 1px font bump is absorbed by line-height. */
+  font-size: 12.5px;
   color: var(--text);
   line-height: 1.4;
 }
@@ -245,7 +248,8 @@
   background: linear-gradient(90deg, var(--pink-light) 0%, transparent 100%);
 }
 .idx-kpi-ribbon-tag {
-  font-size: 10px;
+  /* HEALTHCARE / CPI FORWARD chip - bumped from 10px for readability. */
+  font-size: 11px;
   font-weight: 700;
   letter-spacing: 0.06em;
   text-transform: uppercase;
@@ -266,7 +270,8 @@
 .idx-kpi-ribbon-sep { color: var(--text-subtle); }
 .idx-kpi-ribbon-desc {
   color: var(--text-muted);
-  font-size: 11.5px;
+  /* Description line - bumped from 11.5px for readability. */
+  font-size: 12.5px;
   /* Expand to fill the row so every control after this (live toggle,
      maturity pick, valuation date) is pushed to the right edge and
      reads as a single right-aligned control cluster. Used to be
@@ -295,7 +300,9 @@
 }
 .idx-kpi-cell:last-child { border-right: none; }
 .idx-kpi-cell-label {
-  font-size: 9.5px;
+  /* KPI cell uppercase label - bumped from 9.5px. The 10/11px cell
+     padding above the label absorbs the bump. */
+  font-size: 10.5px;
   text-transform: uppercase;
   letter-spacing: 0.06em;
   font-weight: 600;
@@ -317,7 +324,8 @@
   line-height: 1.05;
 }
 .idx-kpi-cell-sub {
-  font-size: 10.5px;
+  /* KPI cell sub-line under the big value - bumped from 10.5px. */
+  font-size: 11.5px;
   color: var(--text-muted);
   margin-top: 1px;
   line-height: 1.3;
@@ -706,7 +714,9 @@
   border-bottom: 1px solid var(--border-subtle);
 }
 .info-card-eyebrow {
-  font-size: 10.5px;
+  /* Card eyebrow label (Index Stats / Methodology / Live Feed Status
+     / Basis Signal / Basis Drivers etc.) - bumped 10.5 -> 11.5px. */
+  font-size: 11.5px;
   text-transform: uppercase;
   letter-spacing: 0.06em;
   font-weight: 600;
@@ -750,7 +760,8 @@
 }
 .info-stat:nth-child(2n) { border-right: none; }
 .info-stat-label {
-  font-size: 10px;
+  /* Info-card stat row label - bumped 10 -> 11px. */
+  font-size: 11px;
   text-transform: uppercase;
   letter-spacing: 0.06em;
   font-weight: 600;
@@ -786,7 +797,8 @@
 }
 .info-kv-row:last-child { border-bottom: none; }
 .info-kv-key {
-  font-size: 11px;
+  /* Methodology / Live Feed key column - bumped 11 -> 12px. */
+  font-size: 12px;
   text-transform: uppercase;
   letter-spacing: 0.06em;
   font-weight: 600;

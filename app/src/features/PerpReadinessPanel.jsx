@@ -504,7 +504,7 @@
             Implied Index Level
           </text>
         </svg>
-        {hover && <HoverTip x={hover.x} y={hover.y} rows={hover.rows} />}
+        {hover && <HoverTip x={hover.x} y={hover.y} rows={hover.rows} bound={w} />}
       </div>
     );
   }
@@ -578,7 +578,7 @@
             Index Level
           </text>
         </svg>
-        {hover && <HoverTip x={hover.x} y={hover.y} rows={hover.rows} />}
+        {hover && <HoverTip x={hover.x} y={hover.y} rows={hover.rows} bound={w} />}
       </div>
     );
   }
@@ -1164,7 +1164,7 @@
             Abs Diff (bp)
           </text>
         </svg>
-        {hover && <HoverTip x={hover.x} y={hover.y} rows={hover.rows} />}
+        {hover && <HoverTip x={hover.x} y={hover.y} rows={hover.rows} bound={w} />}
       </div>
     );
   }
@@ -1236,7 +1236,7 @@
             Abs Diff (bp)
           </text>
         </svg>
-        {hover && <HoverTip x={hover.x} y={hover.y} rows={hover.rows} />}
+        {hover && <HoverTip x={hover.x} y={hover.y} rows={hover.rows} bound={w} />}
       </div>
     );
   }

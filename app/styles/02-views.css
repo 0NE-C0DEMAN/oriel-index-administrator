@@ -469,7 +469,7 @@
   flex-wrap: wrap;
 }
 .hero-chart-title { font-size: 13.5px; font-weight: 650; letter-spacing: -0.01em; }
-.hero-chart-sub { font-size: 11.5px; color: var(--text-muted); margin-top: 2px; }
+.hero-chart-sub { font-size: 12.5px; color: var(--text-muted); margin-top: 2px; }
 
 .hero-chart-legend {
   display: inline-flex;
@@ -671,7 +671,7 @@
   flex-wrap: wrap;
 }
 .data-card-title { font-size: 13.5px; font-weight: 650; letter-spacing: -0.01em; }
-.data-card-sub { font-size: 11.5px; color: var(--text-muted); margin-top: 2px; }
+.data-card-sub { font-size: 12.5px; color: var(--text-muted); margin-top: 2px; }
 .data-card-body {
   padding: 0;
   max-height: 360px;
@@ -693,7 +693,7 @@
   justify-content: space-between;
   gap: 14px;
   flex-wrap: wrap;
-  font-size: 11px;
+  font-size: 12px;
   color: var(--text-muted);
   background: #FBFCFE;
 }
@@ -716,7 +716,7 @@
 }
 .chip {
   padding: 4px 10px;
-  font-size: 11.5px;
+  font-size: 12.5px;
   font-weight: 550;
   border-radius: 5px;
   color: var(--text-muted);
@@ -737,7 +737,9 @@
   border-collapse: collapse;
 }
 .data-table thead th {
-  font-size: 10px;
+  /* Table header uppercase label - bumped 10 -> 11px. The 10px
+     vertical padding absorbs the bump. */
+  font-size: 11px;
   font-weight: 600;
   letter-spacing: 0.06em;
   text-transform: uppercase;
@@ -758,7 +760,7 @@
 .data-table tbody tr:hover { background: var(--bg-subtle); }
 .data-table .num { text-align: right; font-variant-numeric: tabular-nums; }
 .data-table .strong { color: var(--text); font-weight: 600; }
-.data-table .small { font-size: 11.5px; }
+.data-table .small { font-size: 12.5px; }
 .data-table .empty-row {
   text-align: center;
   color: var(--text-subtle);

@@ -16,9 +16,21 @@
   'use strict';
   const { cn } = window.App.utils;
 
-  function HoverTip({ x, y, rows }) {
+  /* Shared chart hover tooltip. The .perp-tip CSS class anchors the
+     tooltip at its bottom-centre via transform: translate(-50%, -100%),
+     so a raw `left: x` will clip past the chart container whenever x
+     is within half a tooltip width of either edge.  Pass the chart's
+     pixel width as `bound` and HoverTip will clamp x so its centre is
+     always at least HALF_W away from each side - the tooltip card
+     therefore stays fully inside the chart container regardless of
+     which bar / point the user is hovering. */
+  function HoverTip({ x, y, rows, bound }) {
+    const HALF_W = 100;
+    const clampedX = bound
+      ? Math.max(HALF_W, Math.min(bound - HALF_W, x))
+      : x;
     return (
-      <div className="perp-tip" style={{ left: x, top: y - 12 }}>
+      <div className="perp-tip" style={{ left: clampedX, top: y - 12 }}>
         {rows.map((r, i) => (
           <div key={i} className={cn('perp-tip-row', r.accent && 'accent', r.muted && 'muted')}>
             <span className="perp-tip-l">{r.l}</span>

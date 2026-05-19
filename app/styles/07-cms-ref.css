@@ -81,7 +81,7 @@
    on the left, thin separator below. Mirrors v7's
    "Basis history · Hedge lens · Top RV sleeves" header. */
 .cms-section-head {
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 700;
   letter-spacing: 0.12em;
   text-transform: uppercase;
@@ -135,7 +135,7 @@
 /* "Primary lens" pill — slightly tighter than the standard feed-pill
    so it sits cleanly next to the eyebrow. */
 .cms-lens-tag {
-  font-size: 9.5px;
+  font-size: 11.5px;
   letter-spacing: 0.06em;
   padding: 2px 8px;
 }
@@ -189,7 +189,7 @@
   align-items: flex-start;
 }
 .cms-prov-sub {
-  font-size: 11px;
+  font-size: 12px;
   color: var(--text-muted);
   margin-top: 2px;
 }
@@ -237,14 +237,14 @@
   gap: 12px;
   padding: 8px 16px;
   border-bottom: 1px solid var(--border-subtle);
-  font-size: 11.5px;
+  font-size: 12.5px;
 }
 .cms-prov-row:last-child { border-bottom: none; }
 .cms-prov-row:hover { background: var(--bg-subtle); }
 
 .cms-prov-file {
   color: var(--text);
-  font-size: 11px;
+  font-size: 12px;
   word-break: break-all;
   flex: 1 1 auto;
   min-width: 0;
@@ -256,7 +256,7 @@
   flex-shrink: 0;
 }
 .cms-prov-status {
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 700;
   letter-spacing: 0.01em;
   white-space: nowrap;
@@ -266,7 +266,7 @@
 .cms-prov-status.tone-danger  { color: var(--danger); }
 .cms-prov-status.tone-muted   { color: var(--text-muted); }
 .cms-prov-hint {
-  font-size: 10px;
+  font-size: 12px;
   letter-spacing: 0.06em;
   text-transform: uppercase;
   color: var(--text-subtle);
@@ -274,7 +274,7 @@
 .cms-prov-empty {
   padding: 16px;
   text-align: center;
-  font-size: 11.5px;
+  font-size: 12.5px;
   color: var(--text-subtle);
   font-style: italic;
 }

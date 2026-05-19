@@ -545,27 +545,23 @@
         </svg>
 
         {hover && (() => {
-          /* Pin tooltip 10 px above the hovered bar's own top edge.
-             Tooltip CSS anchors at its bottom-centre via
-             transform: translate(-50%, -100%); we keep the Y half
-             and override the X half so the tooltip swings to the
-             right of the bar when the bar sits near the chart's
-             left edge (otherwise the leftmost bar's tooltip is
-             clipped by the chart container), and to the left of
-             the bar when the bar sits near the right edge. */
-          const leftPct = (hover.cx / layout.w) * 100;
-          const xTranslate =
-            leftPct < 14 ? '0%' :
-            leftPct > 86 ? '-100%' :
-            '-50%';
+          /* Position the tooltip 10 px above the hovered bar and CLAMP its
+             centre so a horizontally-centred tooltip can never extend past
+             the chart container.  Earlier versions tried two cleverer
+             schemes (Math.min(barY,padT) for the Y, then a per-third
+             translateX swing for the X) and both still let the tooltip
+             clip - either because the bar sits exactly on a boundary and
+             the swung tooltip still pushes a few pixels past, or because
+             the tooltip's natural width is wider than the gap to the edge.
+             Clamping the absolute left position is robust against both:
+             the tooltip's centre is held HALF_W away from each edge so
+             with the default translate(-50%, -100%) it always fits. */
+          const HALF_W = 110;   // ~half the tooltip's natural width
+          const clampedCx = Math.max(HALF_W, Math.min(layout.w - HALF_W, hover.cx));
           const topY = hover.barY - 10;
           return (
             <div className="forward-chart-tooltip"
-                 style={{
-                   left: `${leftPct}%`,
-                   top: `${topY}px`,
-                   transform: `translate(${xTranslate}, -100%)`,
-                 }}>
+                 style={{ left: `${clampedCx}px`, top: `${topY}px` }}>
               <div className="forward-chart-tooltip-mat">{`> ${hover.thresholdBps} bps`}</div>
               <div className="forward-chart-tooltip-val">{fmtPriceP(hover.yesPrice)}</div>
               <div className="forward-chart-tooltip-band">
@@ -679,22 +675,14 @@
           </text>
         </svg>
         {hover && (() => {
-          // Pin tooltip just above each bar's own top + swing the
-          // horizontal anchor when the bar is near the chart edges -
-          // see the matching block ~120 lines up for the rationale.
-          const leftPct = (hover.cx / layout.w) * 100;
-          const xTranslate =
-            leftPct < 14 ? '0%' :
-            leftPct > 86 ? '-100%' :
-            '-50%';
+          // Same clamp-the-centre approach as the ladder chart block
+          // above - see that comment for the rationale.
+          const HALF_W = 110;
+          const clampedCx = Math.max(HALF_W, Math.min(layout.w - HALF_W, hover.cx));
           const topY = hover.barY - 10;
           return (
             <div className="forward-chart-tooltip"
-                 style={{
-                   left: `${leftPct}%`,
-                   top: `${topY}px`,
-                   transform: `translate(${xTranslate}, -100%)`,
-                 }}>
+                 style={{ left: `${clampedCx}px`, top: `${topY}px` }}>
               <div className="forward-chart-tooltip-mat">{hover.bucket}</div>
               <div className="forward-chart-tooltip-val">{fmtPriceP(hover.probability)}</div>
               <div className="forward-chart-tooltip-band">Midpoint {Math.round(hover.midpointBps)} bps</div>
