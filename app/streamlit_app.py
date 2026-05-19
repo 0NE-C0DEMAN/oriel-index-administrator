@@ -472,12 +472,16 @@ def _render_login():
             text-transform: uppercase !important;
             margin-bottom: 4px !important;
           }}
-          /* Outer BaseWeb wrapper + Streamlit's own root element get
-             flattened to invisible — no border, no background, no
-             radius. They're just structural. */
-          [data-testid="stForm"] .stTextInput > div > div,
-          [data-testid="stForm"] [data-testid="stTextInputRootElement"],
-          [data-testid="stForm"] [data-baseweb="input"] {{
+          /* Outer BaseWeb wrapper [data-baseweb="input"] is structural
+             only — no visible chrome. CAREFUL: do not also strip the
+             inner [data-baseweb="base-input"], that is the element we
+             style as the actual visible shell below. The previous pass
+             used `.stTextInput > div > div` here, which matches the
+             inner base-input element (it sits two divs deep inside
+             stTextInput) and silently zeroed out the border I was
+             trying to apply on the next rule. */
+          [data-testid="stForm"] [data-baseweb="input"],
+          [data-testid="stForm"] [data-testid="stTextInputRootElement"] {{
             background: transparent !important;
             background-color: transparent !important;
             border-width: 0 !important;
