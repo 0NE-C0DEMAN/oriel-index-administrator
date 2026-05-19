@@ -218,14 +218,17 @@ def _render_login():
             width: 50% !important;
             max-width: none !important;
             min-height: 100vh !important;
-            /* Tighter vertical padding so the form + feature grid +
-               security note all fit inside one viewport, no scroll on
-               standard laptop / Chrome window heights. */
-            padding: 24px 48px !important;
+            /* Top padding clears the absolute-positioned brand strip,
+               bottom padding clears the absolute-positioned status pill. */
+            padding: 60px 48px 60px !important;
             box-sizing: border-box !important;
             display: flex !important;
             flex-direction: column !important;
-            justify-content: center !important;
+            /* `safe center` keeps the form vertically centered when the
+               viewport has room, but falls back to flex-start the moment
+               content gets taller than the viewport so the eyebrow chip
+               at the top is never pushed off-screen. */
+            justify-content: safe center !important;
             background:
               radial-gradient(circle at 88% 8%, rgba(45, 91, 255, 0.04) 0%, transparent 38%),
               radial-gradient(circle at 12% 96%, rgba(45, 91, 255, 0.03) 0%, transparent 40%),
@@ -432,15 +435,15 @@ def _render_login():
           }}
           .oriel-form-eyebrow svg {{ color: #2D5BFF; }}
           .oriel-form-title {{
-            font-size: 30px; font-weight: 700;
+            font-size: 28px; font-weight: 700;
             letter-spacing: -0.02em; line-height: 1.15;
             color: #0E1733;
-            margin: 0 0 6px 0;
+            margin: 0 0 4px 0;
           }}
           .oriel-form-subtitle {{
-            font-size: 14px; line-height: 1.5;
+            font-size: 13.5px; line-height: 1.5;
             color: #5A6478;
-            margin: 0 0 20px 0;
+            margin: 0 0 16px 0;
           }}
           .oriel-form-sub {{
             font-size: 14px; line-height: 1.5;
@@ -469,38 +472,48 @@ def _render_login():
             margin-left: 4px;
             animation: oriel-pulse-dot 2.4s ease-in-out infinite;
           }}
-          /* Inside-your-workspace mini-grid below the form. Same card
-             vocabulary used everywhere else in the app (soft fill, subtle
-             border, rounded, hover lift), just compact. Gives the right
-             pane something that competes visually with the gradient hero
-             on the left without crowding the form. */
+          /* What-Oriel-enables stack below the form. Compact section
+             header + vertically stacked horizontal cards. Lives directly
+             under the form so the right pane has two visual halves: the
+             auth block on top, the capability block below. */
           .oriel-form-features {{
-            margin-top: 16px;
-            padding-top: 14px;
+            margin-top: 14px;
+            padding-top: 12px;
             border-top: 1px solid #EEF1F6;
           }}
           .oriel-form-features-eyebrow {{
             font-size: 10px; font-weight: 700;
             letter-spacing: 0.16em; text-transform: uppercase;
             color: #8A93A6;
-            margin-bottom: 8px;
+            margin-bottom: 6px;
             display: flex; align-items: center; gap: 8px;
           }}
           .oriel-form-features-eyebrow::before {{
             content: ''; display: inline-block;
             width: 18px; height: 1px; background: #CFD5E1;
           }}
+          /* Cards stacked vertically, each one a horizontal banner with
+             the icon on the left and the (label + body) on the right.
+             This gives every card the full form-column width so the
+             sentence-level copy from the CEO doc wraps to 1-2 lines
+             instead of being squeezed into a 140px column and wrapping
+             6-7 lines. Total stack height ends up roughly the same as
+             the old 3-up grid but with massively more breathing room
+             per card. */
           .oriel-form-features-grid {{
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 10px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
           }}
           .oriel-form-feature {{
             position: relative;
+            display: flex;
+            align-items: center;
+            gap: 12px;
             background: #F8FAFD;
             border: 1px solid #EEF1F6;
             border-radius: 10px;
-            padding: 10px 11px 12px;
+            padding: 10px 14px 10px 12px;
             transition: border-color 0.15s ease, background 0.15s ease,
                         transform 0.15s ease, box-shadow 0.15s ease;
           }}
@@ -510,45 +523,48 @@ def _render_login():
             transform: translateY(-1px);
             box-shadow: 0 4px 12px rgba(15, 23, 42, 0.06);
           }}
-          /* On hover each card surfaces a tiny accent arrow in the
-             top-right corner. Pure decoration, but it makes the cards
-             feel interactive instead of static info chips. */
+          /* Decorative accent arrow that fades into the right edge of
+             the card on hover. Signals interactivity without competing
+             with the icon on the left. */
           .oriel-form-feature::after {{
-            content: '\\2197'; /* north-east arrow */
+            content: '\\2192'; /* right arrow */
             position: absolute;
-            top: 8px; right: 10px;
-            font-size: 12px;
+            right: 14px; top: 50%;
+            font-size: 14px; font-weight: 600;
             color: #2D5BFF;
             opacity: 0;
-            transform: translate(-3px, 3px);
+            transform: translate(-4px, -50%);
             transition: opacity 0.18s ease, transform 0.18s ease;
           }}
           .oriel-form-feature:hover::after {{
             opacity: 1;
-            transform: translate(0, 0);
+            transform: translate(0, -50%);
           }}
           .oriel-form-feature-icon {{
-            width: 28px; height: 28px;
+            flex: none;
+            width: 36px; height: 36px;
             background: linear-gradient(135deg, #E0E7FF 0%, #C7D2FE 100%);
-            border-radius: 8px;
+            border-radius: 9px;
             display: inline-flex; align-items: center; justify-content: center;
             color: #2D5BFF;
-            margin-bottom: 7px;
           }}
-          .oriel-form-feature-icon svg {{ width: 15px; height: 15px; }}
+          .oriel-form-feature-icon svg {{ width: 18px; height: 18px; }}
+          .oriel-form-feature-body {{
+            min-width: 0;
+            flex: 1;
+            padding-right: 18px;
+          }}
           .oriel-form-feature-label {{
-            font-size: 12.5px; font-weight: 700;
+            font-size: 13px; font-weight: 700;
             color: #0E1733;
             letter-spacing: -0.005em;
             line-height: 1.25;
-            margin-bottom: 4px;
+            margin-bottom: 2px;
           }}
-          /* Body copy on the three cards. Holds 1-2 sentences of real
-             prose, not a meta chip — slightly larger and looser than the
-             pre-CEO-pass version so the wrap is comfortable in the
-             ~140px-wide card column. */
+          /* Body copy on the three cards. Full sentence per card, with
+             the full form column to wrap in — never gets squeezed. */
           .oriel-form-feature-sub {{
-            font-size: 11px;
+            font-size: 11.5px;
             color: #5C6680;
             font-weight: 500;
             letter-spacing: 0.005em;
@@ -889,8 +905,10 @@ def _render_login():
         """          <polyline points="2 12 12 17 22 12"/>"""
         """        </svg>"""
         """      </div>"""
-        """      <div class="oriel-form-feature-label">Build the reference</div>"""
-        """      <div class="oriel-form-feature-sub">Turn fragmented market pricing into comparable fair value, forward curves, and trusted market surfaces.</div>"""
+        """      <div class="oriel-form-feature-body">"""
+        """        <div class="oriel-form-feature-label">Build the reference</div>"""
+        """        <div class="oriel-form-feature-sub">Turn fragmented market pricing into comparable fair value, forward curves, and trusted market surfaces.</div>"""
+        """      </div>"""
         """    </div>"""
         """    <div class="oriel-form-feature">"""
         """      <div class="oriel-form-feature-icon">"""
@@ -904,8 +922,10 @@ def _render_login():
         """          <circle cx="12" cy="12" r="2.2"/>"""
         """        </svg>"""
         """      </div>"""
-        """      <div class="oriel-form-feature-label">Surface the dislocation</div>"""
-        """      <div class="oriel-form-feature-sub">Compare venues, detect curve-relative mispricing, and identify cross-market basis opportunities in real time.</div>"""
+        """      <div class="oriel-form-feature-body">"""
+        """        <div class="oriel-form-feature-label">Surface the dislocation</div>"""
+        """        <div class="oriel-form-feature-sub">Compare venues, detect curve-relative mispricing, and identify cross-market basis opportunities in real time.</div>"""
+        """      </div>"""
         """    </div>"""
         """    <div class="oriel-form-feature">"""
         """      <div class="oriel-form-feature-icon">"""
@@ -922,8 +942,10 @@ def _render_login():
         """          <circle cx="18" cy="18" r="2"/>"""
         """        </svg>"""
         """      </div>"""
-        """      <div class="oriel-form-feature-label">Simulate the response</div>"""
-        """      <div class="oriel-form-feature-sub">Test quoting, inventory, and edge posture as market conditions shift — before turning signals into execution.</div>"""
+        """      <div class="oriel-form-feature-body">"""
+        """        <div class="oriel-form-feature-label">Simulate the response</div>"""
+        """        <div class="oriel-form-feature-sub">Test quoting, inventory, and edge posture as market conditions shift — before turning signals into execution.</div>"""
+        """      </div>"""
         """    </div>"""
         """  </div>"""
         """</div>"""
