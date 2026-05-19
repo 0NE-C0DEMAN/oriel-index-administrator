@@ -615,7 +615,7 @@ def _render_login():
           }}
           /* Field spacing inside the form */
           [data-testid="stForm"] [data-testid="stElementContainer"] {{
-            margin-bottom: 8px !important;
+            margin-bottom: 14px !important;
           }}
           /* Error alert tint */
           [data-testid="stAlert"] {{
