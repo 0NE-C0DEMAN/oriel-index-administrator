@@ -144,11 +144,15 @@ def render_forecastex_tab() -> None:
     _front_contracts = [
         c for c in getattr(curve, "contracts", []) if c.release_month == front.release_month
     ]
+    # Restrict to plausible CPI YoY threshold values. Defensive filter, same
+    # rationale as the Polymarket tab.
     _dlabels, _dprobs, _dist_ev = build_threshold_distribution(
         _front_contracts,
         threshold_attr="threshold",
         price_attr="mid",
         direction_fn=None,
+        min_threshold=0.5,
+        max_threshold=8.0,
     )
 
     left, right = st.columns([2, 1], gap="medium", vertical_alignment="top")

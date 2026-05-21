@@ -143,11 +143,18 @@ def render_polymarket_tab() -> None:
         return PolymarketClient.extract_threshold_direction(c.question or c.slug or "")
 
     _front_contracts = [c for c in curve.contracts if c.release_month == front.release_month]
+    # Restrict to plausible CPI YoY threshold values. The same Polymarket
+    # event group can carry MoM markets (thresholds ~0.0-0.5%), bracket-style
+    # range contracts, or index-level questions whose "threshold" number is
+    # on a different scale. Without this filter the distribution collapses
+    # into a meaningless near-zero spike.
     _dlabels, _dprobs, _dist_ev = build_threshold_distribution(
         _front_contracts,
         threshold_attr="threshold",
         price_attr="mid",
         direction_fn=_poly_direction,
+        min_threshold=0.5,
+        max_threshold=8.0,
     )
 
     left, right = st.columns([2, 1], gap="medium", vertical_alignment="top")

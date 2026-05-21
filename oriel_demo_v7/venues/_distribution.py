@@ -28,6 +28,8 @@ def build_threshold_distribution(
     price_attr: str = "mid",
     direction_fn: Optional[Callable[[object], str]] = None,
     min_bucket_pct: float = 0.05,
+    min_threshold: Optional[float] = None,
+    max_threshold: Optional[float] = None,
 ) -> tuple[list[str], list[float], Optional[float]]:
     """Build (labels, probs_pct, expected_value) tuple for ui.charts.make_distribution.
 
@@ -39,6 +41,12 @@ def build_threshold_distribution(
             None, "above" is assumed (i.e., mid = P(CPI > threshold)).
         min_bucket_pct: minimum bucket probability (in %) to keep. Tiny buckets
             from rounding noise are dropped.
+        min_threshold: drop contracts with threshold below this value. Use to
+            exclude non-YoY (e.g., MoM) markets that share the same event tag
+            and would otherwise pollute the distribution.
+        max_threshold: drop contracts with threshold above this value. Use to
+            exclude bracket-style or index-level contracts whose "threshold"
+            number is on a different scale than CPI YoY percent.
 
     Returns:
         (labels, probs, expected_value):
@@ -59,6 +67,14 @@ def build_threshold_distribution(
             t = float(threshold)
             p = float(price)
         except (TypeError, ValueError):
+            continue
+        # Range filter: drop thresholds outside the expected CPI YoY band.
+        # This excludes MoM markets, bracket contracts, index-level questions,
+        # and other macro markets that share the same event tag but report
+        # numbers on a different scale.
+        if min_threshold is not None and t < min_threshold:
+            continue
+        if max_threshold is not None and t > max_threshold:
             continue
         if direction_fn is not None:
             direction = direction_fn(c) or "above"

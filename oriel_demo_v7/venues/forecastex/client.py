@@ -237,11 +237,13 @@ class ForecastExClient:
             ("CPIY_0326_250", "Will the year-over-year change in the US Consumer Price Index exceed 2.5% in Mar 2026?", "Mar 2026", 2.5, 0.52, 940, 4880),
             ("CPIY_0326_300", "Will the year-over-year change in the US Consumer Price Index exceed 3.0% in Mar 2026?", "Mar 2026", 3.0, 0.25, 830, 4650),
             ("CPIY_0326_350", "Will the year-over-year change in the US Consumer Price Index exceed 3.5% in Mar 2026?", "Mar 2026", 3.5, 0.09, 720, 4310),
-            ("CPIY_0426", "Will the year-over-year change in the US Consumer Price Index exceed 0.7% in Apr 2026?", "Apr 2026", 0.7, 0.67, 980, 5200),
-            ("CPIY_0526", "Will the year-over-year change in the US Consumer Price Index exceed 0.3% in May 2026?", "May 2026", 0.3, 0.32, 870, 4800),
-            ("CPIY_0626", "Will the year-over-year change in the US Consumer Price Index exceed 0.2% in Jun 2026?", "Jun 2026", 0.2, 0.21, 720, 3900),
-            ("CPIY_0726", "Will the year-over-year change in the US Consumer Price Index exceed 0.2% in Jul 2026?", "Jul 2026", 0.2, 0.24, 690, 3600),
-            ("CPIY_0826", "Will the year-over-year change in the US Consumer Price Index exceed 0.2% in Aug 2026?", "Aug 2026", 0.2, 0.22, 650, 3400),
+            # Back months: single ATM-ish strike each, in the realistic CPI YoY band
+            # so the forward curve renders 2.3-2.6%. Implied YoY = threshold + (mid-0.5)*0.5.
+            ("CPIY_0426", "Will the year-over-year change in the US Consumer Price Index exceed 2.4% in Apr 2026?", "Apr 2026", 2.4, 0.54, 980, 5200),
+            ("CPIY_0526", "Will the year-over-year change in the US Consumer Price Index exceed 2.5% in May 2026?", "May 2026", 2.5, 0.50, 870, 4800),
+            ("CPIY_0626", "Will the year-over-year change in the US Consumer Price Index exceed 2.5% in Jun 2026?", "Jun 2026", 2.5, 0.48, 720, 3900),
+            ("CPIY_0726", "Will the year-over-year change in the US Consumer Price Index exceed 2.4% in Jul 2026?", "Jul 2026", 2.4, 0.51, 690, 3600),
+            ("CPIY_0826", "Will the year-over-year change in the US Consumer Price Index exceed 2.4% in Aug 2026?", "Aug 2026", 2.4, 0.49, 650, 3400),
         ]
         return [
             ForecastExContract(

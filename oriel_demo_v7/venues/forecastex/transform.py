@@ -31,8 +31,19 @@ def score_and_package(
 ) -> CurvePackage:
     valuation_timestamp = datetime.now(UTC)
 
+    # Drop contracts whose threshold falls outside the plausible CPI YoY band
+    # (defensive against MoM or off-scale strikes leaking into the feed).
+    contracts = [
+        c for c in contracts
+        if c.threshold is None or 0.5 <= float(c.threshold) <= 8.0
+    ]
+
     for contract in contracts:
-        contract.expected_value = normalize_expected_value(contract.mid, config.coupon_bps_adjustment)
+        contract.expected_value = normalize_expected_value(
+            mid=contract.mid,
+            threshold=contract.threshold,
+            coupon_bps_adjustment=config.coupon_bps_adjustment,
+        )
         contract.liquidity_score = liquidity_score(contract.volume, contract.open_interest)
         contract.publishable = is_publishable(contract, config)
         contract.publishability_reason = publishability_reason(contract, config)
@@ -40,12 +51,18 @@ def score_and_package(
     eligible = [c for c in contracts if c.publishable and c.expected_value is not None]
 
     # Deduplicate: one contract per release_month.
-    # For binary threshold contracts, pick the one whose mid (yes_price) is
-    # closest to 0.50 — that threshold is nearest the market's median CPI estimate.
+    # For binary threshold contracts, pick the one whose mid (YES price) is
+    # closest to 0.50 — that strike is nearest the market's median CPI estimate.
+    # We rank on the raw `mid` rather than `expected_value` because the latter
+    # is now a CPI YoY value (threshold-adjusted) and the at-the-money pick
+    # has to be made on the probability, not the implied level.
+    def _atm_distance(c: ForecastExContract) -> float:
+        return abs(float(c.mid) - 0.5) if c.mid is not None else 1.0
+
     seen: dict[str, ForecastExContract] = {}
     for c in eligible:
         key = c.release_month
-        if key not in seen or abs((c.expected_value or 0) - 0.5) < abs((seen[key].expected_value or 0) - 0.5):
+        if key not in seen or _atm_distance(c) < _atm_distance(seen[key]):
             seen[key] = c
     eligible = sorted(seen.values(), key=release_month_sort_key)[: config.max_curve_points]
 
@@ -97,13 +114,34 @@ def score_and_package(
     )
 
 
-def normalize_expected_value(mid: float | None, coupon_bps_adjustment: float) -> float | None:
+def normalize_expected_value(
+    mid: float | None,
+    threshold: float | None = None,
+    coupon_bps_adjustment: float = 0.0,
+) -> float | None:
+    """Convert a YES probability + threshold into an implied CPI YoY (%).
+
+    ForecastEx CPIY contracts are binary "Will CPI YoY exceed X%?" questions
+    where ``mid`` is the YES price (in [0,1]) and ``threshold`` is the strike X
+    in percent. The implied YoY is the threshold adjusted by how far the YES
+    price sits from 50/50 — the same convention the Polymarket adapter uses
+    so the two venues are directly comparable.
+
+    Formula: implied_yoy = threshold + (mid - 0.5) * 0.5
+
+    A mid of 0.50 means the threshold is the implied median (no adjustment).
+    A mid of 0.75 means the market thinks CPI will land roughly 0.125% above
+    the threshold; a mid of 0.25 means roughly 0.125% below.
+
+    When ``threshold`` is missing we fall back to the raw mid (legacy
+    behaviour) so older code paths and sample fixtures don't crash.
+    """
     if mid is None:
         return None
-    # ForecastEx contracts can include an incentive coupon. Keep the venue-specific
-    # adjustment explicit and configurable rather than burying it in chart logic.
-    adjusted = float(mid) - (coupon_bps_adjustment / 10000.0)
-    return round(adjusted, 4)
+    adjusted_mid = float(mid) - (coupon_bps_adjustment / 10000.0)
+    if threshold is None:
+        return round(adjusted_mid, 4)
+    return round(float(threshold) + (adjusted_mid - 0.5) * 0.5, 4)
 
 
 def liquidity_score(volume: int | None, open_interest: int | None) -> float:

@@ -139,3 +139,47 @@ def test_duplicate_thresholds_are_averaged():
     assert probs[1] == pytest.approx(30.0, abs=0.1)
     assert probs[2] == pytest.approx(30.0, abs=0.1)
     assert probs[3] == pytest.approx(20.0, abs=0.1)
+
+
+def test_threshold_range_filter_drops_mom_and_index_outliers():
+    """min_threshold / max_threshold drop non-YoY thresholds before bucketing.
+
+    Without the filter a Polymarket event group mixing MoM contracts
+    (thresholds 0.01-0.5%) with YoY contracts (thresholds 1.5-4%) would
+    produce a distribution where almost all mass piles into the lowest
+    bucket. With the CPI-YoY range filter the MoM thresholds get dropped
+    and only the realistic YoY ladder remains.
+    """
+    contracts = [
+        # MoM-style outliers — should be dropped
+        _Contract(threshold=0.01, mid=0.99),
+        _Contract(threshold=0.2, mid=0.85),
+        # Real YoY ladder
+        _Contract(threshold=2.0, mid=0.80),
+        _Contract(threshold=2.5, mid=0.50),
+        _Contract(threshold=3.0, mid=0.20),
+        # Index-level outlier
+        _Contract(threshold=120.0, mid=0.10),
+    ]
+    labels, probs, ev = build_threshold_distribution(
+        contracts, min_threshold=0.5, max_threshold=8.0
+    )
+    # Only the 3 YoY thresholds survived
+    assert labels == ["<2.0%", "2.0-2.5%", "2.5-3.0%", ">3.0%"]
+    assert sum(probs) == pytest.approx(100.0, rel=1e-3)
+    # EV is now in the realistic CPI YoY band, not dominated by the 0.01 outlier
+    assert ev is not None
+    assert 2.0 < ev < 3.0
+
+
+def test_threshold_range_filter_keeps_all_when_no_outliers():
+    contracts = [
+        _Contract(threshold=2.0, mid=0.80),
+        _Contract(threshold=3.0, mid=0.20),
+    ]
+    labels1, probs1, _ = build_threshold_distribution(contracts)
+    labels2, probs2, _ = build_threshold_distribution(
+        contracts, min_threshold=0.5, max_threshold=8.0
+    )
+    assert labels1 == labels2
+    assert probs1 == probs2

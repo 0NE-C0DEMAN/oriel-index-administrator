@@ -188,6 +188,15 @@ def score_and_package(
 ) -> PolyCurvePackage:
     valuation_timestamp = datetime.now(UTC)
 
+    # Polymarket's macro-indicators tag can carry MoM markets, bracket
+    # contracts, and other non-YoY questions mixed in with US CPI YoY. Drop
+    # contracts whose threshold falls outside the plausible CPI YoY band so
+    # the curve point and distribution don't anchor on those outliers.
+    contracts = [
+        c for c in contracts
+        if c.threshold is None or 0.5 <= float(c.threshold) <= 8.0
+    ]
+
     for contract in contracts:
         contract.expected_value = normalize_expected_value(contract)
 
