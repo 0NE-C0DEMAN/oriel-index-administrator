@@ -54,6 +54,78 @@ def _live_contracts_cached():
         return None, None
 
 
+def _build_front_distribution(pkg, *, direction_fn=None) -> Optional[Dict[str, Any]]:
+    """Compute the implied probability distribution at the front release_month
+    from the per-threshold contracts that v7's score_and_package retains on
+    pkg.contracts. Returns a dict shaped like the React `bucketSnapshots[0]`
+    that DistributionChart.jsx consumes:
+        { key, maturity, expected, buckets: [{ label, lower, upper, mid, prob }] }
+    or None when the live ladder is too thin to bucket (< 2 unique YoY strikes).
+    """
+    try:
+        from venues._distribution import build_threshold_distribution  # type: ignore
+    except Exception:
+        return None
+    points = list(pkg.points or [])
+    if not points:
+        return None
+    front = points[0]
+    front_contracts = [
+        c for c in (pkg.contracts or []) if c.release_month == front.release_month
+    ]
+    if not front_contracts:
+        return None
+    labels, probs_pct, ev = build_threshold_distribution(
+        front_contracts,
+        threshold_attr="threshold",
+        price_attr="mid",
+        direction_fn=direction_fn,
+        min_threshold=1.0,
+        max_threshold=6.0,
+    )
+    if not labels:
+        return None
+    buckets = []
+    for label, prob_pct in zip(labels, probs_pct):
+        lo, hi = _parse_bucket_edges(label)
+        mid = (lo + hi) / 2.0
+        buckets.append({
+            "label": label,
+            "lower": float(lo),
+            "upper": float(hi),
+            "mid":   float(mid),
+            "prob":  float(prob_pct) / 100.0,
+        })
+    return {
+        "key":      _short_label(front.release_month).replace(" ", "").lower(),
+        "maturity": _short_label(front.release_month),
+        "expected": float(ev) if ev is not None else float(front.implied_yoy),
+        "buckets":  buckets,
+    }
+
+
+def _parse_bucket_edges(label: str) -> tuple:
+    """Convert distribution-builder labels into numeric (lo, hi) edges that
+    DistributionChart's findIndex(b => ev >= lower && ev <= upper) can use."""
+    import re
+    s = (label or "").strip().replace("%", "")
+    if s.startswith("<"):
+        m = re.search(r"-?\d+(?:\.\d+)?", s[1:])
+        hi = float(m.group(0)) if m else 0.0
+        return (hi - 0.5, hi)
+    if s.startswith(">"):
+        m = re.search(r"-?\d+(?:\.\d+)?", s[1:])
+        lo = float(m.group(0)) if m else 0.0
+        return (lo, lo + 0.5)
+    m = re.match(r"^\s*(-?\d+(?:\.\d+)?)\s*-\s*(-?\d+(?:\.\d+)?)\s*$", s)
+    if m:
+        a, b = float(m.group(1)), float(m.group(2))
+        return (min(a, b), max(a, b))
+    m = re.search(r"-?\d+(?:\.\d+)?", s)
+    v = float(m.group(0)) if m else 0.0
+    return (v, v + 0.1)
+
+
 def _serialize_curve_package(pkg, *, sample_contracts=None, live_contracts=None) -> Dict[str, Any]:
     """Convert v7's CurvePackage + the originating contracts into a dict
     shaped the way React's index `detail` expects.
@@ -175,6 +247,8 @@ def _serialize_curve_package(pkg, *, sample_contracts=None, live_contracts=None)
             "status":       status,
         })
 
+    front_distribution = _build_front_distribution(pkg, direction_fn=None)
+
     return {
         "valuationTime":        pkg.valuation_timestamp.strftime("%Y-%m-%d %H:%M UTC"),
         "valuationTimeIso":     pkg.valuation_timestamp.isoformat(),
@@ -190,6 +264,7 @@ def _serialize_curve_package(pkg, *, sample_contracts=None, live_contracts=None)
         "indexPrint":           index_print,
         "stats":                stats,
         "dislocation":          dislocation,
+        "frontDistribution":    front_distribution,
     }
 
 

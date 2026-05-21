@@ -53,6 +53,79 @@ def _live_contracts_cached():
         return None, None
 
 
+def _build_front_distribution(pkg) -> Optional[Dict[str, Any]]:
+    """Compute the implied probability distribution at the front release_month
+    from pkg.contracts. Returns a dict shaped like the React `bucketSnapshots[0]`,
+    or None when the live ladder is too thin to bucket."""
+    try:
+        from venues._distribution import build_threshold_distribution  # type: ignore
+        from venues.polymarket import PolymarketClient  # type: ignore
+    except Exception:
+        return None
+    points = list(pkg.points or [])
+    if not points:
+        return None
+    front = points[0]
+    front_contracts = [
+        c for c in (pkg.contracts or []) if c.release_month == front.release_month
+    ]
+    if not front_contracts:
+        return None
+
+    def _direction(c):
+        return PolymarketClient.extract_threshold_direction(
+            getattr(c, "question", "") or getattr(c, "slug", "") or ""
+        )
+
+    labels, probs_pct, ev = build_threshold_distribution(
+        front_contracts,
+        threshold_attr="threshold",
+        price_attr="mid",
+        direction_fn=_direction,
+        min_threshold=1.0,
+        max_threshold=6.0,
+    )
+    if not labels:
+        return None
+    buckets = []
+    for label, prob_pct in zip(labels, probs_pct):
+        lo, hi = _parse_bucket_edges(label)
+        mid = (lo + hi) / 2.0
+        buckets.append({
+            "label": label,
+            "lower": float(lo),
+            "upper": float(hi),
+            "mid":   float(mid),
+            "prob":  float(prob_pct) / 100.0,
+        })
+    return {
+        "key":      _short_label(front.release_month).replace(" ", "").lower(),
+        "maturity": _short_label(front.release_month),
+        "expected": float(ev) if ev is not None else float(front.implied_yoy),
+        "buckets":  buckets,
+    }
+
+
+def _parse_bucket_edges(label: str):
+    import re
+    s = (label or "").strip().replace("%", "")
+    if s.startswith("<"):
+        m = re.search(r"-?\d+(?:\.\d+)?", s[1:])
+        hi = float(m.group(0)) if m else 0.0
+        return (hi - 0.5, hi)
+    if s.startswith(">"):
+        m = re.search(r"-?\d+(?:\.\d+)?", s[1:])
+        lo = float(m.group(0)) if m else 0.0
+        return (lo, lo + 0.5)
+    m = re.match(r"^\s*(-?\d+(?:\.\d+)?)\s*-\s*(-?\d+(?:\.\d+)?)\s*$", s)
+    if m:
+        a, b = float(m.group(1)), float(m.group(2))
+        return (min(a, b), max(a, b))
+    m = re.search(r"-?\d+(?:\.\d+)?", s)
+    v = float(m.group(0)) if m else 0.0
+    return (v, v + 0.1)
+
+
 def _serialize_curve_package(pkg) -> Dict[str, Any]:
     """Serialize a v7 PolyCurvePackage + its underlying contracts into a dict
     matching what our React `poly` index detail expects."""
@@ -235,6 +308,8 @@ def _serialize_curve_package(pkg) -> Dict[str, Any]:
             "status":     "Eligible" if c.publishable else "Flagged",
         })
 
+    front_distribution = _build_front_distribution(pkg)
+
     return {
         "valuationTime":         pkg.valuation_timestamp.strftime("%Y-%m-%d %H:%M UTC"),
         "valuationTimeIso":      pkg.valuation_timestamp.isoformat(),
@@ -255,6 +330,7 @@ def _serialize_curve_package(pkg) -> Dict[str, Any]:
         "indexPrint":            index_print,
         "stats":                 stats,
         "dislocation":           dislocation,
+        "frontDistribution":     front_distribution,
     }
 
 

@@ -1440,7 +1440,14 @@
             enabled: mode === 'live',
           };
           d.feedStats     = null;
-          d.bucketSnapshots = null;
+          // Front-maturity implied probability distribution computed by the
+          // Python data layer (forecastex_data._build_front_distribution).
+          // Wire it into the React bucketSnapshots[] the DistributionChart
+          // already understands, so the Front maturity sub-tab renders a real
+          // bucketed distribution instead of a single dot.
+          d.bucketSnapshots = variantData.frontDistribution
+            ? [variantData.frontDistribution]
+            : null;
           d.snapshots       = null;
           return true;
         }
@@ -1536,7 +1543,11 @@
             enabled: mode === 'live',
           };
           d.feedStats = null;
-          d.bucketSnapshots = null;
+          // Front-maturity implied probability distribution from
+          // polymarket_data._build_front_distribution.
+          d.bucketSnapshots = variantData.frontDistribution
+            ? [variantData.frontDistribution]
+            : null;
           d.snapshots = null;
           return true;
         }
