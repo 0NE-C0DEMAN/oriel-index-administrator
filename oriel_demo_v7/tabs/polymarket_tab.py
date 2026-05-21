@@ -147,14 +147,15 @@ def render_polymarket_tab() -> None:
     # event group can carry MoM markets (thresholds ~0.0-0.5%), bracket-style
     # range contracts, or index-level questions whose "threshold" number is
     # on a different scale. Without this filter the distribution collapses
-    # into a meaningless near-zero spike.
+    # into a meaningless near-zero spike. Tighter band (1-6%) since real CPI
+    # YoY rarely sits outside this corridor.
     _dlabels, _dprobs, _dist_ev = build_threshold_distribution(
         _front_contracts,
         threshold_attr="threshold",
         price_attr="mid",
         direction_fn=_poly_direction,
-        min_threshold=0.5,
-        max_threshold=8.0,
+        min_threshold=1.0,
+        max_threshold=6.0,
     )
 
     left, right = st.columns([2, 1], gap="medium", vertical_alignment="top")

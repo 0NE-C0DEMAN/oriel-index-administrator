@@ -74,6 +74,14 @@ def render_forecastex_tab() -> None:
     try:
         if _fx_live:
             curve = _cached_forecastex()
+            # ForecastEx rolls listings — sometimes only one CPIY month is
+            # publicly listed at a time. A single-point forward curve is
+            # uninformative for the demo, so fall back to the sample term
+            # structure when the live feed is too sparse to render a curve.
+            if curve is not None and len(curve.points or []) < 3:
+                _client = ForecastExClient(FX_CONFIG)
+                _sample = _client._sample_contracts(datetime.now(_UTC))
+                curve = fx_score_and_package(_sample, source_status="LIVE_SPARSE_FALLBACK", config=FX_CONFIG)
         else:
             _client = ForecastExClient(FX_CONFIG)
             _sample = _client._sample_contracts(datetime.now(_UTC))
@@ -151,8 +159,8 @@ def render_forecastex_tab() -> None:
         threshold_attr="threshold",
         price_attr="mid",
         direction_fn=None,
-        min_threshold=0.5,
-        max_threshold=8.0,
+        min_threshold=1.0,
+        max_threshold=6.0,
     )
 
     left, right = st.columns([2, 1], gap="medium", vertical_alignment="top")

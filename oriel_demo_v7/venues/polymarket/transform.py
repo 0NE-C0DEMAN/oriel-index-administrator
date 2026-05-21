@@ -194,7 +194,7 @@ def score_and_package(
     # the curve point and distribution don't anchor on those outliers.
     contracts = [
         c for c in contracts
-        if c.threshold is None or 0.5 <= float(c.threshold) <= 8.0
+        if c.threshold is None or 1.0 <= float(c.threshold) <= 6.0
     ]
 
     for contract in contracts:
