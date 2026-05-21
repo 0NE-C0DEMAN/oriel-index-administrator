@@ -29,10 +29,15 @@ class KalshiAPIError(RuntimeError):
 
 @dataclass(frozen=True)
 class KalshiClientConfig:
+    # Default to Kalshi's documented "recommended" external-api host (per
+    # https://docs.kalshi.com/getting_started/api_environments). The
+    # api.elections.kalshi.com host is still "also supported" and is kept
+    # as the fallback. The previous fallback (trading-api.kalshi.com) is no
+    # longer in Kalshi's documentation and has been dropped.
     base_url: str = field(default_factory=lambda: os.getenv(
-        "KALSHI_API_BASE_URL", "https://api.elections.kalshi.com/trade-api/v2"))
+        "KALSHI_API_BASE_URL", "https://external-api.kalshi.com/trade-api/v2"))
     fallback_base_url: str = field(default_factory=lambda: os.getenv(
-        "KALSHI_API_BASE_URL_FALLBACK", "https://trading-api.kalshi.com/trade-api/v2"))
+        "KALSHI_API_BASE_URL_FALLBACK", "https://api.elections.kalshi.com/trade-api/v2"))
     timeout_seconds: float = field(default_factory=lambda: float(os.getenv("KALSHI_TIMEOUT_SECONDS", "20")))
     max_retries: int = field(default_factory=lambda: int(os.getenv("KALSHI_MAX_RETRIES", "6")))
     # urllib3 backoff: sleep = backoff_seconds * (2 ** (attempt - 1))
