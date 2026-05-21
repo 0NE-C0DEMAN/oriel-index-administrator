@@ -46,43 +46,62 @@ class PolymarketClient:
             return self._sample_contracts(valuation_timestamp), "FALLBACK"
 
     def _fetch_markets(self) -> list[dict[str, Any]]:
-        """Fetch markets from the Gamma API.
+        """Fetch markets from the Gamma API, paginating each scan.
 
-        Makes two calls: one general scan (trending markets) and one targeted
-        scan using the Macro Indicators tag (tag_id=102000) where Polymarket
-        lists CPI/inflation threshold contracts. Results are merged and
-        deduplicated by market slug.
+        Two scans are run:
+          1. Targeted scan of the Macro Indicators tag (tag_id=102000),
+             where Polymarket lists CPI/inflation threshold contracts.
+          2. General trending scan, as a catch-all for any CPI/inflation
+             markets that are not tagged into Macro Indicators.
+
+        Polymarket's gamma API caps a single response at 100 markets
+        regardless of the ``limit`` query parameter, so we paginate via
+        ``offset`` and stop when the page comes back short. Without this
+        pagination, monthly U.S. CPI threshold contracts (e.g. the May
+        2026 set ending 2026-06-10) live past offset 100 in the Macro
+        tag and never reach the normalizer, which made the venue look
+        like it only carried the annual Dec 2026 contracts.
         """
         seen_slugs: set[str] = set()
         all_markets: list[dict[str, Any]] = []
 
-        for params in [
-            # Targeted: Macro Indicators tag — where CPI/inflation markets live
-            {"limit": self.config.max_markets_scan, "closed": "false", "tag_id": self.config.macro_indicators_tag_id},
-            # General trending scan (fallback for any CPI markets that aren't tagged)
-            {"limit": self.config.max_markets_scan, "closed": "false"},
-        ]:
-            resp = self.session.get(
-                f"{self.config.gamma_api_url}/markets",
-                params=params,
-                timeout=self.config.request_timeout_seconds,
-            )
-            resp.raise_for_status()
-            payload = resp.json()
-            markets: list[dict[str, Any]] = []
-            if isinstance(payload, dict):
-                for key in ("data", "markets"):
-                    if isinstance(payload.get(key), list):
-                        markets = payload[key]
-                        break
-            elif isinstance(payload, list):
-                markets = payload
+        page_size = max(1, min(int(self.config.max_markets_scan), 100))
+        max_pages = max(1, int(self.config.max_pages_per_scan))
 
-            for m in markets:
-                slug = str(m.get("slug") or m.get("market_slug") or m.get("id") or "")
-                if slug and slug not in seen_slugs:
-                    seen_slugs.add(slug)
-                    all_markets.append(m)
+        for base_params in [
+            # Targeted: Macro Indicators tag — where CPI/inflation markets live.
+            {"closed": "false", "tag_id": self.config.macro_indicators_tag_id},
+            # General trending scan — catches any CPI markets not in the tag.
+            {"closed": "false"},
+        ]:
+            for page in range(max_pages):
+                params = {**base_params, "limit": page_size, "offset": page * page_size}
+                resp = self.session.get(
+                    f"{self.config.gamma_api_url}/markets",
+                    params=params,
+                    timeout=self.config.request_timeout_seconds,
+                )
+                resp.raise_for_status()
+                payload = resp.json()
+                markets: list[dict[str, Any]] = []
+                if isinstance(payload, dict):
+                    for key in ("data", "markets"):
+                        if isinstance(payload.get(key), list):
+                            markets = payload[key]
+                            break
+                elif isinstance(payload, list):
+                    markets = payload
+
+                for m in markets:
+                    slug = str(m.get("slug") or m.get("market_slug") or m.get("id") or "")
+                    if slug and slug not in seen_slugs:
+                        seen_slugs.add(slug)
+                        all_markets.append(m)
+
+                # Stop paginating when the page is short -- API has no more
+                # results for this query.
+                if len(markets) < page_size:
+                    break
 
         if not all_markets:
             raise ValueError("Unexpected Polymarket markets payload — no markets returned from either scan")

@@ -9,7 +9,15 @@ class PolymarketConfig:
     gamma_api_url: str = os.getenv("POLYMARKET_GAMMA_API_URL", "https://gamma-api.polymarket.com")
     data_api_url: str = os.getenv("POLYMARKET_DATA_API_URL", "https://data-api.polymarket.com")
     request_timeout_seconds: int = int(os.getenv("POLYMARKET_REQUEST_TIMEOUT_SECONDS", "20"))
-    max_markets_scan: int = int(os.getenv("POLYMARKET_MAX_MARKETS_SCAN", "250"))
+    # Page size for each /markets scan. Polymarket's gamma API caps a
+    # single response at ~100 markets regardless of `limit`, so we keep
+    # this at <=100 and paginate via offset (see max_pages_per_scan).
+    max_markets_scan: int = int(os.getenv("POLYMARKET_MAX_MARKETS_SCAN", "100"))
+    # Maximum number of offset pages to walk per scan before stopping.
+    # 5 pages * 100 markets = 500 markets per scan, which comfortably
+    # covers the Macro Indicators tag's current ~250-market footprint
+    # without hammering the API on every cache miss.
+    max_pages_per_scan: int = int(os.getenv("POLYMARKET_MAX_PAGES_PER_SCAN", "5"))
     max_curve_points: int = int(os.getenv("POLYMARKET_MAX_CURVE_POINTS", "6"))
 
     # Discovery / parsing
