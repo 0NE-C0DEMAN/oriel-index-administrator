@@ -54,3 +54,4 @@ class CurvePackage:
     venue: str = "ForecastEx"
     methodology: str = "v0.3.0-forecastex-live"
     sample_mode: bool = False
+    contracts: list[ForecastExContract] = field(default_factory=list)

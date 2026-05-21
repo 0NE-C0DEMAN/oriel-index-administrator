@@ -106,6 +106,12 @@ class ForecastExClient:
             # to focus on CPI-style products.
             if "CPI" not in text:
                 continue
+            # US YoY headline CPI only: matches Kalshi (KXCPI, US) and Polymarket (US CPI).
+            # Excludes CACPI (Canada), HKCPI (Hong Kong), CPIJP (Japan), CPIIN (India),
+            # CPISP (Spain), SGCPI (Singapore), CPIGE (Germany), CPIC (US Core, different series).
+            pc_upper = product_code.upper().strip()
+            if not pc_upper.startswith("CPIY_"):
+                continue
 
             release_month = self._extract_release_month(text) or "Unknown"
             threshold = self._extract_threshold(event_question) or self._extract_threshold(product_code)
@@ -174,8 +180,16 @@ class ForecastExClient:
 
     @staticmethod
     def _extract_threshold(text: str) -> Optional[float]:
+        # Primary (Chris): number followed by '%' (e.g. "Will CPI exceed 4%?")
         match = re.search(r'([0-9]+(?:\.[0-9]+)?)\s*%', text)
-        return float(match.group(1)) if match else None
+        if match:
+            return float(match.group(1))
+        # Fallback: product-code format CPIY_MMYY_N (e.g. CPIY_0526_4, CPIY_0626_4.8).
+        # Live pairs feed uses this when event_question is empty.
+        match = re.search(r'_\d{4}_(\d+(?:\.\d+)?)$', text)
+        if match:
+            return float(match.group(1))
+        return None
 
     @staticmethod
     def _extract_release_month(text: str) -> Optional[str]:
@@ -208,13 +222,26 @@ class ForecastExClient:
             return None
 
     def _sample_contracts(self, valuation_timestamp: datetime) -> list[ForecastExContract]:
+        # Each row: (contract_id, question, release_month, threshold_pct, yes_mid, volume, oi).
+        # The front maturity (May 2026) carries a five-rung threshold ladder so
+        # the Front-maturity distribution chart can build a proper bucket
+        # distribution even in fallback / sample mode. Out-month entries stay
+        # single-threshold to keep the sample compact.
         sample_rows = [
-            ("CPIY_0326", "Will the year-over-year change in the US Consumer Price Index exceed 0.9% in Mar 2026?", "Mar 2026", 0.91, 1200, 6400),
-            ("CPIY_0426", "Will the year-over-year change in the US Consumer Price Index exceed 0.7% in Apr 2026?", "Apr 2026", 0.67, 980, 5200),
-            ("CPIY_0526", "Will the year-over-year change in the US Consumer Price Index exceed 0.3% in May 2026?", "May 2026", 0.32, 870, 4800),
-            ("CPIY_0626", "Will the year-over-year change in the US Consumer Price Index exceed 0.2% in Jun 2026?", "Jun 2026", 0.21, 720, 3900),
-            ("CPIY_0726", "Will the year-over-year change in the US Consumer Price Index exceed 0.2% in Jul 2026?", "Jul 2026", 0.24, 690, 3600),
-            ("CPIY_0826", "Will the year-over-year change in the US Consumer Price Index exceed 0.2% in Aug 2026?", "Aug 2026", 0.22, 650, 3400),
+            # Mar 2026 (front maturity) carries a five-rung threshold ladder so
+            # the Front-maturity distribution chart has bucket data even in
+            # fallback / sample mode. The mid closest to 0.50 (CPIY_0326_250)
+            # is the contract picked by the dedup step.
+            ("CPIY_0326_150", "Will the year-over-year change in the US Consumer Price Index exceed 1.5% in Mar 2026?", "Mar 2026", 1.5, 0.90, 880, 4750),
+            ("CPIY_0326_200", "Will the year-over-year change in the US Consumer Price Index exceed 2.0% in Mar 2026?", "Mar 2026", 2.0, 0.75, 910, 4820),
+            ("CPIY_0326_250", "Will the year-over-year change in the US Consumer Price Index exceed 2.5% in Mar 2026?", "Mar 2026", 2.5, 0.52, 940, 4880),
+            ("CPIY_0326_300", "Will the year-over-year change in the US Consumer Price Index exceed 3.0% in Mar 2026?", "Mar 2026", 3.0, 0.25, 830, 4650),
+            ("CPIY_0326_350", "Will the year-over-year change in the US Consumer Price Index exceed 3.5% in Mar 2026?", "Mar 2026", 3.5, 0.09, 720, 4310),
+            ("CPIY_0426", "Will the year-over-year change in the US Consumer Price Index exceed 0.7% in Apr 2026?", "Apr 2026", 0.7, 0.67, 980, 5200),
+            ("CPIY_0526", "Will the year-over-year change in the US Consumer Price Index exceed 0.3% in May 2026?", "May 2026", 0.3, 0.32, 870, 4800),
+            ("CPIY_0626", "Will the year-over-year change in the US Consumer Price Index exceed 0.2% in Jun 2026?", "Jun 2026", 0.2, 0.21, 720, 3900),
+            ("CPIY_0726", "Will the year-over-year change in the US Consumer Price Index exceed 0.2% in Jul 2026?", "Jul 2026", 0.2, 0.24, 690, 3600),
+            ("CPIY_0826", "Will the year-over-year change in the US Consumer Price Index exceed 0.2% in Aug 2026?", "Aug 2026", 0.2, 0.22, 650, 3400),
         ]
         return [
             ForecastExContract(
@@ -224,12 +251,12 @@ class ForecastExClient:
                 event_question=question,
                 release_month=release_month,
                 resolution_time=None,
-                threshold=value,
+                threshold=threshold,
                 side="YES",
-                bid=value,
-                ask=value,
-                last=value,
-                mid=value,
+                bid=mid,
+                ask=mid,
+                last=mid,
+                mid=mid,
                 open_interest=oi,
                 volume=volume,
                 coupon_rate=None,
@@ -237,5 +264,5 @@ class ForecastExClient:
                 valuation_timestamp=valuation_timestamp,
                 raw={"sample": True},
             )
-            for cid, question, release_month, value, volume, oi in sample_rows
+            for cid, question, release_month, threshold, mid, volume, oi in sample_rows
         ]

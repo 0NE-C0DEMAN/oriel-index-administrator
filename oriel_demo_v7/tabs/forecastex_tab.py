@@ -29,7 +29,8 @@ from ui.tables import (
     _plotly_desk_table,
     desk_table_content_height_px,
 )
-from ui.charts import make_forward_curve
+from ui.charts import make_forward_curve, make_distribution
+from venues._distribution import build_threshold_distribution
 
 
 @st.cache_data(show_spinner=False, ttl=600)
@@ -137,20 +138,46 @@ def render_forecastex_tab() -> None:
     _dislo_h = 179
     _chart_h = (_ip_h + 8 + _dislo_h) - 128
 
+    # Implied probability distribution from per-threshold contracts at the
+    # front release_month. ForecastEx CPIY contracts are "above threshold"
+    # binaries, so no direction inversion is needed.
+    _front_contracts = [
+        c for c in getattr(curve, "contracts", []) if c.release_month == front.release_month
+    ]
+    _dlabels, _dprobs, _dist_ev = build_threshold_distribution(
+        _front_contracts,
+        threshold_attr="threshold",
+        price_attr="mid",
+        direction_fn=None,
+    )
+
     left, right = st.columns([2, 1], gap="medium", vertical_alignment="top")
 
     with left:
         st.markdown('<span class="oriel-main-split-left" aria-hidden="true"></span>', unsafe_allow_html=True)
         fig_fwd   = make_forward_curve(_mats_s, _evs, _stds, "Implied CPI YoY (%)", chart_height=_chart_h)
-        _mats_f   = pd.Series(_mats[:1])
-        fig_front = make_forward_curve(_mats_f, _evs[:1], _stds[:1], "Implied CPI YoY (%)", chart_height=_chart_h)
+        fig_front = make_distribution(
+            _dlabels,
+            _dprobs,
+            expected_value=_dist_ev,
+            chart_height=_chart_h,
+        )
 
         tab_fx_curve, tab_fx_front = st.tabs(["Forward curve", "Front maturity"])
         with tab_fx_curve:
             st.caption("Term structure of implied CPI YoY (%) across maturities.")
             st.plotly_chart(fig_fwd, width="stretch", config=PLOTLY_CONFIG, key="fwd_curve_fx")
         with tab_fx_front:
-            st.caption(f"Front anchor point ({front.release_month}).")
+            if _dlabels:
+                st.caption(
+                    f"Implied probability distribution at front maturity ({front.release_month}), "
+                    f"derived from {len(_front_contracts)} threshold contracts."
+                )
+            else:
+                st.caption(
+                    f"Front anchor point ({front.release_month}). Distribution unavailable: "
+                    "front maturity has only a single threshold contract."
+                )
             st.plotly_chart(fig_front, width="stretch", config=PLOTLY_CONFIG, key="dist_front_fx")
 
     with right:

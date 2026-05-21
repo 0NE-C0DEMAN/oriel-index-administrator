@@ -343,8 +343,18 @@ class PolymarketClient:
 
     def _sample_contracts(self, valuation_timestamp: datetime) -> list[PolymarketContract]:
         # Sample spreads stay comfortably inside the Polymarket render gate so fallback mode always produces a full demo curve.
+        # The front maturity (May 2026) carries multiple threshold contracts so
+        # the Front-maturity distribution chart has bucket data even in fallback mode.
+        # Front-maturity threshold ladder (Mar 2026): P(>1.5%)=0.92, P(>2.0%)=0.78,
+        # P(>2.5%)=0.58, P(>3.0%)=0.25, P(>3.5%)=0.09. The 2.8% threshold sits
+        # closest to 0.50 in the original sample and remains so under the ladder
+        # so the deduplicated curve point is unchanged.
         rows = [
+            ("poly-cpi-mar-26-150", "Will March 2026 inflation be above 1.5%?", "Mar 2026", 1.5, 0.92, 0.919, 0.921, 580.0, 1180.0),
+            ("poly-cpi-mar-26-200", "Will March 2026 inflation be above 2.0%?", "Mar 2026", 2.0, 0.78, 0.779, 0.781, 660.0, 1290.0),
             ("poly-cpi-mar-26", "Will March 2026 inflation be above 2.8%?", "Mar 2026", 2.8, 0.58, 0.579, 0.581, 820.0, 1600.0),
+            ("poly-cpi-mar-26-300", "Will March 2026 inflation be above 3.0%?", "Mar 2026", 3.0, 0.25, 0.249, 0.251, 510.0, 1140.0),
+            ("poly-cpi-mar-26-350", "Will March 2026 inflation be above 3.5%?", "Mar 2026", 3.5, 0.09, 0.089, 0.091, 380.0, 980.0),
             ("poly-cpi-apr-26", "Will April 2026 inflation be above 2.6%?", "Apr 2026", 2.6, 0.54, 0.539, 0.541, 760.0, 1450.0),
             ("poly-cpi-may-26", "Will May 2026 inflation be above 2.5%?", "May 2026", 2.5, 0.50, 0.499, 0.501, 640.0, 1320.0),
             ("poly-cpi-jun-26", "Will June 2026 inflation be above 2.4%?", "Jun 2026", 2.4, 0.48, 0.479, 0.481, 590.0, 1240.0),

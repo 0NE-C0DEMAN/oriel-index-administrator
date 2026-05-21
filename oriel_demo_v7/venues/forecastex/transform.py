@@ -57,6 +57,7 @@ def score_and_package(
             publishable=False,
             publishability_reason="No eligible ForecastEx CPI contracts were found for the selected valuation timestamp.",
             sample_mode=source_status == "FALLBACK",
+            contracts=list(contracts),
         )
 
     expected_values = [c.expected_value for c in eligible if c.expected_value is not None]
@@ -92,6 +93,7 @@ def score_and_package(
         publishable=publishable,
         publishability_reason=reason,
         sample_mode=source_status == "FALLBACK",
+        contracts=list(contracts),
     )
 
 
