@@ -31,6 +31,14 @@ class PolymarketClient:
         try:
             markets = self._fetch_markets()
             contracts = self._normalize_markets(markets, valuation_timestamp)
+            # Distinguish a successful API call that returned no usable CPI
+            # contracts (LIVE_EMPTY) from a true populated live feed (LIVE).
+            # Pre-fix, both cases returned "LIVE" with an empty list, which
+            # made downstream feed badges read as "live" while showing zero
+            # Polymarket rows. FALLBACK stays reserved for actual fetch /
+            # normalization failure where the sample data is substituted.
+            if not contracts:
+                return [], "LIVE_EMPTY"
             return contracts, "LIVE"
         except Exception:
             if not self.config.allow_sample_fallback:
