@@ -128,7 +128,7 @@ def render_forecastex_tab() -> None:
     """, unsafe_allow_html=True)
 
     # ── Chart inputs ─────────────────────────────────────────────────────────
-    _mats  = pd.to_datetime([p.release_month + " 1" for p in curve.points])
+    _mats  = pd.to_datetime([p.release_month for p in curve.points], format="%b %Y", errors="coerce")
     _mats_s = pd.Series(_mats)
     _evs  = [p.implied_yoy for p in curve.points]
     _stds = [max(p.upper_band - p.implied_yoy, 0.0001) for p in curve.points]
