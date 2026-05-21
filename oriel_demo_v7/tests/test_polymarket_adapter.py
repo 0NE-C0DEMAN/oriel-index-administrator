@@ -87,3 +87,93 @@ def test_stale_quote_fails_render_and_publish():
     contract.quote_age_seconds = 2000
     contract.is_stale = True
     assert publishability_reason(contract, DEFAULT_CONFIG) == 'stale quote'
+
+
+# ---------------------------------------------------------------------------
+# Pagination — the gamma API caps a single /markets response at ~100 rows
+# regardless of `limit`. Without paging via `offset`, US CPI threshold
+# contracts past position 100 in the Macro Indicators tag (e.g. the entire
+# May 2026 monthly + annual ladder) are silently dropped. These tests pin
+# the pagination invariants so the client always offsets through every page
+# until the API returns short.
+# ---------------------------------------------------------------------------
+def test_fetch_markets_paginates_via_offset_and_stops_on_short_page(monkeypatch):
+    from venues.polymarket.client import PolymarketClient
+    from venues.polymarket.config import PolymarketConfig
+
+    captured: list[dict] = []
+
+    def fake_get(url, params=None, timeout=None):
+        captured.append(dict(params or {}))
+        offset = int((params or {}).get("offset", 0))
+        # Per scan: page 0 -> 100 markets, page 1 -> 100, page 2 -> 50 (short, stops loop)
+        page_index = offset // 100
+        if page_index == 0:
+            markets = [{"slug": f"m-{offset+i}", "id": offset + i} for i in range(100)]
+        elif page_index == 1:
+            markets = [{"slug": f"m-{offset+i}", "id": offset + i} for i in range(100)]
+        elif page_index == 2:
+            markets = [{"slug": f"m-{offset+i}", "id": offset + i} for i in range(50)]
+        else:
+            markets = []
+
+        class _Resp:
+            status_code = 200
+            def raise_for_status(self):
+                return None
+            def json(self):
+                return {"data": markets}
+
+        return _Resp()
+
+    cfg = PolymarketConfig()
+    client = PolymarketClient(cfg)
+    monkeypatch.setattr(client.session, "get", fake_get)
+
+    markets = client._fetch_markets()
+
+    # Two scans (Macro Indicators tag + general), each walking pages 0,1,2 until short.
+    # Distinct slugs per scan (offsets differ), so total = 250 + 250 = 500 deduped slugs.
+    # Actually both scans use the SAME offsets so slugs collide -> 250 deduped.
+    assert len(markets) == 250
+
+    # Verify offset progression was followed
+    offsets_used = sorted({c.get("offset", 0) for c in captured})
+    assert offsets_used == [0, 100, 200]
+
+    # Verify the two scans (with vs without tag_id) both ran
+    scan_kinds = {c.get("tag_id") for c in captured}
+    assert scan_kinds == {cfg.macro_indicators_tag_id, None}
+
+
+def test_fetch_markets_stops_paginating_when_first_page_is_short(monkeypatch):
+    """If the first page is already short (fewer than page_size markets),
+    we must not call the API again for that scan."""
+    from venues.polymarket.client import PolymarketClient
+    from venues.polymarket.config import PolymarketConfig
+
+    call_count = {"n": 0}
+
+    def fake_get(url, params=None, timeout=None):
+        call_count["n"] += 1
+        # Return a short page on the very first call
+        markets = [{"slug": f"m-{i}", "id": i} for i in range(7)]
+
+        class _Resp:
+            status_code = 200
+            def raise_for_status(self):
+                return None
+            def json(self):
+                return {"data": markets}
+
+        return _Resp()
+
+    client = PolymarketClient(PolymarketConfig())
+    monkeypatch.setattr(client.session, "get", fake_get)
+
+    markets = client._fetch_markets()
+
+    # Two scans, each stops after the first short page -> 2 total HTTP calls
+    assert call_count["n"] == 2
+    # 7 unique slugs (second scan dedups against the first)
+    assert len(markets) == 7

@@ -27,6 +27,8 @@ from ui.charts import _layout
 from analytics.tier1_fv_engine import (
     BlendMetadata, Tier1Snapshot, build_forecastex_curve_from_constituents,
     build_kalshi_curve_from_constituents, build_tier1_snapshot, blend_curves,
+    build_cme_curve_from_constituents, build_cme_shadow_blend_diagnostics,
+    cme_package_to_constituents,
     load_tier1_constituents, load_tier1_curve,
     VenueCurvePoint, BlendedReferencePoint, VenueWeightDiagnostics,
     VenueFreshnessSummary, BlendedFreshnessSummary,
@@ -38,6 +40,7 @@ from analytics.tier1_fv_engine import (
     compute_enhanced_publishability, generate_trade_ideas,
 )
 from analytics.cpi_basis_diagnostics import build_diagnostics
+from venues.cme import CMEClient, CMEConfig, score_and_package
 
 
 _TIER1_DATA_DIR = PROJECT_ROOT / "data"
@@ -90,6 +93,33 @@ def _cached_tier1_curves():
     prior_blended_curve, prior_smoothing = smooth_reference_curve(
         prior_blended_curve, pd.concat([kalshi_pri_const, forecastex_pri_const], ignore_index=True)
     )
+    cme_shadow = None
+    try:
+        cme_config = CMEConfig(source_mode="proxy")
+        cme_contracts, cme_status = CMEClient(cme_config).fetch_contracts()
+        cme_package = score_and_package(cme_contracts, cme_status, cme_config)
+        cme_constituents = cme_package_to_constituents(
+            cme_package,
+            config=cme_config,
+            valuation_month=current_blended_curve["target_month"].min(),
+        )
+        cme_curve = build_cme_curve_from_constituents(cme_constituents)
+        cme_shadow = build_cme_shadow_blend_diagnostics(
+            current_blended_curve,
+            kalshi_curve,
+            forecastex_curve,
+            cme_curve,
+            kalshi_weight=current_k_wt,
+            forecastex_weight=current_f_wt,
+            kalshi_eligible=current_k_diag.eligible,
+            forecastex_eligible=current_f_diag.eligible,
+            cme_eligible=cme_package.publishable,
+            cme_source_status=cme_package.source_status,
+            dislocation_constituents=pd.concat([kalshi_cur_const, forecastex_cur_const], ignore_index=True),
+            smoothing_constituents=pd.concat([kalshi_cur_const, forecastex_cur_const, cme_constituents], ignore_index=True),
+        )
+    except Exception as exc:
+        cme_shadow = {"error": str(exc)}
 
     return {
         "kalshi_curve": kalshi_curve,
@@ -104,6 +134,7 @@ def _cached_tier1_curves():
         "forecastex_diag": current_f_diag,
         "smoothing_diag": current_smoothing,
         "prior_smoothing_diag": prior_smoothing,
+        "cme_shadow": cme_shadow,
     }
 
 
@@ -774,6 +805,65 @@ def render_perp_readiness_tab() -> None:
         """, unsafe_allow_html=True)
 
     # ── Distribution / Confidence ────────────────────────────────────────────
+    cme_shadow = tier1_bundle.get("cme_shadow")
+    st.markdown("<div class='shdr oriel-section-gap'>CME Proxy / Shadow Blend Impact</div>", unsafe_allow_html=True)
+    if isinstance(cme_shadow, dict) and cme_shadow.get("error"):
+        st.markdown(
+            f"<div class='note-box' style='font-size:0.72rem'>"
+            f"<strong>CME proxy unavailable:</strong> {cme_shadow['error']}. "
+            f"Current governed blend remains Kalshi + ForecastEx.</div>",
+            unsafe_allow_html=True,
+        )
+    elif cme_shadow is not None:
+        _cme_summary = cme_shadow.summary
+        _cme_cols = st.columns(4, gap="small")
+        _cme_kpis = [
+            ("Proxy Status", _cme_summary.status.upper(), "Interim proxy"),
+            ("Avg Shift", f"{_cme_summary.avg_abs_curve_shift_bp:.1f} bp", "vs current governed"),
+            ("Max Shift", f"{_cme_summary.max_abs_curve_shift_bp:.1f} bp", "maturity impact"),
+            ("CME Eff. Wt", f"{_cme_summary.cme_effective_aggregate_weight_pct:.1f}%", "shadow only"),
+        ]
+        for _col, (_label, _value, _hint) in zip(_cme_cols, _cme_kpis):
+            with _col:
+                st.markdown(
+                    f"<div class='mini-card'><div class='kpi-micro'>{_label}</div>"
+                    f"<div class='kpi-value' style='color:{GOLD};'>{_value}</div>"
+                    f"<div style='font-size:0.66rem;color:{TEXT_MUTED};'>{_hint}</div></div>",
+                    unsafe_allow_html=True,
+                )
+        _impact = cme_shadow.impact_by_maturity.copy()
+        if not _impact.empty:
+            _impact["target_month"] = pd.to_datetime(_impact["target_month"]).dt.strftime("%Y-%m")
+            _impact_show = _impact.rename(columns={
+                "target_month": "Month",
+                "days_from_valuation": "Days",
+                "current_governed_expected_yoy_pct": "Current YoY",
+                "shadow_cme_expected_yoy_pct": "CME Shadow YoY",
+                "curve_shift_bp": "Shift bp",
+                "cme_effective_weight_pct": "CME Wt",
+                "source_count": "Sources",
+                "source_dispersion_bp": "Dispersion bp",
+            })
+            for _col_name in ["Current YoY", "CME Shadow YoY"]:
+                _impact_show[_col_name] = _impact_show[_col_name].map(lambda v: f"{v:.4f}" if pd.notna(v) else "n/a")
+            _impact_show["Shift bp"] = _impact_show["Shift bp"].map(lambda v: f"{v:.1f}" if pd.notna(v) else "n/a")
+            _impact_show["CME Wt"] = _impact_show["CME Wt"].map(lambda v: f"{v:.1f}%" if pd.notna(v) else "0.0%")
+            _impact_show["Dispersion bp"] = _impact_show["Dispersion bp"].map(lambda v: f"{v:.1f}" if pd.notna(v) else "n/a")
+            _impact_h = DESK_TABLE_HEADER_PX + len(_impact_show) * DESK_TABLE_ROW_PX + DESK_TABLE_PAD_PX
+            _impact_fig = _plotly_desk_table(
+                _impact_show[["Month", "Days", "Current YoY", "CME Shadow YoY", "Shift bp", "CME Wt", "Sources", "Dispersion bp"]],
+                gold_column="Shift bp",
+            )
+            _impact_fig.update_layout(height=_impact_h)
+            st.plotly_chart(_impact_fig, use_container_width=True, config=PLOTLY_CONFIG, theme=None, key="cme_shadow_impact_tbl", height=_impact_h)
+        st.markdown(
+            f"<div class='note-box' style='font-size:0.71rem'>"
+            f"CME is shown as a <strong>prospective governed CPI curve constituent</strong> through interim proxy mode. "
+            f"The official governed curve remains Kalshi + ForecastEx; Polymarket remains diagnostic/dislocation-only. "
+            f"Final CME licensed-feed promotion remains a follow-on governance step.</div>",
+            unsafe_allow_html=True,
+        )
+
     st.markdown("<div class='shdr oriel-section-gap'>Distribution / Confidence</div>", unsafe_allow_html=True)
     _dc_left, _dc_right = st.columns([1.3, 1], gap="medium")
     with _dc_left:

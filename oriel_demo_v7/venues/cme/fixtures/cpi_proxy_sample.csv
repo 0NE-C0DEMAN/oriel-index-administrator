@@ -1,0 +1,5 @@
+contract_id,product_code,event_description,reference_month,threshold,direction,side,bid,ask,last,volume,open_interest,quote_timestamp,source_timestamp,settlement_source,proxy_source
+CME-PROXY-CPI-JUN26-ABOVE-300,CPI-JUN26,June 2026 CPI-U YoY will be above 3.00%,2026-06,3.00%,above,YES,47,53,0.51,"1,250","6,400",2026-05-18T14:29:55Z,2026-05-18T14:30:00Z,BLS CPI-U initial release,fixture-backed interim proxy
+CME-PROXY-CPI-JUL26-ABOVE-295,CPI-JUL26,July 2026 CPI-U YoY will be above 2.95%,2026-07,2.95%,above,YES,38,44,0.40,960,"5,900",2026-05-18T14:29:55Z,2026-05-18T14:30:00Z,BLS CPI-U initial release,fixture-backed interim proxy
+CME-PROXY-CPI-SEP26-ABOVE-325,CPI-SEP26,September 2026 CPI-U YoY will be above 3.25%,Sep 2026,3.25%,above,YES,41,47,0.45,980,"5,200",2026-05-18T14:29:55Z,2026-05-18T14:30:00Z,BLS CPI-U initial release,fixture-backed interim proxy
+CME-PROXY-CPI-DEC26-BELOW-275,CPI-DEC26,December 2026 CPI-U YoY will be below 2.75%,2026DEC,2.75%,below,YES,18,24,0.20,720,"3,900",2026-05-18T14:29:55Z,2026-05-18T14:30:00Z,BLS CPI-U initial release,fixture-backed interim proxy

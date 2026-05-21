@@ -15,6 +15,7 @@ from tabs.perp_readiness_tab import render_perp_readiness_tab
 from tabs.cms_tab import render_cms_lag_engine_tab
 from tabs.parity_tab import render_parity_tab
 from tabs.index_admin_tab import render_index_admin_tab
+from tabs.medical_basis_tab import render_medical_basis_tab
 
 __all__ = [
     "load_live_cpi_payload",
@@ -26,4 +27,5 @@ __all__ = [
     "render_cms_lag_engine_tab",
     "render_parity_tab",
     "render_index_admin_tab",
+    "render_medical_basis_tab",
 ]

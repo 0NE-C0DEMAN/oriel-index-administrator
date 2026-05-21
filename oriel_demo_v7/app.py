@@ -50,6 +50,12 @@ try:
 except Exception:
     TIER1_AVAILABLE = False
 
+try:
+    import analytics.medical_basis_contract  # noqa: F401
+    MEDICAL_BASIS_AVAILABLE = True
+except Exception:
+    MEDICAL_BASIS_AVAILABLE = False
+
 # ── UI infrastructure ─────────────────────────────────────────────────────────
 from ui.tokens import LIVE_TOGGLE_WIDGET_KEY
 from ui.css import inject_css
@@ -81,6 +87,7 @@ _TAB_META = {
     "poly":   ("Oriel CPI Forward Index",                "Polymarket-style threshold contracts"),
     "perp":   ("Oriel CPI Basis",                        "Tier 1 · Spot / FV / Carry / Basis"),
     "cms":    ("Oriel Healthcare Reference",             "Healthcare cost translation layer"),
+    "med_basis": ("ForecastEx Medical Basis",             "Medical inflation vs. CPI spread contracts"),
     "parity": ("OTC Parity Validation",                  "Benchmark gate · OTC CPI swap curves"),
 }
 
@@ -112,20 +119,22 @@ if active_view == 'index_admin':
     render_index_admin_tab()
 else:
     # ── Tab definitions ───────────────────────────────────────────────────────
-    tab_hc, tab_cpi, tab_fx, tab_poly, tab_perp, tab_cms, tab_parity = st.tabs([
+    tab_hc, tab_cpi, tab_fx, tab_poly, tab_perp, tab_cms, tab_med_basis, tab_parity = st.tabs([
         "CareFi Healthcare Trend Index",
         "Oriel CPI Forward Index (Kalshi-style)",
         "Oriel CPI Forward Index (ForecastEx-style)",
         "Oriel CPI Forward Index (Polymarket-style)",
         "Oriel CPI Basis",
         "Oriel Healthcare Reference",
+        "ForecastEx Medical Basis",
         "OTC Parity Validation",
     ])
 
     # ── Tab routing ───────────────────────────────────────────────────────────
     from tabs import (
         render_index, render_forecastex_tab, render_polymarket_tab,
-        render_perp_readiness_tab, render_cms_lag_engine_tab, render_parity_tab,
+        render_perp_readiness_tab, render_cms_lag_engine_tab,
+        render_medical_basis_tab, render_parity_tab,
     )
 
     with tab_hc:
@@ -166,6 +175,12 @@ else:
 
     with tab_cms:
         render_cms_lag_engine_tab()
+
+    with tab_med_basis:
+        if MEDICAL_BASIS_AVAILABLE:
+            render_medical_basis_tab()
+        else:
+            st.warning("Medical basis contract module not found. Place medical_basis_contract.py in the analytics directory.")
 
     with tab_parity:
         if PARITY_AVAILABLE:

@@ -1,0 +1,55 @@
+{
+  "records": [
+    {
+      "contract_id": "CME-CPI-JUN26-ABOVE-300",
+      "product_code": "CPI-JUN26",
+      "event_description": "June 2026 CPI-U YoY will be above 3.00%",
+      "reference_month": "2026-06",
+      "threshold": "3.00%",
+      "direction": "above",
+      "side": "YES",
+      "bid": "47",
+      "ask": "53",
+      "last": "0.51",
+      "volume": "1,250",
+      "open_interest": "6,400",
+      "quote_timestamp": "2026-05-18T14:29:55Z",
+      "as_of": "2026-05-18T14:30:00Z",
+      "settlement_source": "BLS CPI-U initial release"
+    },
+    {
+      "contract_id": "CME-CPI-SEP26-ABOVE-325",
+      "product_code": "CPI-SEP26",
+      "event_description": "September 2026 CPI-U YoY will be above 3.25%",
+      "reference_month": "Sep 2026",
+      "threshold": 3.25,
+      "direction": "above",
+      "side": "YES",
+      "bid": 0.41,
+      "ask": 0.47,
+      "last": 0.45,
+      "volume": 980,
+      "open_interest": 5200,
+      "quote_timestamp": "2026-05-18T14:29:55Z",
+      "as_of": "2026-05-18T14:30:00Z",
+      "settlement_source": "BLS CPI-U initial release"
+    },
+    {
+      "contract_id": "CME-CPI-DEC26-BELOW-275",
+      "product_code": "CPI-DEC26",
+      "event_description": "December 2026 CPI-U YoY will be below 2.75%",
+      "reference_month": "2026DEC",
+      "threshold": "2.75%",
+      "direction": "below",
+      "side": "YES",
+      "bid": 0.18,
+      "ask": 0.24,
+      "last": 0.2,
+      "volume": 720,
+      "open_interest": 3900,
+      "quote_timestamp": "2026-05-18T14:29:55Z",
+      "as_of": "2026-05-18T14:30:00Z",
+      "settlement_source": "BLS CPI-U initial release"
+    }
+  ]
+}

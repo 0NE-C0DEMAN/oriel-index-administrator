@@ -1,6 +1,8 @@
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import asdict, dataclass, field
+from enum import Enum
+from typing import Any
 
 import numpy as np
 import pandas as pd
@@ -18,6 +20,7 @@ THREE_MONTH_DAYS = 90
 SIX_MONTH_DAYS = 180
 
 CURVE_VALUE_COLUMNS = ["expected_yoy_pct", "index_level", "std_dev_pct"]
+DEFAULT_CURVE_METHOD = "liquidity_weighted_monotone_linear"
 
 # ---------------------------------------------------------------------------
 # Hardening V1 config
@@ -45,6 +48,178 @@ class BlendMetadata:
     forecastex_eligible: bool
     weighting_method: str
     eligibility_rule: str
+
+
+@dataclass
+class MultiSourceBlendMetadata:
+    requested_weights: dict[str, float]
+    effective_weights: dict[str, float]
+    source_eligibility: dict[str, bool]
+    weighting_method: str
+    eligibility_rule: str
+    source_status: dict[str, str] = field(default_factory=dict)
+
+
+@dataclass
+class CMEShadowBlendSummary:
+    status: str
+    current_maturity_count: int
+    shadow_maturity_count: int
+    maturity_count_delta: int
+    cme_maturity_count: int
+    cme_source_coverage_pct: float
+    cme_effective_aggregate_weight_pct: float
+    avg_abs_curve_shift_bp: float
+    max_abs_curve_shift_bp: float
+    avg_abs_dislocation_current_bp: float | None = None
+    avg_abs_dislocation_shadow_bp: float | None = None
+    methodology_note: str = "CME proxy is evaluated as a prospective governed constituent; current governed curve remains Kalshi + ForecastEx."
+
+
+@dataclass
+class CMEShadowBlendResult:
+    current_curve: pd.DataFrame
+    shadow_curve: pd.DataFrame
+    cme_curve: pd.DataFrame
+    impact_by_maturity: pd.DataFrame
+    summary: CMEShadowBlendSummary
+    metadata: MultiSourceBlendMetadata
+
+
+class CurveMethod(str, Enum):
+    RAW_BLENDED_LINEAR = "raw_blended_linear"
+    LIQUIDITY_WEIGHTED_MONOTONE_LINEAR = "liquidity_weighted_monotone_linear"
+    LIQUIDITY_WEIGHTED_MONOTONE_SPLINE = "liquidity_weighted_monotone_spline"
+    NELSON_SIEGEL_PROXY = "nelson_siegel_proxy"
+
+
+@dataclass(frozen=True)
+class CurveMethodMetadata:
+    requested_method: str
+    resolved_method: str
+    fallback_applied: bool = False
+    fallback_reason: str | None = None
+
+    def to_dict(self) -> dict:
+        return asdict(self)
+
+
+@dataclass
+class CurveDiagnostics:
+    method_metadata: CurveMethodMetadata
+    input_anchor_count: int
+    warnings: list[str]
+    source_count: int | None = None
+    source_labels: list[str] = field(default_factory=list)
+    monotone_direction: str | None = None
+    coverage_ratio: float | None = None
+    max_residual_bp: float | None = None
+    rmse_bp: float | None = None
+
+    @property
+    def requested_method(self) -> str:
+        return self.method_metadata.requested_method
+
+    @property
+    def resolved_method(self) -> str:
+        return self.method_metadata.resolved_method
+
+    @property
+    def fallback_applied(self) -> bool:
+        return self.method_metadata.fallback_applied
+
+    @property
+    def fallback_reason(self) -> str | None:
+        return self.method_metadata.fallback_reason
+
+    def to_dict(self) -> dict:
+        return asdict(self)
+
+    def to_surface_diagnostics(self) -> dict[str, Any]:
+        """Return a diagnostics dict compatible with
+        :attr:`oriel.surfaces.schema.SurfaceOutput.diagnostics`.
+
+        ``SurfaceOutput.diagnostics`` is typed as ``dict[str, Any]``, so this
+        method emits the canonical surface-side keys consumers expect
+        (``method_requested``, ``method_used``, ``fallback_applied``,
+        ``fallback_reason``, ``input_points``, ``source_count``,
+        ``source_labels``) overlaid on top of the full :meth:`to_dict`
+        record.  The flat ``input_points`` mirrors the existing convention
+        used by ``oriel.surfaces.builders.SurfaceBuilder.fit``; the
+        original :class:`CurveDiagnostics` field names remain in the
+        dictionary so callers can still introspect the complete record.
+        """
+        out = self.to_dict()
+        out.update(
+            {
+                "method_requested": self.requested_method,
+                "method_used": self.resolved_method,
+                "fallback_applied": self.fallback_applied,
+                "fallback_reason": self.fallback_reason,
+                "input_points": self.input_anchor_count,
+                "source_count": self.source_count,
+                "source_labels": list(self.source_labels),
+            }
+        )
+        return out
+
+
+@dataclass
+class CurveConstructionResult:
+    curve: pd.DataFrame
+    anchors: pd.DataFrame
+    diagnostics: CurveDiagnostics
+    spot_index: float | None = None
+    fair_value_index: float | None = None
+    snapshot: "Tier1Snapshot | None" = None
+    blend_metadata: BlendMetadata | None = None
+    source_metadata: dict[str, object] = field(default_factory=dict)
+
+    @property
+    def method_metadata(self) -> CurveMethodMetadata:
+        return self.diagnostics.method_metadata
+
+    @property
+    def requested_method(self) -> str:
+        return self.diagnostics.requested_method
+
+    @property
+    def resolved_method(self) -> str:
+        return self.diagnostics.resolved_method
+
+    @property
+    def fallback_applied(self) -> bool:
+        return self.diagnostics.fallback_applied
+
+    @property
+    def fallback_reason(self) -> str | None:
+        return self.diagnostics.fallback_reason
+
+
+def resolve_curve_method(
+    requested_method: str | CurveMethod | None,
+    *,
+    default_method: str | CurveMethod = DEFAULT_CURVE_METHOD,
+    supported_methods: tuple[str | CurveMethod, ...] = tuple(CurveMethod),
+) -> CurveMethodMetadata:
+    requested = str(requested_method.value if isinstance(requested_method, CurveMethod) else requested_method or default_method)
+    default = str(default_method.value if isinstance(default_method, CurveMethod) else default_method)
+    supported = {str(m.value if isinstance(m, CurveMethod) else m) for m in supported_methods}
+
+    if requested in supported:
+        return CurveMethodMetadata(
+            requested_method=requested,
+            resolved_method=requested,
+            fallback_applied=False,
+            fallback_reason=None,
+        )
+
+    return CurveMethodMetadata(
+        requested_method=requested,
+        resolved_method=default,
+        fallback_applied=True,
+        fallback_reason=f"Requested curve method '{requested}' is not registered; using '{default}'.",
+    )
 
 
 @dataclass
@@ -131,6 +306,80 @@ def build_forecastex_curve_from_constituents(constituents: pd.DataFrame) -> pd.D
     return _aggregate_curve_from_constituents(constituents, "ForecastEx")
 
 
+def cme_package_to_constituents(
+    package: Any,
+    *,
+    config: Any | None = None,
+    valuation_month: Any | None = None,
+) -> pd.DataFrame:
+    """Convert normalized CME threshold contracts into Tier 1 constituents.
+
+    CME proxy contracts are binary threshold events, not exact CPI observations.
+    The interim demonstrability mapping converts midpoint probability into a
+    threshold-centered expected YoY proxy, direction-aware for above/below
+    contracts, then shifts from headline YoY threshold space into v7's CPI curve
+    convention using ``config.proxy_yoy_shift_pct``.  The source metadata keeps
+    the proxy status explicit so this cannot be confused with the final
+    licensed CME feed.
+    """
+    contracts = list(getattr(package, "contracts", []) or [])
+    if not contracts:
+        return pd.DataFrame(columns=[
+            "target_month", "days_from_valuation", "constituent_id", "contract_family",
+            "weight", "eligible", "expected_yoy_pct", "index_level", "std_dev_pct",
+            "source_status", "normalization_method", "settlement_source",
+        ])
+
+    months = [pd.Timestamp(contract.release_month).to_pydatetime().date().replace(day=1) for contract in contracts]
+    anchor = pd.Timestamp(valuation_month).date().replace(day=1) if valuation_month is not None else min(months)
+    probability_scale = float(getattr(config, "threshold_probability_scale_pct", 1.0) if config is not None else 1.0)
+    yoy_shift = float(getattr(config, "proxy_yoy_shift_pct", 2.5) if config is not None else 2.5)
+
+    rows: list[dict[str, Any]] = []
+    for contract in contracts:
+        probability = contract.expected_value if contract.expected_value is not None else contract.mid
+        threshold = contract.threshold
+        if probability is None or threshold is None:
+            expected_yoy = np.nan
+            eligible = False
+        else:
+            direction_sign = -1.0 if str(contract.direction).lower() == "below" else 1.0
+            raw_yoy = float(threshold) + direction_sign * (float(probability) - 0.5) * probability_scale
+            expected_yoy = raw_yoy - yoy_shift
+            eligible = bool(contract.publishable)
+        target_month = pd.Timestamp(contract.release_month).date().replace(day=1)
+        days = int((pd.Timestamp(target_month) - pd.Timestamp(anchor)).days)
+        liquidity = max(0.0, float(contract.liquidity_score or 0.0))
+        rows.append({
+            "target_month": pd.Timestamp(target_month),
+            "days_from_valuation": days,
+            "constituent_id": contract.contract_id,
+            "contract_family": "cme_proxy_threshold",
+            "weight": max(liquidity, 0.01),
+            "eligible": eligible,
+            "included_in_curve": eligible,
+            "expected_yoy_pct": round(float(expected_yoy), 4) if np.isfinite(expected_yoy) else np.nan,
+            "index_level": round(DEFAULT_BASE_INDEX + (float(expected_yoy) - 0.5), 4) if np.isfinite(expected_yoy) else np.nan,
+            "std_dev_pct": round(max(0.05, 0.30 * (1.0 - min(liquidity, 1.0)) + abs(float(probability or 0.5) - 0.5) * 0.20), 4),
+            "source_status": getattr(contract, "source_status", getattr(package, "source_status", "PROXY")),
+            "normalization_method": getattr(contract, "normalization_method", "cme_threshold_event_probability"),
+            "methodology_note": getattr(contract, "methodology_note", "Interim CME CPI proxy; final licensed feed pending."),
+            "settlement_source": contract.settlement_source,
+            "direction": contract.direction,
+            "threshold": contract.threshold,
+            "probability": probability,
+            "volume": contract.volume,
+            "open_interest": contract.open_interest,
+        })
+
+    out = pd.DataFrame(rows)
+    return out.dropna(subset=["expected_yoy_pct", "index_level"]).reset_index(drop=True)
+
+
+def build_cme_curve_from_constituents(constituents: pd.DataFrame) -> pd.DataFrame:
+    return _aggregate_curve_from_constituents(constituents, "CME")
+
+
 def compute_effective_blend(
     kalshi_weight: float,
     forecastex_weight: float,
@@ -199,6 +448,231 @@ def blend_curves(
     merged["publishable"] = bool(kalshi_eligible or forecastex_eligible)
 
     return merged[["target_month", "days_from_valuation", "expected_yoy_pct", "index_level", "std_dev_pct", "source", "kalshi_weight", "forecastex_weight", "publishable"]], meta
+
+
+def blend_curves_multi_source(
+    source_curves: dict[str, pd.DataFrame],
+    requested_weights: dict[str, float],
+    source_eligibility: dict[str, bool],
+    *,
+    source_status: dict[str, str] | None = None,
+) -> tuple[pd.DataFrame, MultiSourceBlendMetadata]:
+    """Blend any number of governed candidate source curves.
+
+    Existing two-source production behavior remains in :func:`blend_curves`.
+    This helper is used for shadow/candidate diagnostics such as CME inclusion.
+    Per maturity, weights are renormalized over sources that are both eligible
+    and present at that maturity.
+    """
+    frames: list[pd.DataFrame] = []
+    for source, curve in source_curves.items():
+        if curve is None or curve.empty:
+            continue
+        keep = curve[["target_month", "days_from_valuation", *CURVE_VALUE_COLUMNS]].copy()
+        keep["source_name"] = source
+        frames.append(keep)
+
+    metadata = MultiSourceBlendMetadata(
+        requested_weights={k: float(v) for k, v in requested_weights.items()},
+        effective_weights={k: 0.0 for k in requested_weights},
+        source_eligibility={k: bool(source_eligibility.get(k, False)) for k in requested_weights},
+        source_status=source_status or {},
+        weighting_method="Per-maturity eligible-source normalized weighted average",
+        eligibility_rule="Shadow blend only: ineligible or absent sources receive zero weight at that maturity; current governed blend is unchanged.",
+    )
+    if not frames:
+        return pd.DataFrame(columns=["target_month", "days_from_valuation", *CURVE_VALUE_COLUMNS, "source", "publishable"]), metadata
+
+    stacked = pd.concat(frames, ignore_index=True)
+    rows: list[dict[str, Any]] = []
+    aggregate_weights = {source: 0.0 for source in requested_weights}
+    n_rows = 0
+    for (target_month, days_from_valuation), grp in stacked.groupby(["target_month", "days_from_valuation"], sort=True):
+        eligible_sources = [
+            source for source in grp["source_name"].tolist()
+            if bool(source_eligibility.get(source, False)) and requested_weights.get(source, 0.0) > 0
+        ]
+        if not eligible_sources:
+            eligible_sources = [source for source in grp["source_name"].tolist() if requested_weights.get(source, 0.0) > 0]
+        raw_weights = {source: float(requested_weights.get(source, 0.0)) for source in eligible_sources}
+        total = sum(raw_weights.values())
+        if total <= 0:
+            raw_weights = {source: 1.0 for source in eligible_sources}
+            total = float(len(raw_weights))
+        weights = {source: raw / total for source, raw in raw_weights.items()}
+        by_source = {row["source_name"]: row for _, row in grp.iterrows()}
+        out: dict[str, Any] = {
+            "target_month": target_month,
+            "days_from_valuation": int(days_from_valuation),
+            "source": "Oriel CME Shadow Blend",
+            "publishable": any(bool(source_eligibility.get(source, False)) for source in eligible_sources),
+            "source_count": int(len(eligible_sources)),
+        }
+        values_by_source: dict[str, float] = {}
+        for col in CURVE_VALUE_COLUMNS:
+            out[col] = float(sum(weights[source] * float(by_source[source][col]) for source in weights))
+            for source in weights:
+                out[f"{source.lower()}_{col}"] = float(by_source[source][col])
+                if col == "expected_yoy_pct":
+                    values_by_source[source] = float(by_source[source][col])
+        for source in requested_weights:
+            w = float(weights.get(source, 0.0))
+            out[f"{source.lower()}_weight"] = w
+            aggregate_weights[source] += w
+        if values_by_source:
+            out["source_dispersion_bp"] = round(float(pd.Series(values_by_source).std(ddof=0) * 100.0), 2)
+        rows.append(out)
+        n_rows += 1
+
+    if n_rows:
+        metadata.effective_weights = {source: aggregate_weights[source] / n_rows for source in aggregate_weights}
+    return pd.DataFrame(rows).sort_values("days_from_valuation").reset_index(drop=True), metadata
+
+
+def build_cme_shadow_blend_diagnostics(
+    current_curve: pd.DataFrame,
+    kalshi_curve: pd.DataFrame,
+    forecastex_curve: pd.DataFrame,
+    cme_curve: pd.DataFrame,
+    *,
+    kalshi_weight: float,
+    forecastex_weight: float,
+    cme_weight: float = 0.20,
+    kalshi_eligible: bool = True,
+    forecastex_eligible: bool = True,
+    cme_eligible: bool = True,
+    cme_source_status: str = "PROXY",
+    dislocation_constituents: pd.DataFrame | None = None,
+    smoothing_constituents: pd.DataFrame | None = None,
+) -> CMEShadowBlendResult:
+    """Compare current governed blend with a CME-inclusive shadow blend.
+
+    ``current_curve`` is expected to be the governed/published-style curve
+    already used by the caller.  When ``smoothing_constituents`` are supplied,
+    the CME-inclusive shadow curve is passed through the same smoothing helper
+    before impact math is computed, so shifts represent CME inclusion rather
+    than a raw-vs-smoothed artifact.
+    """
+    current = current_curve.copy()
+    empty_meta = MultiSourceBlendMetadata(
+        requested_weights={"Kalshi": kalshi_weight, "ForecastEx": forecastex_weight, "CME": cme_weight},
+        effective_weights={"Kalshi": 0.0, "ForecastEx": 0.0, "CME": 0.0},
+        source_eligibility={"Kalshi": kalshi_eligible, "ForecastEx": forecastex_eligible, "CME": cme_eligible},
+        source_status={"CME": cme_source_status},
+        weighting_method="CME shadow blend unavailable",
+        eligibility_rule="Current governed curve preserved when CME proxy rows are unavailable.",
+    )
+    if cme_curve is None or cme_curve.empty or not cme_eligible:
+        summary = CMEShadowBlendSummary(
+            status="unavailable" if cme_curve is None or cme_curve.empty else "cme_ineligible",
+            current_maturity_count=int(len(current)),
+            shadow_maturity_count=int(len(current)),
+            maturity_count_delta=0,
+            cme_maturity_count=0 if cme_curve is None else int(len(cme_curve)),
+            cme_source_coverage_pct=0.0,
+            cme_effective_aggregate_weight_pct=0.0,
+            avg_abs_curve_shift_bp=0.0,
+            max_abs_curve_shift_bp=0.0,
+        )
+        return CMEShadowBlendResult(current, current.copy(), cme_curve.copy() if cme_curve is not None else pd.DataFrame(), pd.DataFrame(), summary, empty_meta)
+
+    base_total = max(float(kalshi_weight) + float(forecastex_weight), 1e-12)
+    non_cme_share = max(0.0, 1.0 - float(cme_weight))
+    requested = {
+        "Kalshi": non_cme_share * float(kalshi_weight) / base_total,
+        "ForecastEx": non_cme_share * float(forecastex_weight) / base_total,
+        "CME": max(0.0, float(cme_weight)),
+    }
+    shadow, metadata = blend_curves_multi_source(
+        {"Kalshi": kalshi_curve, "ForecastEx": forecastex_curve, "CME": cme_curve},
+        requested,
+        {"Kalshi": kalshi_eligible, "ForecastEx": forecastex_eligible, "CME": cme_eligible},
+        source_status={"CME": cme_source_status},
+    )
+    shadow_for_impact = shadow
+    if smoothing_constituents is not None and not smoothing_constituents.empty and not shadow.empty:
+        smooth_inputs = smoothing_constituents.copy()
+        if "included_in_curve" in smooth_inputs.columns:
+            if "eligible" in smooth_inputs.columns:
+                smooth_inputs["included_in_curve"] = smooth_inputs["included_in_curve"].fillna(smooth_inputs["eligible"])
+            smooth_inputs["included_in_curve"] = smooth_inputs["included_in_curve"].fillna(True).astype(bool)
+        shadow_for_impact, _ = smooth_reference_curve(shadow, smooth_inputs)
+        for col in ["cme_weight", "source_count", "source_dispersion_bp"]:
+            if col in shadow.columns and col not in shadow_for_impact.columns:
+                shadow_for_impact = shadow_for_impact.merge(
+                    shadow[["target_month", "days_from_valuation", col]],
+                    on=["target_month", "days_from_valuation"],
+                    how="left",
+                )
+    impact = _build_cme_shadow_impact_table(current, shadow_for_impact)
+    avg_current, avg_shadow = _compute_shadow_dislocation_impact(dislocation_constituents, current, shadow_for_impact)
+    cme_covered = int((shadow.get("cme_weight", pd.Series(dtype=float)).fillna(0.0) > 0).sum()) if not shadow.empty else 0
+    shifts = impact["curve_shift_bp"].abs() if not impact.empty else pd.Series(dtype=float)
+    summary = CMEShadowBlendSummary(
+        status="available",
+        current_maturity_count=int(len(current)),
+        shadow_maturity_count=int(len(shadow)),
+        maturity_count_delta=int(len(shadow) - len(current)),
+        cme_maturity_count=int(len(cme_curve)),
+        cme_source_coverage_pct=round(100.0 * cme_covered / max(len(shadow), 1), 2),
+        cme_effective_aggregate_weight_pct=round(float(metadata.effective_weights.get("CME", 0.0)) * 100.0, 2),
+        avg_abs_curve_shift_bp=round(float(shifts.mean()) if not shifts.empty else 0.0, 2),
+        max_abs_curve_shift_bp=round(float(shifts.max()) if not shifts.empty else 0.0, 2),
+        avg_abs_dislocation_current_bp=avg_current,
+        avg_abs_dislocation_shadow_bp=avg_shadow,
+    )
+    return CMEShadowBlendResult(current, shadow_for_impact, cme_curve.copy(), impact, summary, metadata)
+
+
+def _build_cme_shadow_impact_table(current_curve: pd.DataFrame, shadow_curve: pd.DataFrame) -> pd.DataFrame:
+    merged = current_curve[["target_month", "days_from_valuation", "expected_yoy_pct"]].merge(
+        shadow_curve[["target_month", "days_from_valuation", "expected_yoy_pct", "cme_weight", "source_count", "source_dispersion_bp"]],
+        on=["target_month", "days_from_valuation"],
+        how="outer",
+        suffixes=("_current", "_shadow"),
+    ).sort_values("days_from_valuation").reset_index(drop=True)
+    merged["current_governed_expected_yoy_pct"] = merged["expected_yoy_pct_current"]
+    merged["shadow_cme_expected_yoy_pct"] = merged["expected_yoy_pct_shadow"].fillna(merged["expected_yoy_pct_current"])
+    zero_cme = merged["cme_weight"].fillna(0.0).abs() < 1e-12
+    merged.loc[zero_cme, "shadow_cme_expected_yoy_pct"] = merged.loc[
+        zero_cme, "current_governed_expected_yoy_pct"
+    ]
+    merged["curve_shift_bp"] = (
+        (merged["shadow_cme_expected_yoy_pct"] - merged["current_governed_expected_yoy_pct"]) * 100.0
+    ).round(2)
+    merged["cme_effective_weight_pct"] = (merged["cme_weight"].fillna(0.0) * 100.0).round(2)
+    merged["source_count_delta"] = merged["source_count"].fillna(0).astype(int) - 2
+    return merged[[
+        "target_month",
+        "days_from_valuation",
+        "current_governed_expected_yoy_pct",
+        "shadow_cme_expected_yoy_pct",
+        "curve_shift_bp",
+        "cme_effective_weight_pct",
+        "source_count",
+        "source_count_delta",
+        "source_dispersion_bp",
+    ]]
+
+
+def _compute_shadow_dislocation_impact(
+    constituents: pd.DataFrame | None,
+    current_curve: pd.DataFrame,
+    shadow_curve: pd.DataFrame,
+) -> tuple[float | None, float | None]:
+    if constituents is None or constituents.empty:
+        return None, None
+    required = {"target_month", "expected_yoy_pct"}
+    if not required.issubset(constituents.columns):
+        return None, None
+    current_ref = current_curve[["target_month", "expected_yoy_pct"]].rename(columns={"expected_yoy_pct": "current_ref"})
+    shadow_ref = shadow_curve[["target_month", "expected_yoy_pct"]].rename(columns={"expected_yoy_pct": "shadow_ref"})
+    work = constituents.merge(current_ref, on="target_month", how="inner").merge(shadow_ref, on="target_month", how="inner")
+    if work.empty:
+        return None, None
+    current = (work["expected_yoy_pct"] - work["current_ref"]).abs() * 100.0
+    shadow = (work["expected_yoy_pct"] - work["shadow_ref"]).abs() * 100.0
+    return round(float(current.mean()), 2), round(float(shadow.mean()), 2)
 
 
 def compute_spot_index(curve: pd.DataFrame) -> float:
@@ -1110,6 +1584,17 @@ class SmoothingDiagnostics:
     max_residual_bp: float
     rmse_bp: float
     notes: list[str]
+    fallback_applied: bool = False
+    fallback_reason: str | None = None
+
+    @property
+    def method_metadata(self) -> CurveMethodMetadata:
+        return CurveMethodMetadata(
+            requested_method=self.method_requested,
+            resolved_method=self.method_used,
+            fallback_applied=self.fallback_applied,
+            fallback_reason=self.fallback_reason,
+        )
 
 
 @dataclass
@@ -1203,20 +1688,162 @@ def _weighted_isotonic(values: np.ndarray, weights: np.ndarray, increasing: bool
     return arr
 
 
+SPLINE_MIN_ANCHORS = 3
+SPLINE_TANGENT_DAMPING = 0.85
+SPLINE_SHAPE_TOLERANCE = 1e-10
+
+
+def _pchip_edge_tangent(h0: float, h1: float, m0: float, m1: float) -> float:
+    """One-sided three-point endpoint derivative with PCHIP shape safeguards.
+
+    Mirrors the de Boor / scipy ``PchipInterpolator`` edge formula:
+
+    * Estimate the endpoint derivative ``d`` from a non-centered 3-point
+      finite difference weighted by the local spacings ``h0`` and ``h1``.
+    * If ``d`` flips sign relative to the local slope ``m0`` (i.e. the
+      raw extrapolation points the wrong way), clamp ``d`` to zero so the
+      spline flattens at the boundary instead of swinging through it.
+    * If ``m0`` and ``m1`` disagree in sign (curvature reversal one step
+      in from the boundary) and ``|d|`` exceeds ``3|m0|``, clamp ``d`` to
+      ``3*m0`` to keep the cubic within the Fritsch-Carlson sufficient
+      monotonicity region.
+    """
+    d = ((2.0 * h0 + h1) * m0 - h0 * m1) / (h0 + h1)
+    if np.sign(d) != np.sign(m0):
+        return 0.0
+    if np.sign(m0) != np.sign(m1) and abs(d) > 3.0 * abs(m0):
+        return 3.0 * m0
+    return float(d)
+
+
+def _monotone_cubic_tangents(
+    x: np.ndarray,
+    y: np.ndarray,
+    *,
+    damping: float = SPLINE_TANGENT_DAMPING,
+) -> np.ndarray:
+    """Return PCHIP shape-preserving tangents (Fritsch-Carlson interior +
+    de Boor / scipy-style endpoints).
+
+    The curve engine uses this as an optional spline representation layered on
+    top of monotone-repaired anchors.  Interior tangents use Fritsch-Carlson's
+    weighted harmonic mean of neighboring slopes; endpoint tangents use the
+    PCHIP one-sided 3-point estimate with the standard shape safeguards (see
+    ``_pchip_edge_tangent``).  Tangents are then lightly damped so sparse
+    ladders do not overreact to local slope changes.
+    """
+    if len(x) != len(y):
+        raise ValueError("x and y must have the same length")
+    if len(x) < SPLINE_MIN_ANCHORS:
+        raise ValueError("monotone spline requires at least 3 anchors")
+    if not (np.all(np.isfinite(x)) and np.all(np.isfinite(y))):
+        raise ValueError("monotone spline inputs must be finite")
+
+    h = np.diff(x.astype(float))
+    if np.any(h <= 0):
+        raise ValueError("monotone spline requires strictly increasing maturities")
+    delta = np.diff(y.astype(float)) / h
+    tangents = np.zeros_like(y, dtype=float)
+    tangents[0] = _pchip_edge_tangent(h[0], h[1], delta[0], delta[1])
+    tangents[-1] = _pchip_edge_tangent(h[-1], h[-2], delta[-1], delta[-2])
+
+    for i in range(1, len(y) - 1):
+        if delta[i - 1] == 0.0 or delta[i] == 0.0 or np.sign(delta[i - 1]) != np.sign(delta[i]):
+            tangents[i] = 0.0
+        else:
+            w1 = 2.0 * h[i] + h[i - 1]
+            w2 = h[i] + 2.0 * h[i - 1]
+            tangents[i] = (w1 + w2) / ((w1 / delta[i - 1]) + (w2 / delta[i]))
+
+    tangents *= float(damping)
+    return tangents
+
+
+def _evaluate_monotone_cubic(
+    x: np.ndarray,
+    y: np.ndarray,
+    tangents: np.ndarray,
+    x_eval: np.ndarray,
+) -> np.ndarray:
+    """Evaluate a monotone cubic Hermite curve on an arbitrary grid."""
+    x = x.astype(float)
+    y = y.astype(float)
+    tangents = tangents.astype(float)
+    x_eval = np.asarray(x_eval, dtype=float)
+    out = np.empty_like(x_eval, dtype=float)
+
+    for j, xj in enumerate(x_eval):
+        if xj <= x[0]:
+            out[j] = y[0]
+            continue
+        if xj >= x[-1]:
+            out[j] = y[-1]
+            continue
+        i = int(np.searchsorted(x, xj) - 1)
+        h = x[i + 1] - x[i]
+        t = (xj - x[i]) / h
+        h00 = (2.0 * t**3) - (3.0 * t**2) + 1.0
+        h10 = (t**3) - (2.0 * t**2) + t
+        h01 = (-2.0 * t**3) + (3.0 * t**2)
+        h11 = (t**3) - (t**2)
+        out[j] = (
+            h00 * y[i]
+            + h10 * h * tangents[i]
+            + h01 * y[i + 1]
+            + h11 * h * tangents[i + 1]
+        )
+    return out
+
+
+def _validate_monotone_spline_shape(
+    x: np.ndarray,
+    y: np.ndarray,
+    *,
+    increasing: bool,
+) -> None:
+    """Raise if the optional spline representation is not shape-safe."""
+    tangents = _monotone_cubic_tangents(x, y)
+    grid = np.linspace(float(x[0]), float(x[-1]), max(25, len(x) * 8))
+    dense = _evaluate_monotone_cubic(x, y, tangents, grid)
+    if not np.all(np.isfinite(dense)):
+        raise ValueError("monotone spline produced non-finite values")
+    diffs = np.diff(dense)
+    if increasing and np.any(diffs < -SPLINE_SHAPE_TOLERANCE):
+        raise ValueError("monotone spline violated increasing shape constraint")
+    if (not increasing) and np.any(diffs > SPLINE_SHAPE_TOLERANCE):
+        raise ValueError("monotone spline violated decreasing shape constraint")
+
+
 def smooth_reference_curve(
     curve: pd.DataFrame,
     constituents: pd.DataFrame | None = None,
-    method: str = 'liquidity_weighted_monotone_linear',
+    method: str = DEFAULT_CURVE_METHOD,
     fallback_method: str = 'nelson_siegel_proxy',
 ) -> tuple[pd.DataFrame, SmoothingDiagnostics]:
     """Apply an explicit smoothing pass and return diagnostics.
 
-    Primary method: liquidity-weighted monotone linear smoothing.
-    Fallback method: low-order parametric proxy (quadratic fit labelled Nelson-Siegel proxy)
-    when coverage is sparse.
+    Default method remains liquidity-weighted monotone linear.  The optional
+    ``liquidity_weighted_monotone_spline`` method fits a shape-preserving
+    monotone cubic Hermite representation over monotone-repaired anchors while
+    keeping the current anchor-row return contract unchanged.  If spline
+    conditions are insufficient, the method falls back explicitly to monotone
+    linear through PR1's fallback metadata.
     """
+    method_resolution = resolve_curve_method(method)
+    resolved_method = method_resolution.resolved_method
     if curve.empty:
-        return curve.copy(), SmoothingDiagnostics(method, method, 'flat', 0, 0.0, 0.0, 0.0, ['Empty curve'])
+        return curve.copy(), SmoothingDiagnostics(
+            method_requested=method_resolution.requested_method,
+            method_used=resolved_method,
+            monotone_direction='flat',
+            anchor_count=0,
+            coverage_ratio=0.0,
+            max_residual_bp=0.0,
+            rmse_bp=0.0,
+            notes=['Empty curve'],
+            fallback_applied=method_resolution.fallback_applied,
+            fallback_reason=method_resolution.fallback_reason,
+        )
 
     work = curve.sort_values('days_from_valuation').reset_index(drop=True).copy()
     raw = work['expected_yoy_pct'].astype(float).to_numpy()
@@ -1231,18 +1858,43 @@ def smooth_reference_curve(
         coverage_ratio = 1.0
 
     direction = 'increasing' if raw[-1] >= raw[0] else 'decreasing'
-    notes = []
-    if len(work) < 4 or coverage_ratio < 0.60:
+    increasing = direction == 'increasing'
+    notes: list[str] = []
+    fallback_applied = method_resolution.fallback_applied
+    fallback_reason = method_resolution.fallback_reason
+
+    if resolved_method == CurveMethod.LIQUIDITY_WEIGHTED_MONOTONE_SPLINE.value:
+        monotone = _weighted_isotonic(raw, weights, increasing=increasing)
+        try:
+            if len(work) < SPLINE_MIN_ANCHORS:
+                raise ValueError(f'monotone spline requires at least {SPLINE_MIN_ANCHORS} distinct maturity anchors')
+            if len(np.unique(x)) != len(x):
+                raise ValueError('monotone spline requires distinct maturity anchors')
+            if coverage_ratio < 0.60:
+                raise ValueError('monotone spline requires at least 60% included maturity coverage')
+            _validate_monotone_spline_shape(x, monotone, increasing=increasing)
+            smoothed = monotone
+            method_used = CurveMethod.LIQUIDITY_WEIGHTED_MONOTONE_SPLINE.value
+            notes.append('Shape-preserving monotone cubic spline fitted over liquidity-weighted monotone anchors; anchor-row output contract retained.')
+        except ValueError as exc:
+            smoothed = 0.75 * monotone + 0.25 * raw
+            method_used = CurveMethod.LIQUIDITY_WEIGHTED_MONOTONE_LINEAR.value
+            fallback_applied = True
+            fallback_reason = f'Spline fallback to monotone linear: {exc}'
+            notes.append(fallback_reason)
+    elif len(work) < 4 or coverage_ratio < 0.60:
         deg = 2 if len(work) >= 3 else 1
         coeffs = np.polyfit(x, raw, deg=deg, w=np.sqrt(weights))
         smoothed = np.polyval(coeffs, x)
         method_used = fallback_method
-        notes.append('Sparse maturity coverage triggered parametric fallback.')
+        fallback_applied = True
+        fallback_reason = 'Sparse maturity coverage triggered parametric fallback.'
+        notes.append(fallback_reason)
     else:
-        smoothed = _weighted_isotonic(raw, weights, increasing=(direction == 'increasing'))
+        smoothed = _weighted_isotonic(raw, weights, increasing=increasing)
         # small linear blend back toward raw to preserve local shape without breaking monotonicity materially
         smoothed = 0.75 * smoothed + 0.25 * raw
-        method_used = method
+        method_used = resolved_method
         notes.append('Primary monotone smoother applied to liquidity-weighted anchors.')
 
     residual_bp = (raw - smoothed) * 100.0
@@ -1255,7 +1907,7 @@ def smooth_reference_curve(
     rmse_bp = float(np.sqrt(np.mean(np.square(residual_bp)))) if len(residual_bp) else 0.0
     max_residual_bp = float(np.max(np.abs(residual_bp))) if len(residual_bp) else 0.0
     diag = SmoothingDiagnostics(
-        method_requested=method,
+        method_requested=method_resolution.requested_method,
         method_used=method_used,
         monotone_direction=direction,
         anchor_count=int(len(work)),
@@ -1263,8 +1915,73 @@ def smooth_reference_curve(
         max_residual_bp=round(max_residual_bp, 2),
         rmse_bp=round(rmse_bp, 2),
         notes=notes,
+        fallback_applied=fallback_applied,
+        fallback_reason=fallback_reason,
     )
     return work, diag
+
+
+def build_curve_construction_result(
+    curve: pd.DataFrame,
+    *,
+    anchors: pd.DataFrame | None = None,
+    requested_method: str | CurveMethod | None = DEFAULT_CURVE_METHOD,
+    fv_horizon_days: int | None = None,
+    perp_basis_bp: float = 0.0,
+    blend_metadata: BlendMetadata | None = None,
+    source_metadata: dict[str, object] | None = None,
+    smoothing_diagnostics: SmoothingDiagnostics | None = None,
+) -> CurveConstructionResult:
+    """Package the existing curve output into a stable diagnostics contract.
+
+    This wrapper is intentionally read-only with respect to curve methodology: it
+    preserves the supplied curve dataframe and exposes method/fallback metadata
+    for downstream validation, UI, and future hardening packages.
+    """
+    method_metadata = (
+        smoothing_diagnostics.method_metadata
+        if smoothing_diagnostics is not None
+        else resolve_curve_method(requested_method)
+    )
+    warnings = list(smoothing_diagnostics.notes) if smoothing_diagnostics is not None else []
+    anchor_frame = anchors.copy() if anchors is not None else curve.copy()
+    source_labels = sorted(str(s) for s in anchor_frame["source"].dropna().unique()) if "source" in anchor_frame.columns else []
+    snapshot = None
+    fair_value_index = None
+    spot_index = None
+
+    if not curve.empty:
+        spot_index = compute_spot_index(curve)
+        if fv_horizon_days is not None:
+            fair_value_index = compute_fair_value(curve, fv_horizon_days)
+            snapshot = build_tier1_snapshot(
+                curve,
+                fv_horizon_days,
+                perp_basis_bp,
+                blend_metadata,
+            )
+
+    diagnostics = CurveDiagnostics(
+        method_metadata=method_metadata,
+        input_anchor_count=int(len(anchor_frame)),
+        warnings=warnings,
+        source_count=len(source_labels) if source_labels else None,
+        source_labels=source_labels,
+        monotone_direction=smoothing_diagnostics.monotone_direction if smoothing_diagnostics is not None else None,
+        coverage_ratio=smoothing_diagnostics.coverage_ratio if smoothing_diagnostics is not None else None,
+        max_residual_bp=smoothing_diagnostics.max_residual_bp if smoothing_diagnostics is not None else None,
+        rmse_bp=smoothing_diagnostics.rmse_bp if smoothing_diagnostics is not None else None,
+    )
+    return CurveConstructionResult(
+        curve=curve.copy(),
+        anchors=anchor_frame,
+        diagnostics=diagnostics,
+        spot_index=spot_index,
+        fair_value_index=fair_value_index,
+        snapshot=snapshot,
+        blend_metadata=blend_metadata,
+        source_metadata=dict(source_metadata or {}),
+    )
 
 
 def compute_weight_calibration_summary(
