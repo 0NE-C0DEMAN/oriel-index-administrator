@@ -63,7 +63,7 @@ def _build_front_distribution(pkg, *, direction_fn=None) -> Optional[Dict[str, A
     or None when the live ladder is too thin to bucket (< 2 unique YoY strikes).
     """
     try:
-        from venues._distribution import build_threshold_distribution  # type: ignore
+        from venues._distribution import build_threshold_distribution, parse_bucket_edges  # type: ignore
     except Exception:
         return None
     points = list(pkg.points or [])
@@ -87,7 +87,7 @@ def _build_front_distribution(pkg, *, direction_fn=None) -> Optional[Dict[str, A
         return None
     buckets = []
     for label, prob_pct in zip(labels, probs_pct):
-        lo, hi = _parse_bucket_edges(label)
+        lo, hi = parse_bucket_edges(label)
         mid = (lo + hi) / 2.0
         buckets.append({
             "label": label,
@@ -102,28 +102,6 @@ def _build_front_distribution(pkg, *, direction_fn=None) -> Optional[Dict[str, A
         "expected": float(ev) if ev is not None else float(front.implied_yoy),
         "buckets":  buckets,
     }
-
-
-def _parse_bucket_edges(label: str) -> tuple:
-    """Convert distribution-builder labels into numeric (lo, hi) edges that
-    DistributionChart's findIndex(b => ev >= lower && ev <= upper) can use."""
-    import re
-    s = (label or "").strip().replace("%", "")
-    if s.startswith("<"):
-        m = re.search(r"-?\d+(?:\.\d+)?", s[1:])
-        hi = float(m.group(0)) if m else 0.0
-        return (hi - 0.5, hi)
-    if s.startswith(">"):
-        m = re.search(r"-?\d+(?:\.\d+)?", s[1:])
-        lo = float(m.group(0)) if m else 0.0
-        return (lo, lo + 0.5)
-    m = re.match(r"^\s*(-?\d+(?:\.\d+)?)\s*-\s*(-?\d+(?:\.\d+)?)\s*$", s)
-    if m:
-        a, b = float(m.group(1)), float(m.group(2))
-        return (min(a, b), max(a, b))
-    m = re.search(r"-?\d+(?:\.\d+)?", s)
-    v = float(m.group(0)) if m else 0.0
-    return (v, v + 0.1)
 
 
 def _serialize_curve_package(pkg, *, sample_contracts=None, live_contracts=None) -> Dict[str, Any]:

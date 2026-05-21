@@ -58,7 +58,7 @@ def _build_front_distribution(pkg) -> Optional[Dict[str, Any]]:
     from pkg.contracts. Returns a dict shaped like the React `bucketSnapshots[0]`,
     or None when the live ladder is too thin to bucket."""
     try:
-        from venues._distribution import build_threshold_distribution  # type: ignore
+        from venues._distribution import build_threshold_distribution, parse_bucket_edges  # type: ignore
         from venues.polymarket import PolymarketClient  # type: ignore
     except Exception:
         return None
@@ -89,7 +89,7 @@ def _build_front_distribution(pkg) -> Optional[Dict[str, Any]]:
         return None
     buckets = []
     for label, prob_pct in zip(labels, probs_pct):
-        lo, hi = _parse_bucket_edges(label)
+        lo, hi = parse_bucket_edges(label)
         mid = (lo + hi) / 2.0
         buckets.append({
             "label": label,
@@ -104,26 +104,6 @@ def _build_front_distribution(pkg) -> Optional[Dict[str, Any]]:
         "expected": float(ev) if ev is not None else float(front.implied_yoy),
         "buckets":  buckets,
     }
-
-
-def _parse_bucket_edges(label: str):
-    import re
-    s = (label or "").strip().replace("%", "")
-    if s.startswith("<"):
-        m = re.search(r"-?\d+(?:\.\d+)?", s[1:])
-        hi = float(m.group(0)) if m else 0.0
-        return (hi - 0.5, hi)
-    if s.startswith(">"):
-        m = re.search(r"-?\d+(?:\.\d+)?", s[1:])
-        lo = float(m.group(0)) if m else 0.0
-        return (lo, lo + 0.5)
-    m = re.match(r"^\s*(-?\d+(?:\.\d+)?)\s*-\s*(-?\d+(?:\.\d+)?)\s*$", s)
-    if m:
-        a, b = float(m.group(1)), float(m.group(2))
-        return (min(a, b), max(a, b))
-    m = re.search(r"-?\d+(?:\.\d+)?", s)
-    v = float(m.group(0)) if m else 0.0
-    return (v, v + 0.1)
 
 
 def _serialize_curve_package(pkg) -> Dict[str, Any]:

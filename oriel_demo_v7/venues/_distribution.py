@@ -143,3 +143,33 @@ def build_threshold_distribution(
     probs = [round(p * 100.0 / total, 2) for p in probs]
     expected_value = sum(m * p for m, p in zip(midpoints, probs)) / 100.0
     return labels, probs, round(expected_value, 4)
+
+
+def parse_bucket_edges(label: str) -> tuple[float, float]:
+    """Convert a build_threshold_distribution bucket label back into numeric
+    (lo, hi) edges. Shared between the Streamlit chart code and the Redesign
+    React data-layer (forecastex_data, polymarket_data) so the edge
+    convention is defined once.
+
+      "<X%"      → (X - 0.5, X)        (lower-tail half-step)
+      ">X%"      → (X, X + 0.5)        (upper-tail half-step)
+      "A-B%"     → (min(A,B), max(A,B))
+      anything   → (v, v + 0.1) using the first number found
+    """
+    import re
+    s = (label or "").strip().replace("%", "")
+    if s.startswith("<"):
+        m = re.search(r"-?\d+(?:\.\d+)?", s[1:])
+        hi = float(m.group(0)) if m else 0.0
+        return (hi - 0.5, hi)
+    if s.startswith(">"):
+        m = re.search(r"-?\d+(?:\.\d+)?", s[1:])
+        lo = float(m.group(0)) if m else 0.0
+        return (lo, lo + 0.5)
+    m = re.match(r"^\s*(-?\d+(?:\.\d+)?)\s*-\s*(-?\d+(?:\.\d+)?)\s*$", s)
+    if m:
+        a, b = float(m.group(1)), float(m.group(2))
+        return (min(a, b), max(a, b))
+    m = re.search(r"-?\d+(?:\.\d+)?", s)
+    v = float(m.group(0)) if m else 0.0
+    return (v, v + 0.1)
