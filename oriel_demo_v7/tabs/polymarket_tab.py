@@ -158,33 +158,10 @@ def render_polymarket_tab() -> None:
         max_threshold=6.0,
     )
 
-    # When live Polymarket has fewer than 4 unique YoY thresholds at the
-    # front maturity, the bucket structure becomes degenerate (one huge
-    # lower-tail bucket plus thin sliver bars). Fall back to the sample
-    # front-maturity distribution so the front-maturity chart still renders
-    # a useful demo shape. The forward curve above stays live.
     _front_thresholds = sorted({
         float(c.threshold) for c in _front_contracts
         if c.threshold is not None and 1.0 <= float(c.threshold) <= 6.0
     })
-    _front_dist_is_sparse = len(_front_thresholds) < 4
-    if _front_dist_is_sparse:
-        _sample_client = PolymarketClient(POLY_CONFIG)
-        _sample_contracts = _sample_client._sample_contracts(datetime.now(_UTC))
-        _sample_pkg = poly_score_and_package(_sample_contracts, source_status="FALLBACK", config=POLY_CONFIG)
-        if _sample_pkg.points:
-            _sample_front = _sample_pkg.points[0]
-            _sample_front_contracts = [
-                c for c in _sample_pkg.contracts if c.release_month == _sample_front.release_month
-            ]
-            _dlabels, _dprobs, _dist_ev = build_threshold_distribution(
-                _sample_front_contracts,
-                threshold_attr="threshold",
-                price_attr="mid",
-                direction_fn=_poly_direction,
-                min_threshold=1.0,
-                max_threshold=6.0,
-            )
 
     left, right = st.columns([2, 1], gap="medium", vertical_alignment="top")
     with left:
@@ -201,21 +178,16 @@ def render_polymarket_tab() -> None:
             st.caption("Term structure of implied CPI YoY (%) across maturities.")
             st.plotly_chart(fig_fwd, width="stretch", config=PLOTLY_CONFIG, key="fwd_curve_poly")
         with tab_front:
-            if _dlabels and _front_dist_is_sparse:
-                st.caption(
-                    f"Implied probability distribution at front maturity ({front.release_month}). "
-                    f"Live ladder has only {len(_front_thresholds)} unique YoY thresholds; "
-                    "showing reference distribution from the sample ladder for shape."
-                )
-            elif _dlabels:
+            if _dlabels:
                 st.caption(
                     f"Implied probability distribution at front maturity ({front.release_month}), "
-                    f"derived from {len(_front_contracts)} threshold contracts."
+                    f"derived from {len(_front_contracts)} live threshold contracts "
+                    f"({len(_front_thresholds)} unique YoY strikes)."
                 )
             else:
                 st.caption(
                     f"Front anchor point ({front.release_month}). Distribution unavailable: "
-                    "front maturity has only a single threshold contract."
+                    "live ladder has fewer than two YoY thresholds at this maturity."
                 )
             st.plotly_chart(fig_front, width="stretch", config=PLOTLY_CONFIG, key="dist_front_poly")
 
