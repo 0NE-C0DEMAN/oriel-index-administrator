@@ -348,6 +348,18 @@ table { border-collapse: collapse; width: 100%; }
   white-space: nowrap;
 }
 
+/* Brand wordmark — quiet text sitting beside the logo + divider. Replaced
+   the old "Index Administrator" pill so the global shell does not box
+   Oriel into an admin console (per Ksenia's MVP-app-lock review). */
+.topnav-brand-wordmark {
+  font-size: 13px;
+  font-weight: 650;
+  letter-spacing: -0.005em;
+  color: var(--text);
+  white-space: nowrap;
+  opacity: 0.85;
+}
+
 /* Row 2: tab strip — Overview + 7 indices + Admin. Underline + soft
    accent-tinted background for the active tab. Its own scroll container
    so it never widens the page. */

@@ -1352,3 +1352,330 @@
 }
 .parity-metric-icon.pass { color: var(--success); }
 .parity-metric-icon.fail { color: var(--danger); }
+
+/* ==========================================================================
+   Overview view — 3-band MVP-app-lock layout (Ksenia)
+   Three sections: Core Oriel CPI Layer, Market Inputs & Validation,
+   Client Modules / Future Surfaces. Each band has a heading and a grid of
+   info cards (2 or 3 columns depending on band).
+   ========================================================================== */
+
+.overview-view { padding-top: 2px; }
+
+.overview-hero {
+  margin: 2px 4px 22px;
+  max-width: 920px;
+}
+.overview-hero-eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px 4px 8px;
+  background: var(--accent-soft);
+  border: 1px solid var(--accent-light);
+  border-radius: var(--r-full);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--accent);
+  margin-bottom: 10px;
+}
+.overview-hero-title {
+  font-size: 28px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  line-height: 1.12;
+  color: var(--text);
+  margin: 0 0 8px 0;
+}
+.overview-hero-sub {
+  font-size: 14px;
+  line-height: 1.6;
+  color: var(--text-muted);
+  margin: 0;
+}
+
+.overview-band {
+  margin: 0 4px 26px;
+}
+.overview-band-head {
+  margin-bottom: 12px;
+  display: flex;
+  align-items: baseline;
+  gap: 14px;
+  flex-wrap: wrap;
+}
+.overview-band-title {
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--text);
+}
+.overview-band-sub {
+  font-size: 12.5px;
+  color: var(--text-muted);
+  font-weight: 500;
+}
+
+.overview-band-grid {
+  display: grid;
+  gap: 14px;
+}
+.overview-band-grid.cols-3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.overview-band-grid.cols-2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+@media (max-width: 1100px) {
+  .overview-band-grid.cols-3 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (max-width: 720px) {
+  .overview-band-grid.cols-3,
+  .overview-band-grid.cols-2 { grid-template-columns: 1fr; }
+}
+
+.overview-card {
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-radius: var(--r-lg);
+  padding: 16px 18px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  cursor: pointer;
+  transition: transform var(--t-fast), box-shadow var(--t-fast), border-color var(--t-fast);
+  box-shadow: var(--shadow-xs);
+}
+.overview-card:hover,
+.overview-card:focus-visible {
+  outline: none;
+  transform: translateY(-1px);
+  border-color: var(--accent-light);
+  box-shadow: var(--shadow-sm);
+}
+.overview-card-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.overview-card-icon {
+  width: 30px;
+  height: 30px;
+  border-radius: var(--r-md);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+.overview-card-icon-accent  { background: var(--accent-soft);   color: var(--accent);  }
+.overview-card-icon-success { background: var(--success-light); color: var(--success); }
+.overview-card-icon-warning { background: var(--warning-light); color: var(--warning); }
+.overview-card-icon-info    { background: var(--info-light);    color: var(--info);    }
+.overview-card-title {
+  font-size: 14.5px;
+  font-weight: 650;
+  letter-spacing: -0.005em;
+  color: var(--text);
+  line-height: 1.25;
+}
+.overview-card-body {
+  font-size: 13px;
+  line-height: 1.55;
+  color: var(--text-muted);
+  margin: 0;
+  flex-grow: 1;
+}
+.overview-card-foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-top: 4px;
+  padding-top: 10px;
+  border-top: 1px solid var(--border-subtle);
+}
+.overview-card-badge {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  padding: 4px 8px;
+  border-radius: var(--r-full);
+}
+.overview-card-badge-accent  { background: var(--accent-soft);   color: var(--accent);  }
+.overview-card-badge-success { background: var(--success-light); color: var(--success); }
+.overview-card-badge-warning { background: var(--warning-light); color: var(--warning); }
+.overview-card-badge-info    { background: var(--info-light);    color: var(--info);    }
+.overview-card-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 11.5px;
+  font-weight: 650;
+  color: var(--accent);
+  letter-spacing: -0.005em;
+}
+
+.overview-footnote { margin-top: 6px; }
+
+/* ==========================================================================
+   PlaceholderView — explainer panel for CPI · CME and Execution Workbench
+   tabs (no full React surface yet, but the audience needs a framed handoff).
+   ========================================================================== */
+
+.placeholder-view {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+.placeholder-hero {
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-radius: var(--r-lg);
+  padding: 20px 22px 18px;
+  box-shadow: var(--shadow-xs);
+}
+.placeholder-eyebrow {
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  margin-bottom: 6px;
+}
+.placeholder-title {
+  font-size: 22px;
+  font-weight: 700;
+  letter-spacing: -0.018em;
+  line-height: 1.18;
+  color: var(--text);
+  margin: 0 0 8px;
+}
+.placeholder-tag { margin-bottom: 12px; }
+.placeholder-lede {
+  font-size: 13.5px;
+  line-height: 1.6;
+  color: var(--text-muted);
+  margin: 0;
+  max-width: 920px;
+}
+.placeholder-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+}
+@media (max-width: 1100px) { .placeholder-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 720px)  { .placeholder-grid { grid-template-columns: 1fr; } }
+.placeholder-card {
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-radius: var(--r-lg);
+  padding: 14px 16px 12px;
+  box-shadow: var(--shadow-xs);
+}
+.placeholder-card-title {
+  font-size: 12.5px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text);
+  margin-bottom: 6px;
+}
+.placeholder-card-body {
+  font-size: 12.5px;
+  line-height: 1.55;
+  color: var(--text-muted);
+  margin: 0;
+}
+.placeholder-ctas {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-top: 2px;
+}
+.placeholder-cta {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--r-md);
+  padding: 8px 14px;
+  font-size: 12.5px;
+  font-weight: 650;
+  color: var(--text);
+  cursor: pointer;
+  transition: background var(--t-fast), border-color var(--t-fast);
+}
+.placeholder-cta:hover { background: var(--bg-subtle); border-color: var(--accent-light); }
+.placeholder-cta.primary {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--text-on-accent);
+}
+.placeholder-cta.primary:hover { background: var(--accent-hover); border-color: var(--accent-hover); }
+.placeholder-footer {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--text-muted);
+  font-size: 11.5px;
+  line-height: 1.55;
+  padding: 2px 4px;
+}
+
+/* ==========================================================================
+   CPI Basis Engine — persistent Validate-in-Simulator CTA
+   Sits between the sticky head (KPI strip + tab bar) and the panel body.
+   Only rendered when index.key === 'perp'.
+   ========================================================================== */
+.detail-basis-cta {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: var(--accent-soft);
+  border: 1px solid var(--accent-light);
+  border-left: 3px solid var(--accent);
+  border-radius: var(--r-md);
+  padding: 10px 14px;
+  margin: 10px 0 14px;
+}
+.detail-basis-cta-icon {
+  width: 24px;
+  height: 24px;
+  border-radius: var(--r-sm);
+  background: var(--bg-elevated);
+  color: var(--accent);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+.detail-basis-cta-body {
+  font-size: 12.5px;
+  line-height: 1.5;
+  color: var(--text);
+  flex-grow: 1;
+}
+.detail-basis-cta-body strong { color: var(--accent); font-weight: 700; letter-spacing: 0.01em; }
+.detail-basis-cta-body span { color: var(--text-muted); }
+.detail-basis-cta-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  background: var(--accent);
+  color: var(--text-on-accent);
+  border: 1px solid var(--accent);
+  border-radius: var(--r-md);
+  padding: 6px 12px;
+  font-size: 12px;
+  font-weight: 650;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background var(--t-fast), border-color var(--t-fast);
+}
+.detail-basis-cta-btn:hover { background: var(--accent-hover); border-color: var(--accent-hover); }
+.detail-basis-cta-btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+@media (max-width: 720px) {
+  .detail-basis-cta { flex-direction: column; align-items: flex-start; }
+  .detail-basis-cta-btn { align-self: stretch; justify-content: center; }
+}

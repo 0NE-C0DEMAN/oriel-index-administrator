@@ -104,29 +104,28 @@
 
     return (
       <header className="topnav" role="banner">
-        {/* Row 1 — brand + status + connect */}
+        {/* Row 1 — brand + status + connect.
+            Per Ksenia's MVP-app-lock review: the "Index Administrator" pill
+            was shrinking the product into an admin console even though the
+            build now covers CPI surface construction, basis / fair value
+            analytics, venue-specific forwards, simulation / execution
+            intelligence, and modules. The pill is gone from the global
+            shell; the Admin tab still lives on the right of the tab strip,
+            and "Index Administrator" only appears as the page title inside
+            the Admin section itself. */}
         <div className="topnav-bar">
-          <div className="topnav-brand-group" aria-label="Oriel · Index Administrator">
+          <div className="topnav-brand-group" aria-label="Oriel CPI Surface">
             <button
               type="button"
               className="topnav-brand-link"
               onClick={() => onNavigate('overview')}
-              aria-label="Go to Overview"
-              title="Overview"
+              aria-label="Go to Oriel CPI Surface"
+              title="Oriel CPI Surface"
             >
               <BrandMark height={48} />
             </button>
             <span className="topnav-brand-divider" aria-hidden="true" />
-            <button
-              type="button"
-              className={cn('topnav-tag-link', activeKey === 'admin' && 'active')}
-              onClick={() => onNavigate('admin')}
-              aria-label="Go to Index Administrator"
-              title="Index Administrator"
-            >
-              <Icon name="shield" size={13} className="topnav-tag-icon" />
-              <span className="topnav-tag-label">Index Administrator</span>
-            </button>
+            <span className="topnav-brand-wordmark" aria-hidden="true">Oriel CPI Surface</span>
           </div>
 
           <div className="topnav-bar-spacer" aria-hidden="true" />

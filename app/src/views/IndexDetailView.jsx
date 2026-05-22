@@ -154,7 +154,7 @@
     return base;
   }
 
-  function IndexDetailView({ index, onBack }) {
+  function IndexDetailView({ index, onBack, onNavigate }) {
     if (!index) return null;
     const d = index.detail;
     const hasDetail = !!d;
@@ -264,6 +264,29 @@
           )}
           <DetailTabBar tabs={tabs} active={tab} onChange={setTab} accent={index.accent} />
         </div>
+
+        {/* CPI Basis Engine carries a persistent "Validate in Simulator"
+            CTA per Ksenia's MVP-app-lock review: the sim should feel
+            downstream of the basis signal, not like a disconnected
+            sandbox. Hidden on every other index. */}
+        {index.key === 'perp' && (
+          <div className="detail-basis-cta">
+            <div className="detail-basis-cta-icon"><Icon name="sliders" size={14} /></div>
+            <div className="detail-basis-cta-body">
+              <strong>Validate in Simulator →</strong>
+              <span> Open the Execution Workbench to stress-test dislocations,
+              quote posture, ScaleTrader-style order planning, and TRS /
+              micro-fund deployment assumptions against this CPI Basis surface.</span>
+            </div>
+            <button
+              type="button"
+              className="detail-basis-cta-btn"
+              onClick={() => onNavigate && onNavigate('execution')}
+            >
+              Open Execution Workbench <Icon name="arrow-right" size={11} />
+            </button>
+          </div>
+        )}
 
         <div className="detail-tab-body">
           {tab === 'overview'     && <OverviewPanel     index={index} liveOn={liveOn} mbSelectedIdx={mbSelectedIdx} />}

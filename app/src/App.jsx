@@ -11,7 +11,7 @@
 (() => {
   'use strict';
   const { useState, useCallback } = React;
-  const { TopNav, IndicesView, IndexDetailView, IndexAdminView, ChartModal } = window.App;
+  const { TopNav, IndicesView, IndexDetailView, IndexAdminView, PlaceholderView, ChartModal } = window.App;
   const { findTab } = window.App.NAV;
   const { byKey: indexByKey } = window.App.INDICES;
 
@@ -46,12 +46,13 @@
         />
         <main className="main">
           <div className="content">
-            {tab.kind === 'overview' && <IndicesView onOpenIndex={onOpenIndex} />}
-            {tab.kind === 'admin'    && <IndexAdminView />}
-            {tab.kind === 'index'    && (() => {
+            {tab.kind === 'overview'    && <IndicesView onOpenIndex={onOpenIndex} />}
+            {tab.kind === 'admin'       && <IndexAdminView />}
+            {tab.kind === 'placeholder' && <PlaceholderView tabKey={tab.key} tabLabel={tab.label} onNavigate={onNavigate} />}
+            {tab.kind === 'index'       && (() => {
               const idx = indexByKey(tab.key);
               if (!idx) return null;
-              return <IndexDetailView index={idx} />;
+              return <IndexDetailView index={idx} onNavigate={onNavigate} />;
             })()}
           </div>
         </main>

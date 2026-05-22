@@ -110,8 +110,12 @@ def _cached_admin_payload() -> str:
 
 
 # ── Streamlit page setup ─────────────────────────────────────────────────────
+# Per Ksenia's MVP-app-lock review the global shell should not box Oriel
+# into an admin console. Page title now says "Oriel CPI Surface"; the
+# "Index Administrator" wording is reserved for the Admin section's own
+# page header.
 st.set_page_config(
-    page_title="Oriel · Index Administrator",
+    page_title="Oriel CPI Surface",
     page_icon="◈",
     layout="wide",
     initial_sidebar_state="collapsed",
@@ -694,6 +698,21 @@ def _render_login():
             display: inline-block !important; visibility: visible !important;
             color: #FFFFFF !important;
           }}
+          /* Low-contrast copyright footer at the bottom of the viewport
+             per Ksenia's MVP-app-lock review. Sits beneath both panels,
+             centered, intentionally quiet so it never competes with the
+             form. */
+          .oriel-login-copyright {{
+            position: fixed;
+            left: 0; right: 0; bottom: 14px;
+            text-align: center;
+            font-size: 10.5px;
+            font-weight: 500;
+            letter-spacing: 0.04em;
+            color: rgba(14, 23, 51, 0.42);
+            pointer-events: none;
+            z-index: 3;
+          }}
           /* Responsive: collapse on narrow viewports */
           @media (max-width: 880px) {{
             .oriel-login-hero {{ display: none; }}
@@ -824,6 +843,13 @@ def _render_login():
         """    </div>"""
         """  </div>"""
         """</div>""",
+        unsafe_allow_html=True,
+    )
+
+    # Low-contrast copyright footer at the bottom of the login viewport
+    # per Ksenia's MVP-app-lock review.
+    st.markdown(
+        """<div class="oriel-login-copyright">© 2026 Oriel Labs, LLC. All rights reserved.</div>""",
         unsafe_allow_html=True,
     )
 
