@@ -2,9 +2,10 @@
    App.jsx — Root component.
    Owns the active top-tab key and routes to the matching view.
    Per "all our screens should be tabbed", we have a flat tab strip:
-     overview → IndicesView (tile grid)
-     <indexKey> → IndexDetailView (with internal sub-tabs)
-     admin → IndexAdminView
+     overview    → IndicesView (3-band Overview, post-MVP-app-lock)
+     <indexKey>  → IndexDetailView (with internal sub-tabs)
+     placeholder → PlaceholderView (CPI · CME proxy, Execution Workbench)
+     admin       → IndexAdminView
    No SubHeader: each view owns its own header.
    Registers window.App.App.
    ========================================================================== */
