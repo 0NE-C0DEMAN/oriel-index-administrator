@@ -106,23 +106,23 @@
     const methodologySteps = useMemo(() => ([
       {
         title: 'Regime classifier reads the venue stack',
-        body: 'analytics.forward_risk_engine.build_forward_risk_summary takes the forward curve, per-maturity dispersion, and per-row dislocations and emits a 0-100 risk score.',
+        body: 'Forward Risk Regime comes from analytics.forward_risk_engine.build_forward_risk_summary, the same module the standalone v7 simulator uses. Inputs: forward curve (Oriel reference per release month), implied-vol proxy (per-maturity cross-venue dispersion of implied YoY), and per-row dislocations. The engine emits a 0–100 risk score.',
       },
       {
         title: 'Score → regime',
-        body: 'Thresholds Low < 35, Moderate < 65, Elevated ≥ 65. Regime drives a RiskRegimeAdjustment with three multipliers.',
+        body: 'Score thresholds Low < 35, Moderate < 65, Elevated ≥ 65 classify the snapshot. The regime label then drives a RiskRegimeAdjustment with three multipliers, one per posture axis.',
       },
       {
         title: 'Posture multipliers applied',
-        body: 'Spread × inventory × edge-hurdle multipliers applied to the base config (12 bp / $5M / 10 bp). Same table v7 oriel/sim/risk.py ships.',
+        body: 'Spread × inventory × edge-hurdle multipliers applied to the base config (12 bp / $5M / 10 bp). Same table v7 oriel/sim/risk.py ships: Low (0.85 / 1.15 / 0.85), Moderate (1.00 neutral), Elevated (1.35 / 0.65 / 1.50).',
       },
       {
         title: 'Dislocations → ScaleTrader ticket',
-        body: 'Top-edge dislocation row drives an illustrative laddered ticket: side / start price / increment / clip / max exposure. Not routed to any venue.',
+        body: 'Top-edge dislocation row (by net executable edge after a 10 bp cost buffer) drives an illustrative laddered ticket: side / start price / increment / clip / max exposure / profit-taker offset. Read-only — no IBKR auth, no TWS routing, no live order submission is wired in.',
       },
       {
         title: 'Pilot TRS scenario sized',
-        body: 'trs_deployment.build_trs_deployment_scenario takes a representative backtest summary + default inputs (2× notional, 25% IM, 6% financing, 75% partial hedge) and sizes the deployment.',
+        body: 'trs_deployment.build_trs_deployment_scenario takes a representative backtest summary ($3M launch, $24k spread capture, −$6k directional, $18k total PnL, $850k max inventory) and default inputs (2× notional, 25% IM, 6% financing, 75% partial CPI perp/reference hedge). Scenario comparison runs the same math across four hedge modes: No TRS / Unhedged / Partial / Full.',
       },
     ]), []);
 
@@ -558,12 +558,13 @@
           <Badge variant="default">decision support</Badge>
         </header>
         <div className="info-kv-list">
-          <Kv label="Net edge"           value="max(0, |disl_bps| − cost_buffer_bps)" mono />
-          <Kv label="Cross-venue weight" value="0.6·conf + 0.4·liq (norm/maturity)" mono />
-          <Kv label="Effective posture"  value="base × regime_multiplier" mono />
-          <Kv label="Required margin"    value="trs_notional × initial_margin_pct" mono />
-          <Kv label="Net fund PnL"       value="spread + dir + hedge + residual − fin + coll" mono />
-          <Kv label="ROC"                value="net_pnl / capital × 365 / horizon_days" mono />
+          <Kv label="Net executable edge" value="max(0, |disl_bps| − cost_buffer_bps)" mono />
+          <Kv label="Cross-venue weight"  value="0.6·conf + 0.4·liq (norm/maturity)" mono />
+          <Kv label="Effective posture"   value="base × regime_multiplier" mono />
+          <Kv label="Required margin"     value="trs_notional × initial_margin_pct" mono />
+          <Kv label="Net fund PnL"        value="spread + dir + hedge + residual − fin + coll" mono />
+          <Kv label="Return on capital"   value="net_pnl / capital × 365 / horizon_days" mono />
+          <Kv label="Capital efficiency"  value="trs_notional / required_margin" mono />
         </div>
       </section>
     );
@@ -586,6 +587,12 @@
           <Kv label="Legal scope"      value="Not legal / CSA / tax / accounting advice" />
           <Kv label="Live simulator"   value="apps/market_sim/ (standalone)" mono />
         </div>
+        <p className="info-card-body muted">
+          Full interactive simulator (ScaleTrader controls, parameter
+          sweep, heatmap, run_backtest) ships as the standalone Oriel
+          Execution Workbench at <code>apps/market_sim/</code> until the
+          React port lands.
+        </p>
         <div className="info-card-foot info-card-foot-actions">
           <button
             type="button"

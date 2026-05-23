@@ -1600,14 +1600,6 @@
   padding: 12px 14px 14px;
   box-shadow: var(--shadow-xs);
 }
-.cme-table-head {
-  font-size: 11.5px;
-  font-weight: 700;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  color: var(--text-muted);
-  margin-bottom: 8px;
-}
 .cme-table-scroll { overflow-x: auto; }
 .cme-table {
   width: 100%;
@@ -1636,95 +1628,6 @@
 }
 .cme-table tbody tr:hover { background: var(--bg-subtle); }
 .cme-table .gold { color: var(--warning); font-weight: 650; }
-
-.cme-methodology {
-  background: var(--bg-elevated);
-  border: 1px solid var(--border);
-  border-radius: var(--r-lg);
-  padding: 12px 14px;
-  box-shadow: var(--shadow-xs);
-}
-.cme-methodology-head {
-  font-size: 11.5px;
-  font-weight: 700;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  color: var(--text-muted);
-  margin-bottom: 8px;
-}
-.cme-methodology-grid {
-  margin: 0;
-  /* 2-column grid so labels + values sit close together instead of
-     stretching across the full card width with empty middle. */
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  column-gap: 28px;
-  row-gap: 0;
-}
-@media (max-width: 720px) { .cme-methodology-grid { grid-template-columns: 1fr; } }
-.cme-methodology-row {
-  display: grid;
-  grid-template-columns: max-content 1fr;
-  align-items: baseline;
-  column-gap: 14px;
-  padding: 6px 0;
-  border-bottom: 1px dashed var(--border-subtle);
-  font-size: 12.5px;
-}
-.cme-methodology-row:last-child { border-bottom: none; }
-.cme-methodology-row dt { color: var(--text-muted); font-weight: 600; margin: 0; }
-.cme-methodology-row dd { color: var(--text); margin: 0; font-family: 'JetBrains Mono', monospace; font-size: 12px; }
-
-.cme-handoff {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  flex-wrap: wrap;
-  margin-top: 2px;
-}
-.cme-disclaimer {
-  font-size: 11px;
-  color: var(--text-muted);
-  line-height: 1.5;
-}
-
-/* CME Overview sub-tab — 3 framing cards mirroring v7's inline narrative. */
-.cme-overview-panel { display: flex; flex-direction: column; gap: 14px; }
-.cme-overview-grid {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 12px;
-}
-@media (max-width: 1100px) { .cme-overview-grid { grid-template-columns: 1fr; } }
-.cme-overview-card {
-  background: var(--bg-elevated);
-  border: 1px solid var(--border);
-  border-radius: var(--r-lg);
-  padding: 14px 16px 12px;
-  box-shadow: var(--shadow-xs);
-}
-.cme-overview-card-title {
-  font-size: 12.5px;
-  font-weight: 700;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  color: var(--text);
-  margin-bottom: 6px;
-}
-.cme-overview-card-body {
-  font-size: 12.5px;
-  line-height: 1.55;
-  color: var(--text-muted);
-  margin: 0;
-}
-.cme-overview-card-body code {
-  font-family: 'JetBrains Mono', monospace;
-  font-size: 11.5px;
-  background: var(--bg-subtle);
-  padding: 1px 5px;
-  border-radius: 4px;
-  color: var(--text);
-}
 
 /* ==========================================================================
    Execution Workbench view (ExecutionView.jsx) — regime banner, posture
@@ -1845,14 +1748,6 @@
   padding: 12px 14px 14px;
   box-shadow: var(--shadow-xs);
 }
-.exec-strip-head {
-  font-size: 11.5px;
-  font-weight: 700;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  color: var(--text-muted);
-  margin-bottom: 10px;
-}
 .exec-strip-grid {
   display: grid;
   grid-template-columns: repeat(6, minmax(0, 1fr));
@@ -1882,73 +1777,6 @@
   color: var(--text-subtle);
 }
 
-.exec-handoff {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  flex-wrap: wrap;
-  margin-top: 2px;
-}
-.exec-disclaimer {
-  font-size: 11px;
-  color: var(--text-muted);
-  line-height: 1.5;
-}
-
-/* ── Methodology sub-tab panel ────────────────────────────────────────── */
-.exec-method-panel { display: flex; flex-direction: column; gap: 12px; }
-.exec-method-card {
-  background: var(--bg-elevated);
-  border: 1px solid var(--border);
-  border-radius: var(--r-lg);
-  padding: 14px 16px;
-  box-shadow: var(--shadow-xs);
-}
-.exec-method-card-title {
-  font-size: 12.5px;
-  font-weight: 700;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  color: var(--text);
-  margin-bottom: 6px;
-}
-.exec-method-card-body {
-  font-size: 12.5px;
-  line-height: 1.6;
-  color: var(--text-muted);
-  margin: 0;
-}
-.exec-method-card-body code {
-  font-family: 'JetBrains Mono', monospace;
-  font-size: 11.5px;
-  background: var(--bg-subtle);
-  padding: 1px 5px;
-  border-radius: 4px;
-  color: var(--text);
-}
-.exec-method-handoff {
-  display: flex;
-  gap: 10px;
-  flex-wrap: wrap;
-  margin-top: 4px;
-}
-.exec-method-disclaimer {
-  font-size: 11px;
-  line-height: 1.55;
-  color: var(--text-muted);
-  margin: 0;
-  font-style: italic;
-}
-.exec-method-disclaimer code {
-  font-family: 'JetBrains Mono', monospace;
-  font-size: 10.5px;
-  background: var(--bg-subtle);
-  padding: 1px 5px;
-  border-radius: 4px;
-  color: var(--text);
-  font-style: normal;
-}
-
 /* ── Regime Comparison cards (Ksenia §10 mirror) ──────────────────────── */
 .exec-rc-section {
   background: var(--bg-elevated);
@@ -1956,14 +1784,6 @@
   border-radius: var(--r-lg);
   padding: 12px 14px 14px;
   box-shadow: var(--shadow-xs);
-}
-.exec-rc-head {
-  font-size: 11.5px;
-  font-weight: 700;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  color: var(--text-muted);
-  margin-bottom: 10px;
 }
 .exec-rc-grid {
   display: grid;
@@ -2033,14 +1853,6 @@
   box-shadow: var(--shadow-xs);
   overflow: hidden;
 }
-.exec-vc-head {
-  font-size: 11.5px;
-  font-weight: 700;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  color: var(--text-muted);
-  padding: 10px 14px 6px;
-}
 .exec-vc-scroll { overflow-x: auto; padding: 0 14px 12px; }
 .exec-vc-table {
   width: 100%;
@@ -2078,16 +1890,6 @@
   border-radius: var(--r-lg);
   box-shadow: var(--shadow-xs);
   overflow: hidden;
-}
-.exec-decision-ribbon {
-  background: transparent;
-  color: var(--text-muted);
-  font-size: 11.5px;
-  font-weight: 700;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  padding: 10px 14px 6px;
-  border-bottom: 1px solid var(--border-subtle);
 }
 .exec-decision-grid {
   display: grid;
@@ -2139,16 +1941,6 @@
   border-radius: var(--r-lg);
   box-shadow: var(--shadow-xs);
   overflow: hidden;
-}
-.exec-trs-ribbon {
-  background: transparent;
-  color: var(--text-muted);
-  font-size: 11.5px;
-  font-weight: 700;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  padding: 10px 14px 6px;
-  border-bottom: 1px solid var(--border-subtle);
 }
 .exec-trs-kpi-grid {
   display: grid;
@@ -2251,14 +2043,6 @@
   box-shadow: var(--shadow-xs);
   overflow: hidden;
 }
-.exec-trs-compare-head {
-  font-size: 11.5px;
-  font-weight: 700;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  color: var(--text-muted);
-  padding: 10px 14px 6px;
-}
 .exec-trs-compare-scroll { overflow-x: auto; padding: 0 14px 4px; }
 .exec-trs-compare-table {
   width: 100%;
@@ -2289,35 +2073,14 @@
 .exec-trs-compare-table tr:hover { background: var(--bg-subtle); }
 .exec-trs-compare-table td.positive { color: var(--success); }
 .exec-trs-compare-table td.negative { color: var(--danger); }
-.exec-trs-compare-foot {
-  padding: 6px 14px 12px;
-  font-size: 10.5px;
-  color: var(--text-subtle);
-  font-style: italic;
-}
 
 /* ── Representative backtest summary (drives the TRS scenario below) ── */
 .exec-bt-section {
-  background: var(--bg-subtle);
-  border: 1px dashed var(--border);
-  border-radius: var(--r-md);
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-radius: var(--r-lg);
+  box-shadow: var(--shadow-xs);
   padding: 10px 14px;
-}
-.exec-bt-head {
-  font-size: 11px;
-  font-weight: 700;
-  letter-spacing: 0.05em;
-  text-transform: uppercase;
-  color: var(--text-muted);
-  margin-bottom: 8px;
-}
-.exec-bt-head-sub {
-  font-weight: 500;
-  text-transform: none;
-  letter-spacing: normal;
-  color: var(--text-subtle);
-  margin-left: 6px;
-  font-size: 11px;
 }
 .exec-bt-grid {
   display: grid;
@@ -2353,18 +2116,6 @@
   box-shadow: var(--shadow-xs);
   overflow: hidden;
 }
-.exec-st-ribbon {
-  background: transparent;
-  color: var(--text-muted);
-  font-size: 11.5px;
-  font-weight: 700;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  padding: 10px 14px 6px;
-  border-bottom: 1px solid var(--border-subtle);
-}
-.exec-st-ribbon.buy strong  { color: var(--success); }
-.exec-st-ribbon.sell strong { color: var(--danger); }
 .exec-st-kpi-grid {
   display: grid;
   grid-template-columns: repeat(8, minmax(0, 1fr));
@@ -2502,6 +2253,96 @@
   display: flex;
   flex-direction: column;
   gap: 6px;
+}
+
+/* ── Source diagnostics strip (Status & Eligibility sub-tab) ─────────
+      4-cell band sitting between the eligibility step flow and the
+      explainer info-row. Carries the read-only diagnostics not already
+      surfaced in the page-level KPI strip: methodology version and
+      valuation timestamp. */
+.cme-source-diag {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-radius: var(--r-lg);
+  box-shadow: var(--shadow-card);
+  overflow: hidden;
+}
+.cme-source-diag-cell {
+  padding: 10px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  border-right: 1px solid var(--border-subtle);
+}
+.cme-source-diag-cell:last-child { border-right: none; }
+.cme-source-diag-label {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+.cme-source-diag-value {
+  font-size: 14px;
+  font-weight: 650;
+  color: var(--text);
+  line-height: 1.25;
+}
+.cme-source-diag-value.mono {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12.5px;
+  letter-spacing: 0.005em;
+}
+.cme-source-diag-cell.tone-warning .cme-source-diag-value { color: var(--warning); }
+
+/* ── Probability curve chart card (Curve & Ladder sub-tab) ────────────
+      Uses the shared ForwardCurveChart inline-SVG renderer. Card chrome
+      matches the rest of the Ladder sub-tab so the chart sits naturally
+      between the ladder-summary stats card and the curve-points table. */
+.cme-curve-card {
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-radius: var(--r-lg);
+  box-shadow: var(--shadow-card);
+  padding: 10px 16px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.cme-curve-chart-wrap {
+  width: 100%;
+  height: 260px;
+  min-height: 260px;
+}
+.cme-curve-legend {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 11px;
+  color: var(--text-muted);
+}
+.cme-curve-legend-band {
+  width: 24px;
+  height: 8px;
+  background: rgba(45, 91, 255, 0.18);
+  border-radius: 2px;
+}
+.cme-curve-legend-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--accent);
+  margin-left: 6px;
+}
+.cme-curve-foot {
+  font-size: 11.5px;
+  color: var(--text-muted);
+  line-height: 1.55;
+  padding-top: 6px;
+  border-top: 1px solid var(--border-subtle);
 }
 
 /* ── Overview handoff CTA row (Status & Eligibility sub-tab) ─────────── */

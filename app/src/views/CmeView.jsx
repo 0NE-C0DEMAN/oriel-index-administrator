@@ -20,7 +20,7 @@
   'use strict';
   const { useState, useMemo } = React;
   const { cn } = window.App.utils;
-  const { Icon, Badge, MethodologySteps } = window.App;
+  const { Icon, Badge, MethodologySteps, ForwardCurveChart } = window.App;
 
   const SUB_TABS = [
     { key: 'overview',    label: 'Status & Eligibility',     icon: 'layers'   },
@@ -70,6 +70,35 @@
       const totalOi  = cs.reduce((s, c) => s + (Number(c.openInterest) || 0), 0);
       return { avgProb, avgLiq, totalVol, totalOi };
     }, [points, contracts]);
+
+    // Curve chart data — one point per maturity. Y axis is the threshold
+    // probability; the upper / lower band uses liquidity_score to widen
+    // the confidence band around lower-liquidity quotes so reviewers see
+    // which curve points are well-supported. ForwardCurveChart wants
+    // { maturity, expected, lower, upper } shape.
+    const curveChartData = useMemo(() => (
+      points
+        .slice()
+        .sort((a, b) => {
+          // Sort by releaseMonthIso when available so the chart x-axis
+          // is left→right calendar order, not array order.
+          const ai = a.releaseMonthIso || '';
+          const bi = b.releaseMonthIso || '';
+          return ai.localeCompare(bi);
+        })
+        .map((p) => {
+          const prob = Number(p.probability) || 0;
+          // Half-width of the confidence band shrinks as liquidity → 1.0.
+          const liq  = Math.max(0.05, Math.min(1.0, Number(p.liquidityScore) || 0.5));
+          const half = Math.max(0.02, 0.08 * (1 - liq));
+          return {
+            maturity: p.releaseMonth,
+            expected: prob,
+            lower:    Math.max(0.0, prob - half),
+            upper:    Math.min(1.0, prob + half),
+          };
+        })
+    ), [points]);
 
     const promotionSteps = useMemo(() => ([
       {
@@ -159,9 +188,11 @@
                 steps={gates}
               />
 
+              <CmeSourceDiagStrip cme={cme} />
+
               <div className="info-row cols-3">
-                <CmeRoleCard cme={cme} fmtPct={fmtPct} ladderStats={ladderStats} />
-                <CmeShadowCard cme={cme} />
+                <CmeWhereCard onNavigate={onNavigate} />
+                <CmeWhyShadowCard />
                 <CmeLabelCard cme={cme} />
               </div>
 
@@ -185,6 +216,37 @@
                     <Stat label="Total open interest"  value={ladderStats.totalOi.toLocaleString()} />
                   </div>
                 </section>
+
+                {curveChartData.length > 0 && ForwardCurveChart && (
+                  <section className="cme-curve-card">
+                    <header className="info-card-head">
+                      <span className="info-card-eyebrow">Probability curve · per maturity</span>
+                      <div className="cme-curve-legend">
+                        <span className="cme-curve-legend-band" />
+                        <span>Liquidity-weighted band</span>
+                        <span className="cme-curve-legend-dot" />
+                        <span>Threshold probability</span>
+                      </div>
+                    </header>
+                    <div className="cme-curve-chart-wrap">
+                      <ForwardCurveChart
+                        data={curveChartData}
+                        unit=""
+                        precision={4}
+                        height={260}
+                        accent="accent"
+                        showBand
+                        showPrior={false}
+                        yLabel="Threshold probability"
+                      />
+                    </div>
+                    <footer className="cme-curve-foot">
+                      Each anchor is the proxy-quoted probability that month's
+                      CPI YoY clears the contract's threshold. Band tightens as
+                      per-contract liquidity rises.
+                    </footer>
+                  </section>
+                )}
 
                 {points.length > 0 && (
                   <section className="cme-table-section">
@@ -303,47 +365,65 @@
     );
   }
 
-  /* ─────────────────────────  Overview cards  ───────────────────────── */
-  function CmeRoleCard({ cme, fmtPct, ladderStats }) {
+  /* ─────────────────────────  Overview cards  ─────────────────────────
+     Three info-cards restoring the original ca59531 explainer content
+     ("Where CME shows up today" / "Why a shadow surface, not a third
+     governed source yet" / "Role label flows through the data layer")
+     wrapped in the new design-system info-card chrome (eyebrow + badge +
+     body paragraph[s]). Quantitative role / methodology data lives in
+     the source-diagnostics strip above and in the page-level KPI strip,
+     so these three cards stay focused on the verbal explanation. */
+  function CmeWhereCard({ onNavigate }) {
     return (
       <section className="info-card">
         <header className="info-card-head">
-          <span className="info-card-eyebrow">Role</span>
-          <span className="feed-pill feed-pill-warning">
-            <span className="feed-dot feed-warn" />
-            Candidate
-          </span>
+          <span className="info-card-eyebrow">Where CME shows up today</span>
+          <Badge variant="accent">CPI Basis Engine</Badge>
         </header>
-        <div className="info-kv-list">
-          <Kv label="Source status"   value={cme.sourceStatus} />
-          <Kv label="Venue"           value={cme.venue || 'CME'} />
-          <Kv label="Contracts"       value={String(cme.contractCount)} />
-          <Kv label="Curve points"    value={String(cme.curvePointCount)} />
-          <Kv label="Maturities"      value={String(cme.maturityCount)} />
-          <Kv label="Avg liquidity"   value={fmtPct(ladderStats.avgLiq)} />
-        </div>
+        <p className="info-card-body">
+          On the CPI Basis Engine tab, the <strong>Source Blend &amp; Shadow Impact</strong>
+          section quantifies what adding CME to the governed blend would do
+          to curve levels, source weights, dispersion, and downstream CPI
+          dislocation metrics.
+        </p>
+        <p className="info-card-body muted">
+          The governed CPI Reference today remains Kalshi + ForecastEx.
+          CME shows up as a shadow surface only; the published reference is
+          unchanged until the licensed feed is approved.
+        </p>
+        {onNavigate && (
+          <div className="info-card-foot info-card-foot-actions">
+            <button
+              type="button"
+              className="placeholder-cta primary"
+              onClick={() => onNavigate('perp')}
+            >
+              Open Basis Engine <Icon name="arrow-right" size={11} />
+            </button>
+          </div>
+        )}
       </section>
     );
   }
 
-  function CmeShadowCard({ cme }) {
+  function CmeWhyShadowCard() {
     return (
       <section className="info-card">
         <header className="info-card-head">
-          <span className="info-card-eyebrow">Shadow blend impact</span>
-          <Badge variant={cme.publishable ? 'success' : 'warning'}>
-            {cme.publishable ? 'Eligible' : 'Pending'}
-          </Badge>
+          <span className="info-card-eyebrow">Why a shadow surface, not a third governed source yet</span>
+          <Badge variant="warning">Shadow blend</Badge>
         </header>
         <p className="info-card-body">
-          The Source Blend &amp; Shadow Impact section on the CPI Basis Engine
-          tab quantifies what adding CME to the governed blend changes:
-          per-maturity curve levels, source weights, dispersion, and the
-          downstream CPI dislocation metrics.
+          CME goes through the same eligibility gate as Kalshi and
+          ForecastEx (coverage, consistency, calibration, history) before
+          it can be promoted. The shadow blend lets us watch CME alongside
+          the governed blend without changing the published Oriel CPI
+          Reference.
         </p>
         <p className="info-card-body muted">
-          CME stays a shadow surface until the governed eligibility gate
-          (coverage · consistency · calibration · history) is cleared.
+          Promotion to the governed blend requires both the licensed feed
+          approval and all four eligibility gates cleared. Until then,
+          CME is a candidate constituent only.
         </p>
       </section>
     );
@@ -353,21 +433,48 @@
     return (
       <section className="info-card">
         <header className="info-card-head">
-          <span className="info-card-eyebrow">Source label propagation</span>
+          <span className="info-card-eyebrow">Role label flows through the data layer</span>
           <Badge variant="default">end-to-end</Badge>
         </header>
-        <div className="info-kv-list">
-          <Kv label="Client"          value="CMEClient(source_mode=&quot;proxy&quot;)" mono />
-          <Kv label="Contract field"  value="source_status=PROXY" mono />
-          <Kv label="Constituent"     value="role=candidate" mono />
-          <Kv label="Methodology"     value={cme.methodology || '—'} mono />
-        </div>
-        <p className="info-card-body muted">
-          The PROXY tag rides every contract, curve point, and constituent
-          row so downstream consumers never confuse the interim proxy with
-          a licensed feed.
+        <p className="info-card-body">
+          Source status carries the <code>PROXY</code> label end-to-end
+          through the client, contract, constituent, and methodology_note
+          fields so any downstream UI never confuses the interim proxy
+          with a licensed feed.
         </p>
+        <div className="info-kv-list">
+          <Kv label="Client"         value="CMEClient(source_mode=&quot;proxy&quot;)" mono />
+          <Kv label="Contract field" value="source_status=PROXY" mono />
+          <Kv label="Constituent"    value="role=candidate" mono />
+          <Kv label="Methodology"    value={cme.methodology || '—'} mono />
+        </div>
       </section>
+    );
+  }
+
+  /* ── Source diagnostics strip (Status & Eligibility) ─────────────────
+     Surfaces the four read-only diagnostic values that are NOT on the
+     page-level KPI strip (which already shows Source Status / Contracts /
+     Curve Points / Maturities / Publishability / Role). Methodology
+     version and valuation timestamp live here so they are visible right
+     after the eligibility gate flow. */
+  function CmeSourceDiagStrip({ cme }) {
+    return (
+      <section className="cme-source-diag">
+        <Diag label="Source status"        value={cme.sourceStatus || '—'} tone="warning" />
+        <Diag label="Venue"                value={cme.venue || 'CME'} />
+        <Diag label="Methodology version"  value={cme.methodology || '—'} mono />
+        <Diag label="Valuation snapshot"   value={formatTimestamp(cme.valuationTimestamp)} mono />
+      </section>
+    );
+  }
+
+  function Diag({ label, value, tone, mono }) {
+    return (
+      <div className={`cme-source-diag-cell tone-${tone || 'default'}`}>
+        <div className="cme-source-diag-label">{label}</div>
+        <div className={`cme-source-diag-value${mono ? ' mono' : ''}`}>{value}</div>
+      </div>
     );
   }
 
