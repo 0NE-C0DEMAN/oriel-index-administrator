@@ -295,14 +295,24 @@ def _build_venue_contribution(front_df: pd.DataFrame, dislocations: pd.DataFrame
         grouped = grouped.merge(ref_df, on="release_month", how="left")
     rows: List[Dict[str, Any]] = []
     for _, r in grouped.sort_values(["release_month", "venue"]).iterrows():
+        # cpi_basis_diagnostics emits confidence_score on a 0-100 scale; the
+        # synthesized liquidity score is 0-1. Normalize both to 0-1 for the
+        # React render so the row "53% / 100%" reads correctly regardless of
+        # which source the field came from.
+        liq = float(r["liquidity_score"]) if pd.notna(r.get("liquidity_score")) else 0.0
+        conf = float(r["confidence_score"]) if pd.notna(r.get("confidence_score")) else 0.0
+        if liq > 1.0:
+            liq = liq / 100.0
+        if conf > 1.0:
+            conf = conf / 100.0
         rows.append({
             "releaseMonth":       _format_maturity(r.get("release_month")),
             "venue":              str(r.get("venue", "—")),
             "impliedYoy":         float(r["implied_yoy"]) if pd.notna(r.get("implied_yoy")) else None,
             "orielReferenceYoy":  float(r["oriel_reference_yoy"]) if pd.notna(r.get("oriel_reference_yoy")) else None,
             "weightPct":          float(r["weight_pct"]) if pd.notna(r.get("weight_pct")) else None,
-            "liquidityScore":     float(r["liquidity_score"]) if pd.notna(r.get("liquidity_score")) else 0.0,
-            "confidenceScore":    float(r["confidence_score"]) if pd.notna(r.get("confidence_score")) else 0.0,
+            "liquidityScore":     max(0.0, min(1.0, liq)),
+            "confidenceScore":    max(0.0, min(1.0, conf)),
         })
     return rows
 
