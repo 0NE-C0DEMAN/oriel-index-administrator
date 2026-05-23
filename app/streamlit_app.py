@@ -982,7 +982,7 @@ def _render_login():
         """      </div>"""
         """      <div class="oriel-form-feature-body">"""
         """        <div class="oriel-form-feature-label">Simulate the response</div>"""
-        """        <div class="oriel-form-feature-sub">Test quoting, inventory, and edge posture as market conditions shift — before turning signals into execution.</div>"""
+        """        <div class="oriel-form-feature-sub">Test quoting, inventory, and edge posture as market conditions shift, before turning signals into execution.</div>"""
         """      </div>"""
         """    </div>"""
         """  </div>"""
