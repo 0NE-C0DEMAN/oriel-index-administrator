@@ -232,7 +232,7 @@
             ex.scaletraderTicket ? (
               <section className="exec-st-section">
                 <div className={`exec-st-ribbon ${ex.scaletraderTicket.side === 'Buy YES' ? 'buy' : 'sell'}`}>
-                  Illustrative ScaleTrader Ticket · {ex.scaletraderTicket.status} · {ex.scaletraderTicket.selectedVenueContract}
+                  Illustrative ScaleTrader Ticket · {ex.scaletraderTicket.status} · <strong>{ex.scaletraderTicket.selectedVenueContract}</strong>
                 </div>
                 <div className="exec-st-kpi-grid">
                   <StKpiCell label="Side"          value={ex.scaletraderTicket.side}                                              accent={ex.scaletraderTicket.side === 'Buy YES' ? 'success' : 'danger'} />
