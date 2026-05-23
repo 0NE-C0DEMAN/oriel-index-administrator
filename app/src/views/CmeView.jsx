@@ -464,11 +464,12 @@
           the governed blend without changing the published Oriel CPI
           Reference.
         </p>
-        <p className="info-card-body muted">
-          Promotion to the governed blend requires both the licensed feed
-          approval and all four eligibility gates cleared. Until then,
-          CME is a candidate constituent only.
-        </p>
+        <div className="info-kv-list">
+          <Kv label="Coverage"    value="4 maturities cleared" />
+          <Kv label="Consistency" value="cross-venue agreement watched" />
+          <Kv label="Calibration" value="awaiting licensed feed" />
+          <Kv label="History"     value="proxy depth only" />
+        </div>
       </section>
     );
   }

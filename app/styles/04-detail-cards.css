@@ -691,10 +691,16 @@
 .info-row {
   display: grid;
   gap: 14px;
-  align-items: stretch;
+  /* align-items: start so each card sits at its natural content height
+     rather than stretching to match the tallest card. Stretching left
+     empty whitespace at the bottom of shorter cards (the issue the user
+     called out as "text overflow" on the CME 3-card row and the
+     Execution Methodology footer). With start, every card ends at its
+     last content element. */
+  align-items: start;
 }
 .info-row.cols-2 { grid-template-columns: minmax(0, 1fr) minmax(0, 1.6fr); }
-.info-row.cols-3 { grid-template-columns: minmax(0, 0.85fr) minmax(0, 1.25fr) minmax(0, 1.25fr); }
+.info-row.cols-3 { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1fr); }
 @media (max-width: 1100px) {
   .info-row.cols-2, .info-row.cols-3 { grid-template-columns: 1fr; }
 }
