@@ -1736,6 +1736,82 @@
   line-height: 1.5;
 }
 
+/* ── Regime Comparison cards (Ksenia §10 mirror) ──────────────────────── */
+.exec-rc-section {
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-radius: var(--r-lg);
+  padding: 12px 14px 14px;
+  box-shadow: var(--shadow-xs);
+}
+.exec-rc-head {
+  font-size: 11.5px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  margin-bottom: 10px;
+}
+.exec-rc-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+}
+@media (max-width: 900px) { .exec-rc-grid { grid-template-columns: 1fr; } }
+.exec-rc-card {
+  background: var(--bg-subtle);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--r-md);
+  padding: 10px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  opacity: 0.7;
+  transition: opacity var(--t-fast), border-color var(--t-fast), box-shadow var(--t-fast);
+}
+.exec-rc-card.current {
+  background: var(--bg-elevated);
+  opacity: 1;
+  box-shadow: var(--shadow-sm);
+}
+.exec-rc-card.exec-rc-success.current { border-color: var(--success); }
+.exec-rc-card.exec-rc-info.current    { border-color: var(--info); }
+.exec-rc-card.exec-rc-warning.current { border-color: var(--warning); }
+.exec-rc-card-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 4px;
+}
+.exec-rc-card-name {
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: -0.005em;
+  color: var(--text);
+}
+.exec-rc-success .exec-rc-card-name { color: var(--success); }
+.exec-rc-info    .exec-rc-card-name { color: var(--info); }
+.exec-rc-warning .exec-rc-card-name { color: var(--warning); }
+.exec-rc-card-pill {
+  font-size: 9.5px;
+  font-weight: 700;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  padding: 2px 7px;
+  border-radius: var(--r-full);
+  background: var(--accent-soft);
+  color: var(--accent);
+}
+.exec-rc-card-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  font-size: 11.5px;
+  font-variant-numeric: tabular-nums;
+}
+.exec-rc-card-mini { color: var(--text-muted); }
+.exec-rc-card-num  { color: var(--text); font-weight: 600; font-family: 'JetBrains Mono', monospace; }
+
 /* ── Cross-Venue Contribution table ───────────────────────────────────── */
 .exec-vc-section {
   background: var(--bg-elevated);

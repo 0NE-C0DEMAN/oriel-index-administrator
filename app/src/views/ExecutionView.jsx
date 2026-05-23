@@ -151,6 +151,44 @@
           </div>
         </section>
 
+        {/* Regime Comparison — Ksenia §10 "compare same dislocation under
+            Low / Moderate / Elevated" ask. Shows all three regimes side by
+            side with each regime's multipliers + effective values. The
+            current regime is highlighted so the audience sees how posture
+            shifts as the regime moves. */}
+        {ex.regimeComparison && ex.regimeComparison.length > 0 && (
+          <section className="exec-rc-section">
+            <div className="exec-rc-head">
+              Regime Comparison · same dislocation under each regime · current → {ex.regime}
+            </div>
+            <div className="exec-rc-grid">
+              {ex.regimeComparison.map((row) => (
+                <article
+                  key={row.regime}
+                  className={`exec-rc-card${row.isCurrent ? ' current' : ''} exec-rc-${REGIME_TONE[row.regime] || 'info'}`}
+                >
+                  <header className="exec-rc-card-head">
+                    <span className="exec-rc-card-name">{row.regime}</span>
+                    {row.isCurrent && <span className="exec-rc-card-pill">Current</span>}
+                  </header>
+                  <div className="exec-rc-card-row">
+                    <span className="exec-rc-card-mini">Quoted spread</span>
+                    <span className="exec-rc-card-num">×{Number(row.spreadMultiplier).toFixed(2)} → {fmtBp1(row.effectiveSpreadBps)}</span>
+                  </div>
+                  <div className="exec-rc-card-row">
+                    <span className="exec-rc-card-mini">Inventory limit</span>
+                    <span className="exec-rc-card-num">×{Number(row.inventoryMultiplier).toFixed(2)} → {fmtUsd(row.effectiveInventoryUsd)}</span>
+                  </div>
+                  <div className="exec-rc-card-row">
+                    <span className="exec-rc-card-mini">Edge hurdle</span>
+                    <span className="exec-rc-card-num">×{Number(row.edgeHurdleMultiplier).toFixed(2)} → {fmtBp1(row.effectiveEdgeHurdleBps)}</span>
+                  </div>
+                </article>
+              ))}
+            </div>
+          </section>
+        )}
+
         {/* Cross-Venue Contribution — per-(release_month, venue) weight
             contribution to the Oriel reference. Mirrors v7's
             compute_venue_contribution_summary table. Weight =

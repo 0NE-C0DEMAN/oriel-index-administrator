@@ -237,6 +237,39 @@ def _serialize_trs_row(row) -> Dict[str, Any]:
     }
 
 
+# Regime multipliers — verbatim from v7 oriel/sim/risk.py REGIME_MULTIPLIERS.
+# Kept inline so the React side can render the three-regime comparison
+# without having to import the full RiskRegimeAdjustment table.
+_REGIME_MULTIPLIERS = {
+    "Low":      {"spread": 0.85, "inventory": 1.15, "edge_hurdle": 0.85},
+    "Moderate": {"spread": 1.00, "inventory": 1.00, "edge_hurdle": 1.00},
+    "Elevated": {"spread": 1.35, "inventory": 0.65, "edge_hurdle": 1.50},
+}
+
+
+def _build_regime_comparison(
+    *,
+    base_spread_bps: float,
+    base_inventory_limit_usd: float,
+    base_edge_hurdle_bps: float,
+    current_regime: str,
+) -> List[Dict[str, Any]]:
+    rows: List[Dict[str, Any]] = []
+    for regime in ("Low", "Moderate", "Elevated"):
+        mults = _REGIME_MULTIPLIERS[regime]
+        rows.append({
+            "regime":              regime,
+            "isCurrent":           regime == current_regime,
+            "spreadMultiplier":    float(mults["spread"]),
+            "inventoryMultiplier": float(mults["inventory"]),
+            "edgeHurdleMultiplier": float(mults["edge_hurdle"]),
+            "effectiveSpreadBps":  float(base_spread_bps) * float(mults["spread"]),
+            "effectiveInventoryUsd": float(base_inventory_limit_usd) * float(mults["inventory"]),
+            "effectiveEdgeHurdleBps": float(base_edge_hurdle_bps) * float(mults["edge_hurdle"]),
+        })
+    return rows
+
+
 def _build_venue_contribution(front_df: pd.DataFrame, dislocations: pd.DataFrame) -> List[Dict[str, Any]]:
     """Mirror v7 compute_venue_contribution_summary: per-(release_month, venue)
     weight contribution to the Oriel reference. weight = 0.6 * confidence + 0.4 * liquidity,
@@ -407,6 +440,7 @@ def _payload_unavailable(reason: str) -> Dict[str, Any]:
         "orielDecision":   None,
         "scaletraderTicket": None,
         "venueContribution": [],
+        "regimeComparison":  [],
         "trsDeployment":   None,
         "trsComparison":   [],
         "trsInputs":       _DEFAULT_TRS_INPUTS_DICT,
@@ -439,6 +473,18 @@ def _build_payload() -> Dict[str, Any]:
     decision = _build_oriel_decision(dislocations)
     scaletrader_ticket = _build_scaletrader_ticket(dislocations)
     venue_contribution = _build_venue_contribution(front_df, dislocations)
+
+    # Ksenia §10 ask: "Compare same dislocation under: Low | Moderate |
+    # Elevated. That would be very powerful in demos." Renders the three
+    # regimes' multipliers side-by-side against the same base config so
+    # reviewers see how posture changes with regime even when sitting
+    # inside one regime today.
+    regime_comparison = _build_regime_comparison(
+        base_spread_bps=_BASE_SPREAD_BPS,
+        base_inventory_limit_usd=_BASE_INVENTORY_LIMIT_USD,
+        base_edge_hurdle_bps=_BASE_EDGE_HURDLE_BPS,
+        current_regime=posture.regime,
+    )
 
     # TRS deployment scenario (illustrative — driven by a representative
     # backtest summary, not a live run_backtest). Same math v7's
@@ -491,6 +537,7 @@ def _build_payload() -> Dict[str, Any]:
         "orielDecision":  decision,
         "scaletraderTicket": scaletrader_ticket,
         "venueContribution": venue_contribution,
+        "regimeComparison":  regime_comparison,
         "trsDeployment":  trs_deployment_payload,
         "trsComparison":  trs_comparison_payload,
         "trsInputs":      _DEFAULT_TRS_INPUTS_DICT,
