@@ -171,6 +171,33 @@
           </section>
         )}
 
+        {/* Representative backtest summary that drives the TRS scenario
+            math. Surfaced explicitly so reviewers can see where the
+            illustrative numbers come from — same fields v7
+            run_backtest produces (launch notional, spread/directional/
+            total PnL, max inventory, liquidity / market-stability
+            scores). */}
+        {ex.backtestSummary && (
+          <section className="exec-bt-section">
+            <div className="exec-bt-head">
+              Representative backtest summary · drives the TRS scenario below
+              <span className="exec-bt-head-sub">
+                · 30-day simulator run · spread {Number(ex.baseSpreadBps).toFixed(0)}bp · launch ${(ex.backtestSummary.launchNotionalUsd / 1e6).toFixed(1)}M ·
+                regime {ex.regime}
+              </span>
+            </div>
+            <div className="exec-bt-grid">
+              <BtCell label="Launch Notional"   value={fmtUsd(ex.backtestSummary.launchNotionalUsd)} />
+              <BtCell label="Spread Capture PnL" value={fmtUsd(ex.backtestSummary.spreadCapturePnlUsd)} accent={ex.backtestSummary.spreadCapturePnlUsd > 0 ? 'success' : 'danger'} />
+              <BtCell label="Directional PnL"   value={fmtUsd(ex.backtestSummary.directionalPnlUsd)}   accent={ex.backtestSummary.directionalPnlUsd > 0 ? 'success' : 'danger'} />
+              <BtCell label="Total PnL"         value={fmtUsd(ex.backtestSummary.totalPnlUsd)}         accent={ex.backtestSummary.totalPnlUsd > 0 ? 'success' : 'danger'} />
+              <BtCell label="Max Inventory"     value={fmtUsd(ex.backtestSummary.maxInventoryUsd)} />
+              <BtCell label="Liquidity Score"   value={`${(ex.backtestSummary.liquiditySelfSufficiencyScore * 100).toFixed(0)}%`} />
+              <BtCell label="Stability Score"   value={`${(ex.backtestSummary.marketStabilityScore * 100).toFixed(0)}%`} />
+            </div>
+          </section>
+        )}
+
         {/* TRS Pilot Deployment Economics — illustrative 30-day scenario
             from v7 trs_deployment.py. */}
         {ex.trsDeployment && (
@@ -390,6 +417,15 @@
         <td>{label}</td>
         <td className="num">{value}</td>
       </tr>
+    );
+  }
+
+  function BtCell({ label, value, accent }) {
+    return (
+      <div className={`exec-bt-cell accent-${accent || 'default'}`}>
+        <div className="exec-bt-label">{label}</div>
+        <div className="exec-bt-value">{value}</div>
+      </div>
     );
   }
 

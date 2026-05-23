@@ -1947,6 +1947,55 @@
   font-style: italic;
 }
 
+/* ── Representative backtest summary (drives the TRS scenario below) ── */
+.exec-bt-section {
+  background: var(--bg-subtle);
+  border: 1px dashed var(--border);
+  border-radius: var(--r-md);
+  padding: 10px 14px;
+}
+.exec-bt-head {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  margin-bottom: 8px;
+}
+.exec-bt-head-sub {
+  font-weight: 500;
+  text-transform: none;
+  letter-spacing: normal;
+  color: var(--text-subtle);
+  margin-left: 6px;
+  font-size: 11px;
+}
+.exec-bt-grid {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 10px;
+}
+@media (max-width: 1300px) { .exec-bt-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
+@media (max-width: 720px)  { .exec-bt-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+.exec-bt-cell { display: flex; flex-direction: column; gap: 1px; }
+.exec-bt-label {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--text-subtle);
+}
+.exec-bt-value {
+  font-size: 13px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  font-family: 'JetBrains Mono', monospace;
+  color: var(--text);
+  line-height: 1.25;
+}
+.exec-bt-cell.accent-success .exec-bt-value { color: var(--success); }
+.exec-bt-cell.accent-danger  .exec-bt-value { color: var(--danger); }
+
 /* ── Illustrative ScaleTrader Ticket card (v7 _render_scaletrader_card mirror) ── */
 .exec-st-section {
   background: var(--bg-elevated);
