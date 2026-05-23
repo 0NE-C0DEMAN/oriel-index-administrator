@@ -237,6 +237,43 @@ def _serialize_trs_row(row) -> Dict[str, Any]:
     }
 
 
+def _build_venue_contribution(front_df: pd.DataFrame, dislocations: pd.DataFrame) -> List[Dict[str, Any]]:
+    """Mirror v7 compute_venue_contribution_summary: per-(release_month, venue)
+    weight contribution to the Oriel reference. weight = 0.6 * confidence + 0.4 * liquidity,
+    normalized within each release_month so venues sum to 100%."""
+    if front_df is None or front_df.empty:
+        return []
+    tmp = front_df.copy()
+    tmp["confidence_score"] = pd.to_numeric(tmp.get("confidence_score"), errors="coerce").fillna(0.5)
+    tmp["liquidity_score"] = pd.to_numeric(tmp.get("liquidity_score"), errors="coerce").fillna(0.5)
+    tmp["oriel_weight"] = (0.6 * tmp["confidence_score"] + 0.4 * tmp["liquidity_score"]).clip(lower=0.01)
+    tmp["month_total_weight"] = (
+        tmp.groupby("release_month")["oriel_weight"].transform("sum").replace(0, pd.NA)
+    )
+    tmp["weight_pct"] = (tmp["oriel_weight"] / tmp["month_total_weight"]) * 100.0
+    grouped = tmp.groupby(["release_month", "venue"], as_index=False).agg(
+        implied_yoy=("implied_yoy", "mean"),
+        liquidity_score=("liquidity_score", "mean"),
+        confidence_score=("confidence_score", "mean"),
+        weight_pct=("weight_pct", "sum"),
+    )
+    if dislocations is not None and not dislocations.empty and "oriel_reference_yoy" in dislocations.columns:
+        ref_df = dislocations[["release_month", "oriel_reference_yoy"]].drop_duplicates()
+        grouped = grouped.merge(ref_df, on="release_month", how="left")
+    rows: List[Dict[str, Any]] = []
+    for _, r in grouped.sort_values(["release_month", "venue"]).iterrows():
+        rows.append({
+            "releaseMonth":       _format_maturity(r.get("release_month")),
+            "venue":              str(r.get("venue", "—")),
+            "impliedYoy":         float(r["implied_yoy"]) if pd.notna(r.get("implied_yoy")) else None,
+            "orielReferenceYoy":  float(r["oriel_reference_yoy"]) if pd.notna(r.get("oriel_reference_yoy")) else None,
+            "weightPct":          float(r["weight_pct"]) if pd.notna(r.get("weight_pct")) else None,
+            "liquidityScore":     float(r["liquidity_score"]) if pd.notna(r.get("liquidity_score")) else 0.0,
+            "confidenceScore":    float(r["confidence_score"]) if pd.notna(r.get("confidence_score")) else 0.0,
+        })
+    return rows
+
+
 def _build_scaletrader_ticket(dislocations: pd.DataFrame) -> Optional[Dict[str, Any]]:
     """Generate an illustrative ScaleTrader ticket from the top-edge
     dislocation. Mirrors what v7's _render_scaletrader_card produces
@@ -369,6 +406,7 @@ def _payload_unavailable(reason: str) -> Dict[str, Any]:
         },
         "orielDecision":   None,
         "scaletraderTicket": None,
+        "venueContribution": [],
         "trsDeployment":   None,
         "trsComparison":   [],
         "trsInputs":       _DEFAULT_TRS_INPUTS_DICT,
@@ -400,6 +438,7 @@ def _build_payload() -> Dict[str, Any]:
     strip = compute_dislocation_strip(front_df, dislocations)
     decision = _build_oriel_decision(dislocations)
     scaletrader_ticket = _build_scaletrader_ticket(dislocations)
+    venue_contribution = _build_venue_contribution(front_df, dislocations)
 
     # TRS deployment scenario (illustrative — driven by a representative
     # backtest summary, not a live run_backtest). Same math v7's
@@ -451,6 +490,7 @@ def _build_payload() -> Dict[str, Any]:
         },
         "orielDecision":  decision,
         "scaletraderTicket": scaletrader_ticket,
+        "venueContribution": venue_contribution,
         "trsDeployment":  trs_deployment_payload,
         "trsComparison":  trs_comparison_payload,
         "trsInputs":      _DEFAULT_TRS_INPUTS_DICT,

@@ -151,6 +151,48 @@
           </div>
         </section>
 
+        {/* Cross-Venue Contribution — per-(release_month, venue) weight
+            contribution to the Oriel reference. Mirrors v7's
+            compute_venue_contribution_summary table. Weight =
+            0.6 * confidence + 0.4 * liquidity, normalized within each
+            maturity so venues sum to 100%. Helps the audience see
+            which venue is driving the reference at each maturity. */}
+        {ex.venueContribution && ex.venueContribution.length > 0 && (
+          <section className="exec-vc-section">
+            <div className="exec-vc-head">
+              Cross-Venue Contribution · how each venue weights into the Oriel Reference
+            </div>
+            <div className="exec-vc-scroll">
+              <table className="exec-vc-table">
+                <thead>
+                  <tr>
+                    <th>Release Month</th>
+                    <th>Venue</th>
+                    <th className="num">Implied YoY</th>
+                    <th className="num">Oriel Reference</th>
+                    <th className="num">Weight %</th>
+                    <th className="num">Liquidity</th>
+                    <th className="num">Confidence</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {ex.venueContribution.map((row, i) => (
+                    <tr key={i}>
+                      <td>{row.releaseMonth}</td>
+                      <td>{row.venue}</td>
+                      <td className="num">{row.impliedYoy != null ? Number(row.impliedYoy).toFixed(4) : '—'}</td>
+                      <td className="num">{row.orielReferenceYoy != null ? Number(row.orielReferenceYoy).toFixed(4) : '—'}</td>
+                      <td className="num gold">{row.weightPct != null ? `${Number(row.weightPct).toFixed(1)}%` : '—'}</td>
+                      <td className="num">{`${(Number(row.liquidityScore) * 100).toFixed(0)}%`}</td>
+                      <td className="num">{`${(Number(row.confidenceScore) * 100).toFixed(0)}%`}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </section>
+        )}
+
         {/* Oriel Decision — picks the top-edge dislocation row.
             Mirrors v7's PR #19 "Oriel Decision · trade-worth-doing
             chain · not routed" KPI strip. */}
