@@ -355,12 +355,13 @@ def _render_login():
             width: 50% !important;
             max-width: none !important;
             min-height: 100vh !important;
-            padding: 24px 48px !important;
+            padding: 16px 48px 10px !important;
             box-sizing: border-box !important;
             display: flex !important;
             flex-direction: column !important;
-            justify-content: safe center !important;
+            justify-content: center !important;
             background: #FFFFFF !important;
+            overflow: hidden !important;
           }}
           [data-testid="stMainBlockContainer"] > div {{
             width: 100% !important;
@@ -492,14 +493,14 @@ def _render_login():
             font-size: 10px; font-weight: 700;
             letter-spacing: 0.14em; text-transform: uppercase;
             color: #2D5BFF;
-            margin-bottom: 10px;
+            margin-bottom: 6px;
           }}
           .oriel-form-eyebrow svg {{ color: #2D5BFF; }}
           .oriel-form-title {{
             font-size: 24px; font-weight: 700;
             letter-spacing: -0.02em; line-height: 1.1;
             color: #0E1733;
-            margin: 0 0 14px 0;
+            margin: 0 0 8px 0;
           }}
           .oriel-form-subtitle {{ display: none; }}
           .oriel-form-sub {{
@@ -516,8 +517,8 @@ def _render_login():
              under the form so the right pane has two visual halves: the
              auth block on top, the capability block below. */
           .oriel-form-features {{
-            margin-top: 10px;
-            padding-top: 10px;
+            margin-top: 6px;
+            padding-top: 6px;
             border-top: 1px solid #EEF1F6;
           }}
           .oriel-form-features-eyebrow {{
@@ -598,6 +599,14 @@ def _render_login():
             border: 0 !important;
             padding: 0 !important;
             box-shadow: none !important;
+          }}
+          /* Tighten the vertical gap Streamlit injects between form
+             elements so the login fits in the viewport without scroll. */
+          [data-testid="stForm"] [data-testid="stVerticalBlockBorderWrapper"] {{
+            margin-bottom: -6px !important;
+          }}
+          [data-testid="stForm"] [data-testid="stFormSubmitButton"] {{
+            margin-top: 2px !important;
           }}
           /* Field labels */
           [data-testid="stForm"] .stTextInput label,
@@ -838,15 +847,13 @@ def _render_login():
              centered, intentionally quiet so it never competes with the
              form. */
           .oriel-login-copyright {{
-            position: fixed;
-            left: 50%; right: 0; bottom: 14px;
             text-align: center;
             font-size: 10.5px;
             font-weight: 500;
             letter-spacing: 0.04em;
-            color: rgba(14, 23, 51, 0.42);
-            pointer-events: none;
-            z-index: 3;
+            color: rgba(14, 23, 51, 0.36);
+            margin-top: 6px;
+            padding-bottom: 2px;
           }}
           /* Responsive: collapse on narrow viewports */
           @media (max-width: 880px) {{
