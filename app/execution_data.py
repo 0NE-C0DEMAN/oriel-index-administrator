@@ -29,6 +29,7 @@ import functools
 import json
 import logging
 import sys
+from datetime import date, datetime
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
@@ -236,6 +237,69 @@ def _serialize_trs_row(row) -> Dict[str, Any]:
     }
 
 
+def _build_scaletrader_ticket(dislocations: pd.DataFrame) -> Optional[Dict[str, Any]]:
+    """Generate an illustrative ScaleTrader ticket from the top-edge
+    dislocation. Mirrors what v7's _render_scaletrader_card produces
+    (selectable contract → ladder ticket: side, start price, levels,
+    clip, max exposure, profit-taker offset, edge pp, disable conditions).
+
+    React-side renders this as a read-only ticket card; the v7 streamlit
+    version has interactive max-position / ladder-depth controls — those
+    can be added once a controls panel ships."""
+    if dislocations is None or dislocations.empty:
+        return None
+    try:
+        from scaletrader import generate_scaletrader_ticket  # type: ignore
+    except Exception as ex:
+        logger.warning("Execution payload: scaletrader import failed (%s)", ex)
+        return None
+    edge_col = "net_executable_edge_bps" if "net_executable_edge_bps" in dislocations.columns else "gross_edge_bps"
+    if edge_col not in dislocations.columns:
+        return None
+    row = dislocations.sort_values(edge_col, ascending=False).iloc[0].to_dict()
+    # Build a market_id label if missing (v7 has it via venue ingestion).
+    rm_raw = row.get("release_month")
+    if isinstance(rm_raw, (datetime, date)):
+        rm_label = (rm_raw.date() if isinstance(rm_raw, datetime) else rm_raw).strftime("%b %Y")
+        market_label = (rm_raw.date() if isinstance(rm_raw, datetime) else rm_raw).strftime("CPI-%y%b").upper()
+    else:
+        try:
+            ts = pd.to_datetime(rm_raw, errors="coerce")
+            rm_label = ts.strftime("%b %Y") if pd.notna(ts) else str(rm_raw)
+            market_label = ts.strftime("CPI-%y%b").upper() if pd.notna(ts) else "CPI"
+        except Exception:
+            rm_label = str(rm_raw)
+            market_label = "CPI"
+    row["release_month"] = rm_label
+    if "market_id" not in row or row["market_id"] in (None, "", float("nan")):
+        row["market_id"] = f"{row.get('venue', 'CPI')}-{market_label}"
+    # threshold_direction defaults to "above" in scaletrader if absent.
+    ticket = generate_scaletrader_ticket(row, max_position=2_000, target_ladder_depth=8)
+    return {
+        "selectedVenueContract": ticket.selected_venue_contract,
+        "venue":                 ticket.venue,
+        "releaseMonth":          ticket.release_month,
+        "side":                  ticket.side,
+        "orielFairValueYoy":     float(ticket.oriel_fair_value),
+        "contractMarketPrice":   float(ticket.contract_market_price),
+        "liquidityScore":        float(ticket.liquidity_score),
+        "confidenceScore":       float(ticket.confidence_score),
+        "startPrice":            float(ticket.start_price),
+        "increment":             float(ticket.increment),
+        "levels":                int(ticket.levels),
+        "clipSize":              int(ticket.clip_size),
+        "maxExposure":           int(ticket.max_exposure),
+        "profitTakerOffset":     float(ticket.profit_taker_offset),
+        "edgeProbabilityPoints": float(ticket.edge_probability_points),
+        "disableConditions":     ticket.disable_conditions,
+        "status":                "not routed",
+        "controls": {
+            "maxPosition":         2_000,
+            "targetLadderDepth":   8,
+        },
+    }
+
+
 def _build_oriel_decision(dislocations: pd.DataFrame) -> Optional[Dict[str, Any]]:
     """Pick the single best 'trade-worth-doing' row from the dislocations
     frame — the row with the largest net executable edge. Mirrors the
@@ -304,6 +368,7 @@ def _payload_unavailable(reason: str) -> Dict[str, Any]:
             "maturityCount":        0,
         },
         "orielDecision":   None,
+        "scaletraderTicket": None,
         "trsDeployment":   None,
         "trsComparison":   [],
         "trsInputs":       _DEFAULT_TRS_INPUTS_DICT,
@@ -334,6 +399,7 @@ def _build_payload() -> Dict[str, Any]:
     )
     strip = compute_dislocation_strip(front_df, dislocations)
     decision = _build_oriel_decision(dislocations)
+    scaletrader_ticket = _build_scaletrader_ticket(dislocations)
 
     # TRS deployment scenario (illustrative — driven by a representative
     # backtest summary, not a live run_backtest). Same math v7's
@@ -384,6 +450,7 @@ def _build_payload() -> Dict[str, Any]:
             "maturityCount":        int(strip.maturity_count),
         },
         "orielDecision":  decision,
+        "scaletraderTicket": scaletrader_ticket,
         "trsDeployment":  trs_deployment_payload,
         "trsComparison":  trs_comparison_payload,
         "trsInputs":      _DEFAULT_TRS_INPUTS_DICT,

@@ -214,6 +214,55 @@
           </section>
         )}
 
+        {/* Illustrative ScaleTrader Ticket — Not Routed.
+            Mirrors v7's _render_scaletrader_card output: a ladder
+            ticket derived from the top-edge dislocation, with side,
+            start price, increment, levels, clip, max exposure,
+            profit-taker offset, Oriel reference, contract market
+            price, liquidity/confidence, disable conditions. */}
+        {ex.scaletraderTicket && (
+          <section className="exec-st-section">
+            <div className={`exec-st-ribbon ${ex.scaletraderTicket.side === 'Buy YES' ? 'buy' : 'sell'}`}>
+              Illustrative ScaleTrader Ticket · {ex.scaletraderTicket.status} · {ex.scaletraderTicket.selectedVenueContract}
+            </div>
+            <div className="exec-st-kpi-grid">
+              <StKpiCell label="Side"          value={ex.scaletraderTicket.side}                                              accent={ex.scaletraderTicket.side === 'Buy YES' ? 'success' : 'danger'} />
+              <StKpiCell label="Start Price"   value={`$${Number(ex.scaletraderTicket.startPrice).toFixed(2)}`} />
+              <StKpiCell label="Increment"     value={`$${Number(ex.scaletraderTicket.increment).toFixed(2)}`} />
+              <StKpiCell label="Levels"        value={String(ex.scaletraderTicket.levels)} />
+              <StKpiCell label="Clip Size"     value={ex.scaletraderTicket.clipSize.toLocaleString()} />
+              <StKpiCell label="Max Exposure"  value={ex.scaletraderTicket.maxExposure.toLocaleString()} />
+              <StKpiCell label="Profit-Taker"  value={`${ex.scaletraderTicket.profitTakerOffset >= 0 ? '+' : '−'}$${Math.abs(ex.scaletraderTicket.profitTakerOffset).toFixed(2)}`} />
+              <StKpiCell label="Oriel Edge"    value={`${Number(ex.scaletraderTicket.edgeProbabilityPoints).toFixed(2)}`} suffix="pp" />
+            </div>
+            <div className="exec-st-detail-row">
+              <div className="exec-st-detail-card">
+                <div className="exec-st-detail-label">Oriel Reference</div>
+                <div className="exec-st-detail-value">
+                  {Number(ex.scaletraderTicket.orielFairValueYoy).toFixed(4)}
+                  <span className="exec-st-detail-unit">% YoY</span>
+                </div>
+              </div>
+              <div className="exec-st-detail-card">
+                <div className="exec-st-detail-label">Contract Market Price</div>
+                <div className="exec-st-detail-value">${Number(ex.scaletraderTicket.contractMarketPrice).toFixed(2)}</div>
+              </div>
+              <div className="exec-st-detail-card">
+                <div className="exec-st-detail-label">Liquidity / Confidence</div>
+                <div className="exec-st-detail-value">
+                  {(Number(ex.scaletraderTicket.liquidityScore) * 100).toFixed(0)}%
+                  <span className="exec-st-detail-sep"> / </span>
+                  {(Number(ex.scaletraderTicket.confidenceScore) * 100).toFixed(0)}%
+                </div>
+              </div>
+            </div>
+            <div className="exec-st-disable">
+              <div className="exec-st-disable-label">Disable Conditions</div>
+              <div className="exec-st-disable-text">{ex.scaletraderTicket.disableConditions}</div>
+            </div>
+          </section>
+        )}
+
         {/* TRS Scenario Comparison — 4 rows mirroring v7's
             build_trs_scenario_comparison output. */}
         {ex.trsComparison && ex.trsComparison.length > 0 && (
@@ -341,6 +390,18 @@
         <td>{label}</td>
         <td className="num">{value}</td>
       </tr>
+    );
+  }
+
+  function StKpiCell({ label, value, suffix, accent }) {
+    return (
+      <div className={`exec-st-kpi-cell accent-${accent || 'default'}`}>
+        <div className="exec-st-kpi-label">{label}</div>
+        <div className="exec-st-kpi-value">
+          {value}
+          {suffix && <span className="exec-st-kpi-suffix">{suffix}</span>}
+        </div>
+      </div>
     );
   }
 
