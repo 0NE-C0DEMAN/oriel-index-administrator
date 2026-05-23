@@ -158,6 +158,11 @@ st.set_page_config(
 # where sig = HMAC-SHA256(secret, user|expiry). Tampering invalidates the sig
 # so the session can't be forged. Closing the tab no longer logs the user
 # out — real apps don't do that.
+#
+# Reading uses Streamlit's native `st.context.cookies` (added in 1.35);
+# writing uses a tiny inline-iframe <script> that touches
+# window.top.document.cookie directly so the cookie lands on the parent
+# page (and survives full reloads), not just inside a component iframe.
 import hmac
 import hashlib
 import base64
@@ -165,18 +170,11 @@ import time
 import os
 from datetime import datetime, timedelta, timezone
 
-import extra_streamlit_components as stx
+import streamlit.components.v1 as components
 
 # Cookie name + TTL.
 _SESSION_COOKIE = "oriel_session"
 _SESSION_TTL_DAYS = 7
-
-@st.cache_resource
-def _cookie_manager() -> "stx.CookieManager":
-    """Single CookieManager per process. stx requires a unique key per
-    component instance; we hard-code one because there is only one auth
-    cookie."""
-    return stx.CookieManager(key="oriel_cookie_mgr")
 
 
 def _admin_credentials() -> tuple[str, str]:
@@ -229,6 +227,62 @@ def _verify_session_token(token: str) -> str | None:
         return username
     except Exception:
         return None
+
+
+def _read_session_cookie() -> str | None:
+    """Read oriel_session cookie from the parent page via the native
+    st.context.cookies API. Returns None if not present or unavailable."""
+    try:
+        ctx = getattr(st, "context", None)
+        if ctx is None:
+            return None
+        cookies = getattr(ctx, "cookies", None)
+        if cookies is None:
+            return None
+        return cookies.get(_SESSION_COOKIE)
+    except Exception:
+        return None
+
+
+def _write_session_cookie(token: str, ttl_seconds: int = _SESSION_TTL_DAYS * 86400) -> None:
+    """Set the oriel_session cookie on the PARENT page (not in a sandboxed
+    iframe) via a tiny window.top.document.cookie write. Streamlit's
+    components.v1.html() runs the script inside an iframe that shares the
+    parent origin, so window.top.document.cookie is accessible. Without
+    `window.top.` we'd be writing to the iframe's own document, which
+    would never survive a full page reload."""
+    # Cookie attributes: max-age (seconds), path=/ so all routes can read,
+    # SameSite=Lax so cross-tab navigations preserve it. Secure flag is
+    # auto-added in HTTPS context by browser default behaviour.
+    js = f"""
+    <script>
+      (function() {{
+        try {{
+          var doc = (window.top && window.top.document) || document;
+          doc.cookie = "{_SESSION_COOKIE}=" + "{token}" +
+                       "; max-age={ttl_seconds}" +
+                       "; path=/" +
+                       "; SameSite=Lax";
+        }} catch (e) {{ /* cross-origin blocked — fall through */ }}
+      }})();
+    </script>
+    """
+    components.html(js, height=0)
+
+
+def _clear_session_cookie() -> None:
+    """Drop the oriel_session cookie on the parent page (sets max-age=0)."""
+    js = f"""
+    <script>
+      (function() {{
+        try {{
+          var doc = (window.top && window.top.document) || document;
+          doc.cookie = "{_SESSION_COOKIE}=; max-age=0; path=/; SameSite=Lax";
+        }} catch (e) {{ /* cross-origin blocked */ }}
+      }})();
+    </script>
+    """
+    components.html(js, height=0)
 
 def _oriel_logo_uri() -> str:
     """Pull the base64 PNG data URI of the Oriel logo out of the React
@@ -856,17 +910,16 @@ def _render_login():
                 clean_user = (username or "").strip()
                 st.session_state["oriel_auth"] = True
                 st.session_state["oriel_user"] = clean_user
-                # Persistent session: drop a signed HMAC cookie so refresh
-                # / close+reopen keeps the user logged in for 7 days.
-                try:
-                    _cookie_manager().set(
-                        _SESSION_COOKIE,
-                        _make_session_token(clean_user),
-                        expires_at=datetime.now(timezone.utc) + timedelta(days=_SESSION_TTL_DAYS),
-                        key="oriel_set_session_cookie",
-                    )
-                except Exception:
-                    pass
+                # Persistent session: drop a signed HMAC cookie on the
+                # PARENT page so refresh / close+reopen keeps the user
+                # logged in for 7 days. We render the cookie-write
+                # iframe ONCE here (not rerun immediately) so the
+                # browser has time to commit the cookie before the next
+                # render reads it.
+                _write_session_cookie(_make_session_token(clean_user))
+                # Give the cookie a beat to land, then rerun into the
+                # authenticated app.
+                time.sleep(0.25)
                 st.rerun()
             else:
                 st.error("Invalid username or password.")
@@ -945,40 +998,32 @@ def _render_login():
     )
 
 # Logout handler — triggered by `?logout=1` from the React app's profile
-# dropdown. Clear session AND the persistent cookie, drop the query
-# param, rerun → login screen.
+# dropdown. Clear session state, drop the persistent cookie via inline
+# JS on the parent page, scrub the query param, then rerun into the
+# login screen.
 if st.query_params.get("logout") in ("1", "true"):
     for k in ("oriel_auth", "oriel_user"):
         st.session_state.pop(k, None)
-    try:
-        _cookie_manager().delete(_SESSION_COOKIE, key="oriel_del_session_cookie")
-    except Exception:
-        pass
+    _clear_session_cookie()
     try:
         st.query_params.clear()
     except Exception:
         pass
+    time.sleep(0.15)
     st.rerun()
 
 # ── Restore session from persistent cookie ──────────────────────────────
-# Read the oriel_session cookie. If it's a valid signed token, lift
-# st.session_state.oriel_auth = True without forcing the user to log in
-# again. This is what makes refresh (and tab close+reopen within the
-# 7-day TTL) NOT log them out — real apps don't drop sessions on reload.
+# Read the oriel_session cookie via Streamlit's native st.context.cookies.
+# If it's a valid signed token, lift st.session_state.oriel_auth = True
+# without forcing the user to log in again. This is what makes refresh
+# (and tab close+reopen within the 7-day TTL) NOT log them out — real
+# apps don't drop sessions on reload.
 if not st.session_state.get("oriel_auth"):
-    try:
-        _cookies_loaded = _cookie_manager().get_all(key="oriel_get_all_cookies")
-        _tok = (_cookies_loaded or {}).get(_SESSION_COOKIE)
-        _user_from_cookie = _verify_session_token(_tok) if _tok else None
-        if _user_from_cookie:
-            st.session_state["oriel_auth"] = True
-            st.session_state["oriel_user"] = _user_from_cookie
-    except Exception:
-        # First-render race: CookieManager component sometimes returns
-        # None on initial mount because the cookies haven't been
-        # POSTed back from the browser yet. Streamlit will rerun
-        # naturally; on the next pass the cookie will be available.
-        pass
+    _tok = _read_session_cookie()
+    _user_from_cookie = _verify_session_token(_tok) if _tok else None
+    if _user_from_cookie:
+        st.session_state["oriel_auth"] = True
+        st.session_state["oriel_user"] = _user_from_cookie
 
 if not st.session_state.get("oriel_auth"):
     _render_login()
