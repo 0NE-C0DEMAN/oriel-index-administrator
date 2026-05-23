@@ -124,33 +124,46 @@
     ]), []);
 
     // Eligibility gates as a numbered horizontal flow (matches the
-    // MethodologySteps visual language). Each step's status drives a tone
-    // class on the number circle.
+    // MethodologySteps visual language). Each gate carries a main body
+    // line + a "next" line so the cards have enough vertical content to
+    // not look hollow when stretched across 4 columns.
     const gates = useMemo(() => ([
       {
         title: 'Licensed feed',
         body: cme.sourceStatus === 'PROXY'
-          ? 'Interim proxy in use, licensed feed pending.'
+          ? 'Interim proxy in use; licensed CME market-data agreement pending.'
           : `Source status: ${cme.sourceStatus}.`,
+        next: cme.sourceStatus === 'PROXY'
+          ? 'Next: legal review + market-data licensing sign-off.'
+          : 'Cleared — feed ingested as governed source.',
         status: cme.sourceStatus === 'PROXY' ? 'pending' : 'cleared',
       },
       {
         title: 'Maturity coverage',
-        body: `${cme.maturityCount} release ${cme.maturityCount === 1 ? 'month' : 'months'} covered across the curve.`,
+        body: `${cme.maturityCount} release ${cme.maturityCount === 1 ? 'month' : 'months'} covered. Curve spans the front-end of the CPI surface.`,
+        next: cme.maturityCount >= 3
+          ? 'Cleared — coverage matches governed sources.'
+          : 'Pending — need at least 3 maturities to clear.',
         status: cme.maturityCount >= 3 ? 'cleared' : 'partial',
       },
       {
         title: 'Liquidity depth',
         body: ladderStats.totalOi > 0
-          ? `${ladderStats.totalOi.toLocaleString()} contracts open, avg liquidity ${fmtPct(ladderStats.avgLiq)}.`
+          ? `${ladderStats.totalOi.toLocaleString()} contracts open, avg liquidity ${fmtPct(ladderStats.avgLiq)} across the ladder.`
           : 'No open interest yet — quote depth gate pending.',
+        next: ladderStats.totalOi > 0
+          ? 'Cleared — all contracts sit above the proxy depth floor.'
+          : 'Pending — monitor depth as participation grows.',
         status: ladderStats.totalOi > 0 ? 'cleared' : 'pending',
       },
       {
         title: 'Shadow eligibility',
         body: cme.publishabilityReason || (cme.publishable
-          ? 'Eligible for shadow blend; governed promotion still requires the licensed feed.'
-          : 'Not yet eligible for shadow blend.'),
+          ? 'Eligible for the shadow blend; governed promotion still gated on the licensed feed.'
+          : 'Not yet eligible for shadow blend; missing coverage or calibration data.'),
+        next: cme.publishable
+          ? 'Cleared — shadow blend can include CME on the Basis Engine tab.'
+          : 'Pending — fix any missing constituent data first.',
         status: cme.publishable ? 'cleared' : 'pending',
       },
     ]), [cme.sourceStatus, cme.maturityCount, cme.publishable, cme.publishabilityReason, ladderStats.totalOi, ladderStats.avgLiq]);
@@ -200,53 +213,82 @@
             </>
           )}
 
-          {/* ─────────────────────────  Curve & Ladder  ────────────────────── */}
+          {/* ─────────────────────────  Curve & Ladder  ──────────────────────
+              Hero-row layout matches every other detail tab (Kalshi etc):
+              chart card on the LEFT, rail of summary cards on the RIGHT.
+              Below the hero-row, the two tables stack full width. */}
           {tab === 'ladder' && (
             (points.length > 0 || contracts.length > 0) ? (
               <>
-                <section className="cme-stats-card">
-                  <header className="info-card-head">
-                    <span className="info-card-eyebrow">Ladder summary</span>
-                    <Badge variant="accent">{points.length} curve points · {contracts.length} contracts</Badge>
-                  </header>
-                  <div className="info-stats-grid">
-                    <Stat label="Avg probability"      value={fmt4(ladderStats.avgProb)} />
-                    <Stat label="Avg liquidity score"  value={fmtPct(ladderStats.avgLiq)} muted />
-                    <Stat label="Total volume"         value={ladderStats.totalVol.toLocaleString()} muted />
-                    <Stat label="Total open interest"  value={ladderStats.totalOi.toLocaleString()} />
-                  </div>
-                </section>
-
-                {curveChartData.length > 0 && ForwardCurveChart && (
-                  <section className="cme-curve-card">
-                    <header className="info-card-head">
-                      <span className="info-card-eyebrow">Probability curve · per maturity</span>
-                      <div className="cme-curve-legend">
-                        <span className="cme-curve-legend-band" />
-                        <span>Liquidity-weighted band</span>
-                        <span className="cme-curve-legend-dot" />
-                        <span>Threshold probability</span>
+                <div className="hero-row">
+                  {curveChartData.length > 0 && ForwardCurveChart ? (
+                    <section className="herochart-card cme-curve-herochart">
+                      <header className="herochart-head">
+                        <div className="herochart-head-text">
+                          <div className="herochart-title">Probability curve</div>
+                          <div className="herochart-sub">
+                            Proxy-quoted P(CPI YoY clears threshold) · {points.length} anchor points · band shrinks with liquidity
+                          </div>
+                        </div>
+                        <div className="cme-curve-legend">
+                          <span className="cme-curve-legend-band" />
+                          <span>±Liquidity band</span>
+                          <span className="cme-curve-legend-dot" />
+                          <span>Probability</span>
+                        </div>
+                      </header>
+                      <div className="herochart-body">
+                        <ForwardCurveChart
+                          data={curveChartData}
+                          unit=""
+                          precision={4}
+                          height={260}
+                          accent="accent"
+                          showBand
+                          showPrior={false}
+                          yLabel="Threshold probability"
+                        />
                       </div>
-                    </header>
-                    <div className="cme-curve-chart-wrap">
-                      <ForwardCurveChart
-                        data={curveChartData}
-                        unit=""
-                        precision={4}
-                        height={260}
-                        accent="accent"
-                        showBand
-                        showPrior={false}
-                        yLabel="Threshold probability"
-                      />
-                    </div>
-                    <footer className="cme-curve-foot">
-                      Each anchor is the proxy-quoted probability that month's
-                      CPI YoY clears the contract's threshold. Band tightens as
-                      per-contract liquidity rises.
-                    </footer>
-                  </section>
-                )}
+                    </section>
+                  ) : (
+                    <section className="herochart-card cme-curve-herochart"><div className="herochart-body" /></section>
+                  )}
+
+                  <div className="hero-row-rail">
+                    <section className="info-card cme-ladder-stats">
+                      <header className="info-card-head">
+                        <span className="info-card-eyebrow">Ladder summary</span>
+                        <Badge variant="accent">{points.length} pts · {contracts.length} contracts</Badge>
+                      </header>
+                      <div className="info-stats-grid">
+                        <Stat label="Avg probability"      value={fmt4(ladderStats.avgProb)} />
+                        <Stat label="Avg liquidity score"  value={fmtPct(ladderStats.avgLiq)} muted />
+                        <Stat label="Total volume"         value={ladderStats.totalVol.toLocaleString()} muted />
+                        <Stat label="Total open interest"  value={ladderStats.totalOi.toLocaleString()} />
+                      </div>
+                    </section>
+
+                    <section className="info-card">
+                      <header className="info-card-head">
+                        <span className="info-card-eyebrow">Per-maturity highlights</span>
+                        <Badge variant="default">{points.length} maturities</Badge>
+                      </header>
+                      <div className="info-kv-list">
+                        {points
+                          .slice()
+                          .sort((a, b) => (a.releaseMonthIso || '').localeCompare(b.releaseMonthIso || ''))
+                          .map((p, i) => (
+                            <Kv
+                              key={i}
+                              label={`${p.releaseMonth} · ${p.direction} ${fmt2(p.threshold)}`}
+                              value={`P=${fmt4(p.probability)} · liq ${fmt2(p.liquidityScore)}`}
+                              mono
+                            />
+                          ))}
+                      </div>
+                    </section>
+                  </div>
+                </div>
 
                 {points.length > 0 && (
                   <section className="cme-table-section">
@@ -381,7 +423,7 @@
           <Badge variant="accent">CPI Basis Engine</Badge>
         </header>
         <p className="info-card-body">
-          On the CPI Basis Engine tab, the <strong>Source Blend &amp; Shadow Impact</strong>
+          On the CPI Basis Engine tab, the <strong>Source Blend &amp; Shadow Impact</strong>{' '}
           section quantifies what adding CME to the governed blend would do
           to curve levels, source weights, dispersion, and downstream CPI
           dislocation metrics.
@@ -572,7 +614,9 @@
   /* ────────────────  Numbered horizontal step flow  ────────────────── */
   // Matches MethodologySteps visual language but supports per-step tone
   // (cleared / partial / pending) so the eligibility gates can render in
-  // the same horizontal-flow layout the rest of the app uses.
+  // the same horizontal-flow layout the rest of the app uses. Renders a
+  // status pill in the card header + a secondary "next" line under the
+  // body so the cards have enough vertical density to fill 4 columns.
   function CmeStepFlow({ eyebrow, title, steps }) {
     return (
       <section className="method-steps cme-step-flow">
@@ -585,8 +629,16 @@
             <li key={i} className={`method-step cme-step-${s.status}`}>
               <div className={`method-step-num cme-step-num-${s.status}`}>{i + 1}</div>
               <div className="method-step-body">
-                <div className="method-step-title">{s.title}</div>
+                <div className="cme-step-title-row">
+                  <span className="method-step-title">{s.title}</span>
+                  <span className={`cme-step-pill cme-step-pill-${s.status}`}>
+                    {s.status === 'cleared' ? 'Cleared' : s.status === 'partial' ? 'Partial' : 'Pending'}
+                  </span>
+                </div>
                 <div className="method-step-text">{s.body}</div>
+                {s.next && (
+                  <div className="cme-step-next">{s.next}</div>
+                )}
               </div>
               {i < steps.length - 1 && (
                 <div className="method-step-connector" aria-hidden="true">

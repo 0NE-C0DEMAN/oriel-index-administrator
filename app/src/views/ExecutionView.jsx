@@ -213,7 +213,11 @@
             </>
           )}
 
-          {/* ───────────────────────  Dislocations tab  ────────────────────── */}
+          {/* ───────────────────────  Dislocations tab  ──────────────────────
+              Top-down narrative: summary strip → trade decision (the
+              actionable thing) → supporting cross-venue weights and
+              per-row audit table. Decision sits at the top because that
+              is what desks act on. */}
           {tab === 'dislocations' && (
             <>
               <section className="exec-strip-section">
@@ -230,6 +234,24 @@
                   <StripCell label="Maturities"           value={String(ex.strip.maturityCount)} />
                 </div>
               </section>
+
+              {ex.orielDecision && (
+                <section className="exec-decision-section">
+                  <header className="info-card-head">
+                    <span className="info-card-eyebrow">Oriel decision · trade-worth-doing chain</span>
+                    <Badge variant="warning">{ex.orielDecision.status}</Badge>
+                  </header>
+                  <div className="exec-decision-grid">
+                    <DecisionCell label="Preferred Side"      value={ex.orielDecision.preferredSide} accent="gold" sub={`Status: ${ex.orielDecision.status}`} />
+                    <DecisionCell label="Preferred Venue"     value={ex.orielDecision.preferredVenue} />
+                    <DecisionCell label="Maturity"            value={ex.orielDecision.preferredMaturity} />
+                    <DecisionCell label="Oriel Reference"     value={`${Number(ex.orielDecision.orielReferenceYoy).toFixed(4)}`} suffix="% YoY" />
+                    <DecisionCell label="Best Displayed"      value={`${Number(ex.orielDecision.bestDisplayedYoy).toFixed(4)}`} suffix="% YoY" />
+                    <DecisionCell label="Net Executable Edge" value={fmtBp1(ex.orielDecision.netExecutableEdgeBps)} accent={ex.orielDecision.netExecutableEdgeBps > 0 ? 'success' : 'muted'} />
+                    <DecisionCell label="Rationale"           value={ex.orielDecision.rationale} small />
+                  </div>
+                </section>
+              )}
 
               {ex.venueContribution && ex.venueContribution.length > 0 && (
                 <section className="exec-vc-section">
@@ -308,24 +330,6 @@
                   </div>
                 </section>
               )}
-
-              {ex.orielDecision && (
-                <section className="exec-decision-section">
-                  <header className="info-card-head">
-                    <span className="info-card-eyebrow">Oriel decision · trade-worth-doing chain</span>
-                    <Badge variant="warning">{ex.orielDecision.status}</Badge>
-                  </header>
-                  <div className="exec-decision-grid">
-                    <DecisionCell label="Preferred Side"      value={ex.orielDecision.preferredSide} accent="gold" sub={`Status: ${ex.orielDecision.status}`} />
-                    <DecisionCell label="Preferred Venue"     value={ex.orielDecision.preferredVenue} />
-                    <DecisionCell label="Maturity"            value={ex.orielDecision.preferredMaturity} />
-                    <DecisionCell label="Oriel Reference"     value={`${Number(ex.orielDecision.orielReferenceYoy).toFixed(4)}`} suffix="% YoY" />
-                    <DecisionCell label="Best Displayed"      value={`${Number(ex.orielDecision.bestDisplayedYoy).toFixed(4)}`} suffix="% YoY" />
-                    <DecisionCell label="Net Executable Edge" value={fmtBp1(ex.orielDecision.netExecutableEdgeBps)} accent={ex.orielDecision.netExecutableEdgeBps > 0 ? 'success' : 'muted'} />
-                    <DecisionCell label="Rationale"           value={ex.orielDecision.rationale} small />
-                  </div>
-                </section>
-              )}
             </>
           )}
 
@@ -380,13 +384,17 @@
                       <Badge variant="default">{scaletraderLadder.length} levels · clip {ex.scaletraderTicket.clipSize.toLocaleString()}</Badge>
                     </header>
                     <div className="exec-st-ladder-grid">
-                      {scaletraderLadder.map((rung) => (
-                        <div key={rung.level} className="exec-st-ladder-cell">
-                          <div className="exec-st-ladder-mini">Level {rung.level}</div>
-                          <div className="exec-st-ladder-price">${rung.price.toFixed(2)}</div>
-                          <div className="exec-st-ladder-sub">Clip {ex.scaletraderTicket.clipSize.toLocaleString()}</div>
-                        </div>
-                      ))}
+                      {scaletraderLadder.map((rung) => {
+                        const pct = (rung.level / scaletraderLadder.length) * 100;
+                        return (
+                          <div key={rung.level} className="exec-st-ladder-cell">
+                            <div className="exec-st-ladder-mini">Level {rung.level}</div>
+                            <div className="exec-st-ladder-price">${rung.price.toFixed(2)}</div>
+                            <div className="exec-st-ladder-sub">Clip {ex.scaletraderTicket.clipSize.toLocaleString()}</div>
+                            <div className="exec-st-ladder-bar" style={{ width: `${pct}%` }} />
+                          </div>
+                        );
+                      })}
                     </div>
                     <div className="exec-st-ladder-foot">
                       Profit-taker offset {ex.scaletraderTicket.profitTakerOffset >= 0 ? '+' : '−'}${Math.abs(ex.scaletraderTicket.profitTakerOffset).toFixed(2)} applied to each fill.
