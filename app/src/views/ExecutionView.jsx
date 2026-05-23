@@ -86,41 +86,31 @@
 
     return (
       <div className="view detail-view execution-view">
-        {/* Sticky head: hero + regime banner + sub-tab bar.
-            Regime banner stays visible regardless of which sub-tab is
-            active because it's the most important context the audience
-            needs to interpret every other section. */}
+        {/* Sticky head: compact single-line page head + regime strip +
+            sub-tab bar. Methodology sub-tab carries the long-form
+            explainer copy so the head stays dense and scannable like
+            the rest of the Redesign tabs. */}
         <div className="detail-sticky-head">
-          <header className="placeholder-hero">
-            <div className="placeholder-eyebrow">Execution Workbench</div>
-            <h1 className="placeholder-title">Forward Risk Regime · Posture · Dislocations</h1>
-            <div className="placeholder-tag">
-              <Badge variant="info" dot>Decision-support only · Not routed</Badge>
-            </div>
-            <p className="placeholder-lede">
-              Translates the live venue stack into a Forward Risk Regime
-              (Low / Moderate / Elevated), the three posture multipliers
-              (spread, inventory, edge hurdle) the simulator applies under
-              that regime, and the CPI Dislocation Strip Chris asked to
-              make prominent. The standalone Oriel Execution Workbench
-              (apps/market_sim) still owns the full simulator —
-              ScaleTrader ticket controls, parameter sweep, heatmap —
-              until the React port lands.
-            </p>
-          </header>
+          <div className="compact-page-head">
+            <span className="compact-page-eyebrow">Execution Workbench</span>
+            <span className="compact-page-divider" aria-hidden="true" />
+            <span className="compact-page-title">Forward Risk Regime · Posture · Dislocations</span>
+            <span className="compact-page-tag info">Decision-support only · Not routed</span>
+          </div>
 
-          <section className={`exec-regime-banner exec-regime-${tone}`}>
-            <div className="exec-regime-head">
-              <Badge variant={tone} dot>Forward Risk Regime · {ex.regime}</Badge>
-              {ex.riskScore != null && (
-                <span className="exec-regime-score">
-                  Risk score <strong>{fmtPct(ex.riskScore)}</strong>/100
-                  <span className="exec-regime-thresholds"> (Low &lt; 35 · Moderate &lt; 65 · Elevated ≥ 65)</span>
-                </span>
-              )}
-            </div>
-            <p className="exec-regime-explainer">{ex.regimeExplainer}</p>
-          </section>
+          <div className={`exec-regime-strip exec-regime-strip-${tone}`}>
+            <span className={`exec-regime-strip-dot dot-${tone}`} aria-hidden="true" />
+            <span className="exec-regime-strip-label">Forward Risk Regime</span>
+            <span className={`exec-regime-strip-value tone-${tone}`}>{ex.regime}</span>
+            {ex.riskScore != null && (
+              <>
+                <span className="exec-regime-strip-sep">·</span>
+                <span className="exec-regime-strip-label">Risk score</span>
+                <span className="exec-regime-strip-value">{fmtPct(ex.riskScore)}<span className="exec-regime-strip-unit">/100</span></span>
+              </>
+            )}
+            <span className="exec-regime-strip-thresholds">Low &lt; 35 · Moderate &lt; 65 · Elevated ≥ 65</span>
+          </div>
 
           <SubTabBar tabs={SUB_TABS} active={tab} onChange={setTab} />
         </div>

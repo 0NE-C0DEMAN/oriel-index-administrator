@@ -56,25 +56,18 @@
 
     return (
       <div className="view detail-view cme-view">
-        {/* Sticky head: hero card + KPI strip + sub-tab bar.
-            Same pattern as IndexDetailView so the page chrome reads
-            consistent with the rest of the Redesign tabs. */}
+        {/* Sticky head: compact single-line page head + KPI strip +
+            sub-tab bar. Long-form context moved into the Overview
+            sub-tab's framing cards so the head stays compact like the
+            Kalshi / ForecastEx / Polymarket detail pages. */}
         <div className="detail-sticky-head">
-          <header className="placeholder-hero">
-            <div className="placeholder-eyebrow">CPI · CME</div>
-            <h1 className="placeholder-title">CME CPI proxy · shadow constituent</h1>
-            <div className="placeholder-tag" style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-              <Badge variant="warning" dot>Proxy / shadow mode</Badge>
-              <Badge variant="accent" dot>Prospective governed constituent</Badge>
-            </div>
-            <p className="placeholder-lede">
-              Interim CME CPI proxy path for reviewer demonstration. Final
-              licensed-feed approval and governance promotion remain pending;
-              current governed CPI Reference stays Kalshi + ForecastEx while
-              CME is evaluated through shadow-blend diagnostics on the CPI
-              Basis Engine.
-            </p>
-          </header>
+          <div className="compact-page-head">
+            <span className="compact-page-eyebrow">CPI · CME</span>
+            <span className="compact-page-divider" aria-hidden="true" />
+            <span className="compact-page-title">CME proxy · shadow constituent</span>
+            <span className="compact-page-tag warning">Proxy / shadow mode</span>
+            <span className="compact-page-tag accent">Prospective governed constituent</span>
+          </div>
 
           <div className="cme-kpi-strip">
             <KpiCell label="Source Status"  value={cme.sourceStatus}             accent="warning" sub="interim proxy" />

@@ -1271,6 +1271,117 @@
 .overview-footnote { margin-top: 6px; }
 
 /* ==========================================================================
+   Compact single-line page head — used by CME + Execution Workbench so
+   their hero blocks stay as dense as the rest of the Redesign tabs
+   (mirrors v7 .oriel-page-head pattern). One row: eyebrow chip, title,
+   tag pills. No multi-line lede — long-form copy lives in the
+   Methodology sub-tab or in Overview framing cards.
+   ========================================================================== */
+.compact-page-head {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  padding: 10px 14px;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  box-shadow: var(--shadow-xs);
+}
+.compact-page-eyebrow {
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+.compact-page-divider {
+  width: 1px;
+  height: 14px;
+  background: var(--border-strong);
+}
+.compact-page-title {
+  font-size: 15px;
+  font-weight: 700;
+  letter-spacing: -0.012em;
+  color: var(--text);
+  margin-right: auto;
+}
+.compact-page-tag {
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  padding: 4px 9px;
+  border-radius: var(--r-full);
+  background: var(--bg-subtle);
+  color: var(--text-muted);
+  border: 1px solid var(--border);
+}
+.compact-page-tag.info    { background: var(--info-light);    color: var(--info);    border-color: rgba(2,132,199,0.18); }
+.compact-page-tag.warning { background: var(--warning-light); color: var(--warning); border-color: rgba(217,119,6,0.18); }
+.compact-page-tag.success { background: var(--success-light); color: var(--success); border-color: rgba(22,163,74,0.18); }
+.compact-page-tag.accent  { background: var(--accent-soft);   color: var(--accent);  border-color: var(--accent-light); }
+
+/* Execution Workbench regime strip — single horizontal row pinned in
+   the sticky head. The long-form regime explainer moved into the
+   Methodology sub-tab's "How the regime is derived" card. */
+.exec-regime-strip {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  padding: 8px 14px;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-left-width: 3px;
+  border-radius: var(--r-md);
+  box-shadow: var(--shadow-xs);
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+}
+.exec-regime-strip-success { border-left-color: var(--success); }
+.exec-regime-strip-info    { border-left-color: var(--info); }
+.exec-regime-strip-warning { border-left-color: var(--warning); }
+.exec-regime-strip-dot {
+  width: 8px; height: 8px; border-radius: 50%;
+  flex-shrink: 0;
+}
+.dot-success { background: var(--success); box-shadow: 0 0 0 3px rgba(22,163,74,0.16); }
+.dot-info    { background: var(--info);    box-shadow: 0 0 0 3px rgba(2,132,199,0.16); }
+.dot-warning { background: var(--warning); box-shadow: 0 0 0 3px rgba(217,119,6,0.16); }
+.exec-regime-strip-label {
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+.exec-regime-strip-value {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text);
+  font-family: 'JetBrains Mono', monospace;
+}
+.exec-regime-strip-value.tone-success { color: var(--success); }
+.exec-regime-strip-value.tone-info    { color: var(--info); }
+.exec-regime-strip-value.tone-warning { color: var(--warning); }
+.exec-regime-strip-unit {
+  font-size: 10.5px;
+  color: var(--text-muted);
+  font-weight: 500;
+  font-family: 'Inter', sans-serif;
+  margin-left: 1px;
+}
+.exec-regime-strip-sep { color: var(--text-subtle); }
+.exec-regime-strip-thresholds {
+  margin-left: auto;
+  font-size: 10.5px;
+  color: var(--text-subtle);
+  font-weight: 500;
+}
+
+/* ==========================================================================
    PlaceholderView — explainer panel for CPI · CME and Execution Workbench
    tabs (no full React surface yet, but the audience needs a framed handoff).
    ========================================================================== */
@@ -1541,18 +1652,28 @@
   color: var(--text-muted);
   margin-bottom: 8px;
 }
-.cme-methodology-grid { margin: 0; }
+.cme-methodology-grid {
+  margin: 0;
+  /* 2-column grid so labels + values sit close together instead of
+     stretching across the full card width with empty middle. */
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  column-gap: 28px;
+  row-gap: 0;
+}
+@media (max-width: 720px) { .cme-methodology-grid { grid-template-columns: 1fr; } }
 .cme-methodology-row {
-  display: flex;
-  justify-content: space-between;
-  gap: 12px;
+  display: grid;
+  grid-template-columns: max-content 1fr;
+  align-items: baseline;
+  column-gap: 14px;
   padding: 6px 0;
   border-bottom: 1px dashed var(--border-subtle);
   font-size: 12.5px;
 }
 .cme-methodology-row:last-child { border-bottom: none; }
 .cme-methodology-row dt { color: var(--text-muted); font-weight: 600; margin: 0; }
-.cme-methodology-row dd { color: var(--text); margin: 0; text-align: right; }
+.cme-methodology-row dd { color: var(--text); margin: 0; font-family: 'JetBrains Mono', monospace; font-size: 12px; }
 
 .cme-handoff {
   display: flex;
@@ -2073,21 +2194,35 @@
   color: var(--text-muted);
   margin-bottom: 6px;
 }
+/* 2-column layout so 7 components fit on 4 rows instead of stretching
+   down the page with a long whitespace gap on every row. */
 .exec-trs-components-table {
   width: 100%;
   border-collapse: collapse;
   font-size: 12px;
   font-variant-numeric: tabular-nums;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  column-gap: 32px;
 }
-.exec-trs-components-table td {
+@media (max-width: 900px) { .exec-trs-components-table { grid-template-columns: 1fr; } }
+.exec-trs-components-table tbody { display: contents; }
+.exec-trs-components-table tr {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: baseline;
+  column-gap: 14px;
   padding: 5px 0;
   border-bottom: 1px dashed var(--border-subtle);
+}
+.exec-trs-components-table td {
+  padding: 0;
+  border: none;
   color: var(--text);
 }
 .exec-trs-components-table td:first-child { color: var(--text-muted); }
 .exec-trs-components-table td.num         { text-align: right; font-family: 'JetBrains Mono', monospace; }
 .exec-trs-components-table tr.muted td    { color: var(--text-subtle); }
-.exec-trs-components-table tr:last-child td { border-bottom: none; }
 
 .exec-trs-warnings {
   margin: 4px 16px 14px;
