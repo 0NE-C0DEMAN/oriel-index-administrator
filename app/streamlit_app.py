@@ -626,6 +626,8 @@ def _render_login():
             border-radius: 0 !important;
             box-shadow: none !important;
             min-height: 0 !important;
+            height: auto !important;
+            overflow: visible !important;
             padding: 0 !important;
           }}
           /* Visible input shell. Streamlit's emotion-cache stylesheet
