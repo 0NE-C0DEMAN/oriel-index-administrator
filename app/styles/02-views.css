@@ -1334,15 +1334,11 @@
   padding: 8px 14px;
   background: var(--bg-elevated);
   border: 1px solid var(--border);
-  border-left-width: 3px;
   border-radius: var(--r-md);
   box-shadow: var(--shadow-xs);
   font-size: 12px;
   font-variant-numeric: tabular-nums;
 }
-.exec-regime-strip-success { border-left-color: var(--success); }
-.exec-regime-strip-info    { border-left-color: var(--info); }
-.exec-regime-strip-warning { border-left-color: var(--warning); }
 .exec-regime-strip-dot {
   width: 8px; height: 8px; border-radius: 50%;
   flex-shrink: 0;
@@ -1492,22 +1488,26 @@
    Sits between the sticky head (KPI strip + tab bar) and the panel body.
    Only rendered when index.key === 'perp'.
    ========================================================================== */
+/* CPI Basis Engine — persistent "Validate in Simulator" CTA. Clean
+   info-card chrome (bg-elevated + plain border + shadow) — no
+   tinted-soft background, no colored left bar. Same design language as
+   every other detail-tab card. */
 .detail-basis-cta {
   display: flex;
   align-items: center;
   gap: 12px;
-  background: var(--accent-soft);
-  border: 1px solid var(--accent-light);
-  border-left: 3px solid var(--accent);
-  border-radius: var(--r-md);
-  padding: 10px 14px;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-radius: var(--r-lg);
+  box-shadow: var(--shadow-card);
+  padding: 12px 16px;
   margin: 10px 0 14px;
 }
 .detail-basis-cta-icon {
-  width: 24px;
-  height: 24px;
+  width: 28px;
+  height: 28px;
   border-radius: var(--r-sm);
-  background: var(--bg-elevated);
+  background: var(--accent-soft);
   color: var(--accent);
   display: flex;
   align-items: center;
@@ -1516,11 +1516,12 @@
 }
 .detail-basis-cta-body {
   font-size: 12.5px;
-  line-height: 1.5;
+  line-height: 1.55;
   color: var(--text);
   flex-grow: 1;
+  min-width: 0;
 }
-.detail-basis-cta-body strong { color: var(--accent); font-weight: 700; letter-spacing: 0.01em; }
+.detail-basis-cta-body strong { color: var(--text); font-weight: 650; letter-spacing: -0.005em; }
 .detail-basis-cta-body span { color: var(--text-muted); }
 .detail-basis-cta-btn {
   display: inline-flex;
@@ -2469,11 +2470,12 @@
   margin-top: 8px;
 }
 
-/* ── Regime explainer card (Risk Posture sub-tab) ────────────────────── */
+/* ── Regime explainer card (Risk Posture sub-tab) ──────────────────────
+      Clean info-card chrome — no colored left bar. Tone shows through
+      the eyebrow pill + headline-tag in the header instead. */
 .exec-regime-explainer-card {
   background: var(--bg-elevated);
   border: 1px solid var(--border);
-  border-left-width: 4px;
   border-radius: var(--r-lg);
   box-shadow: var(--shadow-card);
   padding: 12px 16px 14px;
@@ -2481,9 +2483,6 @@
   flex-direction: column;
   gap: 6px;
 }
-.exec-regime-explainer-success { border-left-color: var(--success); }
-.exec-regime-explainer-info    { border-left-color: var(--info); }
-.exec-regime-explainer-warning { border-left-color: var(--warning); }
 .exec-regime-explainer-head {
   display: flex;
   align-items: center;

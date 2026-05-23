@@ -319,12 +319,11 @@
 .perp-idea-card {
   background: var(--bg-elevated);
   border: 1px solid var(--border);
-  border-left: 4px solid var(--accent);
   border-radius: 10px;
   padding: 14px 16px;
   display: flex; flex-direction: column; gap: 10px;
+  box-shadow: var(--shadow-card);
 }
-.perp-panel.accent-pink .perp-idea-card { border-left-color: var(--pink); }
 .perp-idea-head {
   display: flex; align-items: center; gap: 8px;
   color: var(--accent);
@@ -754,16 +753,14 @@
   padding: 8px 11px;
 }
 
-/* ── Trade idea cards — softer accent, polished hover */
+/* ── Trade idea cards — clean info-card chrome, no colored left edge */
 .perp-idea-card {
   border: 1px solid var(--border);
-  border-left: 3px solid var(--accent);
   border-radius: 10px;
   padding: 14px 16px;
   background: var(--bg-elevated);
-  box-shadow: 0 1px 2px rgba(15, 23, 51, 0.04);
+  box-shadow: var(--shadow-card);
 }
-.perp-panel.accent-pink .perp-idea-card { border-left-color: var(--pink); }
 .perp-idea-head h4 { font-size: 13.5px; font-weight: 600; letter-spacing: -0.005em; }
 .perp-idea-rows > div { grid-template-columns: 88px 1fr; }
 .perp-idea-rows dt { letter-spacing: 0.08em; }

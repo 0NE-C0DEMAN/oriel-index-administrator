@@ -152,10 +152,32 @@ st.set_page_config(
 # in the UI even if we catch the exception in Python. Reading os.environ has
 # no side-effects and works identically on HF and locally.
 #
-# Session is held in st.session_state for the duration of the browser tab.
-# No cookies, no JWT. Closing the tab logs the user out.
+# Session persistence: we set a signed HMAC token in an `oriel_session`
+# cookie (7-day TTL) so refreshing the tab or closing + reopening within the
+# window keeps the user logged in. The cookie value is base64(user|expiry|sig)
+# where sig = HMAC-SHA256(secret, user|expiry). Tampering invalidates the sig
+# so the session can't be forged. Closing the tab no longer logs the user
+# out — real apps don't do that.
 import hmac
+import hashlib
+import base64
+import time
 import os
+from datetime import datetime, timedelta, timezone
+
+import extra_streamlit_components as stx
+
+# Cookie name + TTL.
+_SESSION_COOKIE = "oriel_session"
+_SESSION_TTL_DAYS = 7
+
+@st.cache_resource
+def _cookie_manager() -> "stx.CookieManager":
+    """Single CookieManager per process. stx requires a unique key per
+    component instance; we hard-code one because there is only one auth
+    cookie."""
+    return stx.CookieManager(key="oriel_cookie_mgr")
+
 
 def _admin_credentials() -> tuple[str, str]:
     """Pull the admin credentials. Env vars win over the in-file default."""
@@ -169,6 +191,44 @@ def _check_credentials(username: str, password: str) -> bool:
         hmac.compare_digest(username.strip(), expected_u) and
         hmac.compare_digest(password,         expected_p)
     )
+
+
+def _make_session_token(username: str, ttl_seconds: int = _SESSION_TTL_DAYS * 86400) -> str:
+    """Pack username + expiry + HMAC signature into a base64-url token."""
+    _, secret = _admin_credentials()
+    expiry = int(time.time()) + ttl_seconds
+    msg = f"{username}|{expiry}".encode()
+    sig = hmac.new(secret.encode(), msg, hashlib.sha256).hexdigest()
+    raw = f"{username}|{expiry}|{sig}".encode()
+    return base64.urlsafe_b64encode(raw).decode().rstrip("=")
+
+
+def _verify_session_token(token: str) -> str | None:
+    """Return username if the token is well-formed, not expired, and
+    signature matches the current secret. Otherwise return None."""
+    if not token:
+        return None
+    try:
+        # Re-pad base64 in case the trailing '=' was stripped.
+        padded = token + "=" * (-len(token) % 4)
+        raw = base64.urlsafe_b64decode(padded.encode()).decode()
+        parts = raw.split("|")
+        if len(parts) != 3:
+            return None
+        username, expiry_str, sig = parts
+        expiry = int(expiry_str)
+        if expiry < time.time():
+            return None
+        _, secret = _admin_credentials()
+        expected_sig = hmac.new(secret.encode(), f"{username}|{expiry}".encode(), hashlib.sha256).hexdigest()
+        if not hmac.compare_digest(sig, expected_sig):
+            return None
+        expected_u, _ = _admin_credentials()
+        if not hmac.compare_digest(username, expected_u):
+            return None
+        return username
+    except Exception:
+        return None
 
 def _oriel_logo_uri() -> str:
     """Pull the base64 PNG data URI of the Oriel logo out of the React
@@ -793,8 +853,20 @@ def _render_login():
         )
         if submitted:
             if _check_credentials(username or "", password or ""):
+                clean_user = (username or "").strip()
                 st.session_state["oriel_auth"] = True
-                st.session_state["oriel_user"] = (username or "").strip()
+                st.session_state["oriel_user"] = clean_user
+                # Persistent session: drop a signed HMAC cookie so refresh
+                # / close+reopen keeps the user logged in for 7 days.
+                try:
+                    _cookie_manager().set(
+                        _SESSION_COOKIE,
+                        _make_session_token(clean_user),
+                        expires_at=datetime.now(timezone.utc) + timedelta(days=_SESSION_TTL_DAYS),
+                        key="oriel_set_session_cookie",
+                    )
+                except Exception:
+                    pass
                 st.rerun()
             else:
                 st.error("Invalid username or password.")
@@ -873,15 +945,40 @@ def _render_login():
     )
 
 # Logout handler — triggered by `?logout=1` from the React app's profile
-# dropdown. Clear session, drop the query param, rerun → login screen.
+# dropdown. Clear session AND the persistent cookie, drop the query
+# param, rerun → login screen.
 if st.query_params.get("logout") in ("1", "true"):
     for k in ("oriel_auth", "oriel_user"):
         st.session_state.pop(k, None)
+    try:
+        _cookie_manager().delete(_SESSION_COOKIE, key="oriel_del_session_cookie")
+    except Exception:
+        pass
     try:
         st.query_params.clear()
     except Exception:
         pass
     st.rerun()
+
+# ── Restore session from persistent cookie ──────────────────────────────
+# Read the oriel_session cookie. If it's a valid signed token, lift
+# st.session_state.oriel_auth = True without forcing the user to log in
+# again. This is what makes refresh (and tab close+reopen within the
+# 7-day TTL) NOT log them out — real apps don't drop sessions on reload.
+if not st.session_state.get("oriel_auth"):
+    try:
+        _cookies_loaded = _cookie_manager().get_all(key="oriel_get_all_cookies")
+        _tok = (_cookies_loaded or {}).get(_SESSION_COOKIE)
+        _user_from_cookie = _verify_session_token(_tok) if _tok else None
+        if _user_from_cookie:
+            st.session_state["oriel_auth"] = True
+            st.session_state["oriel_user"] = _user_from_cookie
+    except Exception:
+        # First-render race: CookieManager component sometimes returns
+        # None on initial mount because the cookies haven't been
+        # POSTed back from the browser yet. Streamlit will rerun
+        # naturally; on the next pass the cookie will be available.
+        pass
 
 if not st.session_state.get("oriel_auth"):
     _render_login()

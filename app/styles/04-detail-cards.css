@@ -711,7 +711,7 @@
 .info-card-head {
   padding: 12px 16px;
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: space-between;
   gap: 10px;
   border-bottom: 1px solid var(--border-subtle);
@@ -722,6 +722,18 @@
   letter-spacing: 0.06em;
   font-weight: 600;
   color: var(--accent);
+  /* Allow long eyebrow text to wrap rather than push the badge off the
+     right edge. min-width: 0 lets flex children shrink below content. */
+  flex: 1 1 auto;
+  min-width: 0;
+  line-height: 1.35;
+}
+.info-card-head > .badge,
+.info-card-head > [class*="feed-pill"] {
+  /* Badge / pill on the right stays its natural width even when the
+     eyebrow wraps to 2 lines. */
+  flex-shrink: 0;
+  align-self: flex-start;
 }
 .info-card.accent-pink .info-card-eyebrow { color: var(--pink); }
 
