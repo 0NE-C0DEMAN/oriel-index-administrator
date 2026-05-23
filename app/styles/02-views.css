@@ -1551,45 +1551,54 @@
    ========================================================================== */
 .cme-view { display: flex; flex-direction: column; gap: 16px; }
 
+/* CME KPI strip — conforms to the shared .idx-kpi-grid + .idx-kpi-cell
+   typography so the CPI · CME page reads as the same design system as
+   every other detail tab (Kalshi / ForecastEx / Polymarket / Basis
+   Engine / Validation). Card chrome matches .idx-kpi (bg-elevated +
+   border + shadow + radius); cells use right-border separators (no
+   gap) instead of a gap-based grid. */
 .cme-kpi-strip {
   display: grid;
   grid-template-columns: repeat(6, minmax(0, 1fr));
-  gap: 12px;
+  gap: 0;
   background: var(--bg-elevated);
   border: 1px solid var(--border);
   border-radius: var(--r-lg);
-  padding: 14px 16px;
-  box-shadow: var(--shadow-xs);
+  box-shadow: var(--shadow-card);
+  overflow: hidden;
 }
 @media (max-width: 1100px) { .cme-kpi-strip { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
 @media (max-width: 720px)  { .cme-kpi-strip { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 
 .cme-kpi-cell {
+  padding: 10px 16px 11px;
   display: flex;
   flex-direction: column;
   gap: 2px;
-  padding: 4px 0;
+  border-right: 1px solid var(--border-subtle);
 }
+.cme-kpi-cell:last-child { border-right: none; }
 .cme-kpi-label {
-  font-size: 10.5px;
-  font-weight: 700;
-  letter-spacing: 0.07em;
+  font-size: 9.5px;
   text-transform: uppercase;
+  letter-spacing: 0.06em;
+  font-weight: 600;
   color: var(--text-muted);
 }
 .cme-kpi-value {
-  font-size: 17px;
+  font-size: 14px;
   font-weight: 650;
-  letter-spacing: -0.012em;
-  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.005em;
   color: var(--text);
-  line-height: 1.2;
+  margin-top: 1px;
+  line-height: 1.15;
 }
 .cme-kpi-cell.accent-warning .cme-kpi-value { color: var(--warning); }
 .cme-kpi-cell.accent-success .cme-kpi-value { color: var(--success); }
 .cme-kpi-sub {
   font-size: 10.5px;
-  color: var(--text-subtle);
+  color: var(--text-muted);
+  margin-top: 1px;
   line-height: 1.3;
 }
 
@@ -1741,40 +1750,54 @@
 .exec-posture-warning .exec-posture-mult { color: var(--warning); background: var(--warning-light); border-color: rgba(217,119,6,0.18); }
 .exec-posture-eff-value { color: var(--accent); }
 
+/* Dislocation Strip / Backtest Summary / TRS Pilot Economics — all
+   conform to the canonical .idx-kpi-cell scale (label 9.5/600/0.06em,
+   value 14/650/-0.005em). Card chrome matches .idx-kpi (bg-elevated +
+   border + box-shadow + rounded corners). */
 .exec-strip-section {
   background: var(--bg-elevated);
   border: 1px solid var(--border);
   border-radius: var(--r-lg);
-  padding: 12px 14px 14px;
-  box-shadow: var(--shadow-xs);
+  box-shadow: var(--shadow-card);
+  overflow: hidden;
 }
 .exec-strip-grid {
   display: grid;
   grid-template-columns: repeat(6, minmax(0, 1fr));
-  gap: 12px;
+  gap: 0;
 }
 @media (max-width: 1100px) { .exec-strip-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
 @media (max-width: 720px)  { .exec-strip-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
-.exec-strip-cell { display: flex; flex-direction: column; gap: 2px; }
+.exec-strip-cell {
+  padding: 10px 16px 11px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  border-right: 1px solid var(--border-subtle);
+}
+.exec-strip-cell:last-child { border-right: none; }
 .exec-strip-label {
-  font-size: 10.5px;
-  font-weight: 700;
-  letter-spacing: 0.06em;
+  font-size: 9.5px;
   text-transform: uppercase;
+  letter-spacing: 0.06em;
+  font-weight: 600;
   color: var(--text-muted);
 }
 .exec-strip-value {
-  font-size: 17px;
+  font-size: 14px;
   font-weight: 650;
-  letter-spacing: -0.012em;
+  letter-spacing: -0.005em;
   font-variant-numeric: tabular-nums;
-  color: var(--text);
-  line-height: 1.2;
   font-family: 'JetBrains Mono', monospace;
+  color: var(--text);
+  margin-top: 1px;
+  line-height: 1.15;
 }
 .exec-strip-sub {
   font-size: 10.5px;
-  color: var(--text-subtle);
+  color: var(--text-muted);
+  margin-top: 1px;
+  line-height: 1.3;
 }
 
 /* ── Regime Comparison cards (Ksenia §10 mirror) ──────────────────────── */
@@ -1894,8 +1917,7 @@
 .exec-decision-grid {
   display: grid;
   grid-template-columns: 1.3fr repeat(6, minmax(0, 1fr));
-  gap: 12px;
-  padding: 14px 16px;
+  gap: 0;
 }
 @media (max-width: 1300px) {
   .exec-decision-grid { grid-template-columns: 1.3fr repeat(3, minmax(0, 1fr)); }
@@ -1903,21 +1925,29 @@
 @media (max-width: 720px) {
   .exec-decision-grid { grid-template-columns: 1fr 1fr; }
 }
-.exec-decision-cell { display: flex; flex-direction: column; gap: 2px; }
+.exec-decision-cell {
+  padding: 10px 16px 11px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  border-right: 1px solid var(--border-subtle);
+}
+.exec-decision-cell:last-child { border-right: none; }
 .exec-decision-label {
-  font-size: 10.5px;
-  font-weight: 700;
-  letter-spacing: 0.07em;
+  font-size: 9.5px;
   text-transform: uppercase;
+  letter-spacing: 0.06em;
+  font-weight: 600;
   color: var(--text-muted);
 }
 .exec-decision-value {
-  font-size: 14.5px;
+  font-size: 14px;
   font-weight: 650;
-  letter-spacing: -0.012em;
+  letter-spacing: -0.005em;
   font-variant-numeric: tabular-nums;
   color: var(--text);
-  line-height: 1.25;
+  margin-top: 1px;
+  line-height: 1.15;
 }
 .exec-decision-cell.accent-gold    .exec-decision-value { color: var(--warning); }
 .exec-decision-cell.accent-success .exec-decision-value { color: var(--success); }
@@ -1945,33 +1975,42 @@
 .exec-trs-kpi-grid {
   display: grid;
   grid-template-columns: repeat(7, minmax(0, 1fr));
-  gap: 12px;
-  padding: 14px 16px;
+  gap: 0;
 }
 @media (max-width: 1300px) { .exec-trs-kpi-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
 @media (max-width: 720px)  { .exec-trs-kpi-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
-.exec-trs-kpi-cell { display: flex; flex-direction: column; gap: 2px; }
+.exec-trs-kpi-cell {
+  padding: 10px 16px 11px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  border-right: 1px solid var(--border-subtle);
+}
+.exec-trs-kpi-cell:last-child { border-right: none; }
 .exec-trs-kpi-label {
-  font-size: 10px;
-  font-weight: 700;
-  letter-spacing: 0.07em;
+  font-size: 9.5px;
   text-transform: uppercase;
+  letter-spacing: 0.06em;
+  font-weight: 600;
   color: var(--text-muted);
 }
 .exec-trs-kpi-value {
-  font-size: 17px;
+  font-size: 14px;
   font-weight: 650;
-  letter-spacing: -0.012em;
+  letter-spacing: -0.005em;
   font-variant-numeric: tabular-nums;
   font-family: 'JetBrains Mono', monospace;
   color: var(--text);
-  line-height: 1.2;
+  margin-top: 1px;
+  line-height: 1.15;
 }
 .exec-trs-kpi-cell.accent-success .exec-trs-kpi-value { color: var(--success); }
 .exec-trs-kpi-cell.accent-danger  .exec-trs-kpi-value { color: var(--danger); }
 .exec-trs-kpi-sub {
   font-size: 10.5px;
-  color: var(--text-subtle);
+  color: var(--text-muted);
+  margin-top: 1px;
+  line-height: 1.3;
 }
 
 .exec-trs-components {
@@ -2085,25 +2124,34 @@
 .exec-bt-grid {
   display: grid;
   grid-template-columns: repeat(7, minmax(0, 1fr));
-  gap: 10px;
+  gap: 0;
 }
 @media (max-width: 1300px) { .exec-bt-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
 @media (max-width: 720px)  { .exec-bt-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
-.exec-bt-cell { display: flex; flex-direction: column; gap: 1px; }
+.exec-bt-cell {
+  padding: 10px 16px 11px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  border-right: 1px solid var(--border-subtle);
+}
+.exec-bt-cell:last-child { border-right: none; }
 .exec-bt-label {
-  font-size: 10px;
-  font-weight: 700;
-  letter-spacing: 0.05em;
+  font-size: 9.5px;
   text-transform: uppercase;
-  color: var(--text-subtle);
+  letter-spacing: 0.06em;
+  font-weight: 600;
+  color: var(--text-muted);
 }
 .exec-bt-value {
-  font-size: 13px;
-  font-weight: 600;
+  font-size: 14px;
+  font-weight: 650;
+  letter-spacing: -0.005em;
   font-variant-numeric: tabular-nums;
   font-family: 'JetBrains Mono', monospace;
   color: var(--text);
-  line-height: 1.25;
+  margin-top: 1px;
+  line-height: 1.15;
 }
 .exec-bt-cell.accent-success .exec-bt-value { color: var(--success); }
 .exec-bt-cell.accent-danger  .exec-bt-value { color: var(--danger); }
@@ -2119,27 +2167,34 @@
 .exec-st-kpi-grid {
   display: grid;
   grid-template-columns: repeat(8, minmax(0, 1fr));
-  gap: 12px;
-  padding: 14px 16px;
+  gap: 0;
 }
 @media (max-width: 1300px) { .exec-st-kpi-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
 @media (max-width: 720px)  { .exec-st-kpi-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
-.exec-st-kpi-cell { display: flex; flex-direction: column; gap: 2px; }
+.exec-st-kpi-cell {
+  padding: 10px 14px 11px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  border-right: 1px solid var(--border-subtle);
+}
+.exec-st-kpi-cell:last-child { border-right: none; }
 .exec-st-kpi-label {
-  font-size: 10px;
-  font-weight: 700;
-  letter-spacing: 0.07em;
+  font-size: 9.5px;
   text-transform: uppercase;
+  letter-spacing: 0.06em;
+  font-weight: 600;
   color: var(--text-muted);
 }
 .exec-st-kpi-value {
-  font-size: 16px;
+  font-size: 14px;
   font-weight: 650;
-  letter-spacing: -0.012em;
+  letter-spacing: -0.005em;
   font-variant-numeric: tabular-nums;
   font-family: 'JetBrains Mono', monospace;
   color: var(--text);
-  line-height: 1.2;
+  margin-top: 1px;
+  line-height: 1.15;
 }
 .exec-st-kpi-cell.accent-success .exec-st-kpi-value { color: var(--success); }
 .exec-st-kpi-cell.accent-danger  .exec-st-kpi-value { color: var(--danger); }
