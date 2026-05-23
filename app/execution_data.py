@@ -270,6 +270,38 @@ def _build_regime_comparison(
     return rows
 
 
+def _build_dislocations_table(dislocations: pd.DataFrame) -> List[Dict[str, Any]]:
+    """Per-row reference & dislocation audit. Mirrors what v7's
+    falconx_sim_tab "Reference Audit" + "Execution Snapshot" sections render,
+    pulled from the dislocations frame the rest of the workbench already
+    consumes. Lets the React Dislocations sub-tab show every (venue, maturity)
+    pair under the Oriel Reference, the dislocation in bp, and the net edge
+    after the cost buffer.
+    """
+    if dislocations is None or dislocations.empty:
+        return []
+    rows: List[Dict[str, Any]] = []
+    for _, r in dislocations.sort_values(["release_month", "venue"]).iterrows():
+        liq = float(r.get("liquidity_score", 0.0)) if pd.notna(r.get("liquidity_score")) else 0.0
+        conf = float(r.get("confidence_score", 0.0)) if pd.notna(r.get("confidence_score")) else 0.0
+        if liq > 1.0:
+            liq = liq / 100.0
+        if conf > 1.0:
+            conf = conf / 100.0
+        rows.append({
+            "releaseMonth":          _format_maturity(r.get("release_month")),
+            "venue":                 str(r.get("venue", "—")),
+            "impliedYoy":            float(r["implied_yoy"]) if pd.notna(r.get("implied_yoy")) else None,
+            "orielReferenceYoy":     float(r["oriel_reference_yoy"]) if pd.notna(r.get("oriel_reference_yoy")) else None,
+            "dislocationBps":        float(r["dislocation_bps"]) if pd.notna(r.get("dislocation_bps")) else None,
+            "grossEdgeBps":          float(r["gross_edge_bps"]) if pd.notna(r.get("gross_edge_bps")) else None,
+            "netExecutableEdgeBps":  float(r["net_executable_edge_bps"]) if pd.notna(r.get("net_executable_edge_bps")) else None,
+            "liquidityScore":        max(0.0, min(1.0, liq)),
+            "confidenceScore":       max(0.0, min(1.0, conf)),
+        })
+    return rows
+
+
 def _build_venue_contribution(front_df: pd.DataFrame, dislocations: pd.DataFrame) -> List[Dict[str, Any]]:
     """Mirror v7 compute_venue_contribution_summary: per-(release_month, venue)
     weight contribution to the Oriel reference. weight = 0.6 * confidence + 0.4 * liquidity,
@@ -450,6 +482,7 @@ def _payload_unavailable(reason: str) -> Dict[str, Any]:
         "orielDecision":   None,
         "scaletraderTicket": None,
         "venueContribution": [],
+        "dislocationsTable": [],
         "regimeComparison":  [],
         "trsDeployment":   None,
         "trsComparison":   [],
@@ -483,6 +516,7 @@ def _build_payload() -> Dict[str, Any]:
     decision = _build_oriel_decision(dislocations)
     scaletrader_ticket = _build_scaletrader_ticket(dislocations)
     venue_contribution = _build_venue_contribution(front_df, dislocations)
+    dislocations_table = _build_dislocations_table(dislocations)
 
     # Ksenia §10 ask: "Compare same dislocation under: Low | Moderate |
     # Elevated. That would be very powerful in demos." Renders the three
@@ -547,6 +581,7 @@ def _build_payload() -> Dict[str, Any]:
         "orielDecision":  decision,
         "scaletraderTicket": scaletrader_ticket,
         "venueContribution": venue_contribution,
+        "dislocationsTable": dislocations_table,
         "regimeComparison":  regime_comparison,
         "trsDeployment":  trs_deployment_payload,
         "trsComparison":  trs_comparison_payload,

@@ -7,17 +7,21 @@
    Validation / Healthcare): hero + regime banner stay pinned at the top
    for context, then a sub-tab bar splits the workbench into focused panes:
 
-       Risk Posture     — Posture multipliers + Regime Comparison cards
-                          (Ksenia §10 "compare same dislocation under
-                          Low / Moderate / Elevated")
-       Dislocations     — Dislocation Strip (6 metrics) + Cross-Venue
-                          Contribution table + Oriel Decision strip
-       ScaleTrader      — Illustrative ladder ticket card (v7
-                          _render_scaletrader_card mirror)
+       Risk Posture     — Posture multipliers + Regime Comparison cards +
+                          plain-English regime explainer (Ksenia §10).
+       Dislocations     — Dislocation Strip + Cross-Venue Contribution +
+                          per-row Reference Audit table + Oriel Decision.
+       ScaleTrader      — Illustrative ladder ticket + computed ladder
+                          rung visualization + disable conditions.
        TRS Deployment   — Representative Backtest Summary + Pilot
                           Deployment Economics + Components + Scenario
-                          Comparison (v7 PR #18 mirror)
-       Methodology      — Disclaimers + handoff CTAs + how-this-works
+                          Comparison (v7 PR #18 mirror).
+       Methodology      — How the regime / multipliers / TRS sizing work +
+                          key formulas table + disclaimers + handoff CTAs.
+
+   Each sub-tab opens with a short intro lede, has 3+ substantive content
+   blocks, and ends either at a closing band or with the next-section
+   handoff. Avoids the "naked tab" feel from the earlier sub-tab pass.
 
    Mirrors v7's apps/market_sim/falconx_sim_tab sections Chris asked to
    make obvious; the full interactive simulator (sliders, parameter
@@ -28,7 +32,7 @@
    ========================================================================== */
 (() => {
   'use strict';
-  const { useState } = React;
+  const { useState, useMemo } = React;
   const { cn } = window.App.utils;
   const { Icon, Badge } = window.App;
 
@@ -36,6 +40,21 @@
     Low:      'success',
     Moderate: 'info',
     Elevated: 'warning',
+  };
+
+  const REGIME_EXPLAINER = {
+    Low: {
+      headline: 'Tight quotes, wider inventory, lower edge floor',
+      body: 'Cross-venue dispersion is contained and dislocations are small. The book quotes through tighter than baseline, carries more inventory, and accepts lower-edge trades.',
+    },
+    Moderate: {
+      headline: 'Neutral posture against the baseline config',
+      body: 'Dispersion and dislocations sit in the middle of the historical range. Posture multipliers all sit at 1.00 — the visible spread / inventory / edge hurdle match the published base config.',
+    },
+    Elevated: {
+      headline: 'Wider quotes, shrunken inventory, higher edge floor',
+      body: 'Cross-venue dispersion or dislocations are running hot. The book widens quotes, pulls back inventory, and only fills against larger residuals — protective stance, not opportunistic.',
+    },
   };
 
   const SUB_TABS = [
@@ -84,6 +103,10 @@
       return `$${m.toFixed(0)}`;
     };
 
+    const dislocationsTable = ex.dislocationsTable || [];
+    const scaletraderLadder = useMemo(() => buildLadder(ex.scaletraderTicket), [ex.scaletraderTicket]);
+    const explainer = REGIME_EXPLAINER[ex.regime] || REGIME_EXPLAINER.Moderate;
+
     return (
       <div className="view detail-view execution-view">
         {/* Sticky head: compact single-line page head + regime strip +
@@ -116,8 +139,18 @@
         </div>
 
         <div className="detail-tab-body">
+          {/* ───────────────────────  Risk Posture tab  ────────────────────── */}
           {tab === 'posture' && (
             <>
+              <p className="exec-tab-lede">
+                Three multipliers translate the Forward Risk Regime into a
+                quoting posture: how tight to quote, how much inventory to
+                carry, and the minimum edge a trade has to clear before the
+                book fills. Effective values are <code>base × multiplier</code>;
+                the base config is the v7 simulator baseline (12 bp spread, $5M
+                inventory limit, 10 bp edge hurdle).
+              </p>
+
               <section className="exec-posture-grid">
                 <PostureCard title="Quoted spread"          unit="bp"  base={ex.baseSpreadBps}     mult={ex.spreadMultiplier}    eff={ex.effectiveSpreadBps}     tone={tone} fmt={fmtBp1} />
                 <PostureCard title="Inventory limit"        unit="USD" base={ex.baseInventoryUsd}  mult={ex.inventoryMultiplier} eff={ex.effectiveInventoryUsd}  tone={tone} fmt={fmtUsd} />
@@ -156,11 +189,33 @@
                   </div>
                 </section>
               )}
+
+              <section className={`exec-regime-explainer-card exec-regime-explainer-${tone}`}>
+                <div className="exec-regime-explainer-head">
+                  <span className="exec-regime-explainer-eyebrow">Current regime</span>
+                  <span className={`exec-regime-explainer-tag tone-${tone}`}>{ex.regime}</span>
+                </div>
+                <div className="exec-regime-explainer-headline">{explainer.headline}</div>
+                <p className="exec-regime-explainer-body">{explainer.body}</p>
+                {ex.regimeExplainer && (
+                  <p className="exec-regime-explainer-source">Engine note: {ex.regimeExplainer}</p>
+                )}
+              </section>
             </>
           )}
 
+          {/* ───────────────────────  Dislocations tab  ────────────────────── */}
           {tab === 'dislocations' && (
             <>
+              <p className="exec-tab-lede">
+                Cross-venue residuals against the Oriel Reference, per
+                release-month. The strip aggregates avg / median / max
+                dislocation and the net edge after a 10 bp cost buffer.
+                Contribution tells you which venue the reference leaned on;
+                the per-row audit shows every (venue, maturity) pair the
+                strip rolled up.
+              </p>
+
               <section className="exec-strip-section">
                 <div className="exec-strip-head">CPI Dislocation Strip · cross-venue residuals vs Oriel Reference</div>
                 <div className="exec-strip-grid">
@@ -209,6 +264,52 @@
                 </section>
               )}
 
+              {dislocationsTable.length > 0 && (
+                <section className="exec-ra-section">
+                  <div className="exec-ra-head">
+                    Reference Audit · per-(venue, maturity) dislocation &amp; edge
+                  </div>
+                  <div className="exec-ra-scroll">
+                    <table className="exec-ra-table">
+                      <thead>
+                        <tr>
+                          <th>Release Month</th>
+                          <th>Venue</th>
+                          <th className="num">Implied YoY</th>
+                          <th className="num">Oriel Reference</th>
+                          <th className="num">Dislocation</th>
+                          <th className="num">Gross Edge</th>
+                          <th className="num">Net Edge (after 10 bp)</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {dislocationsTable.map((row, i) => (
+                          <tr key={i}>
+                            <td>{row.releaseMonth}</td>
+                            <td>{row.venue}</td>
+                            <td className="num">{row.impliedYoy != null ? Number(row.impliedYoy).toFixed(4) : '—'}</td>
+                            <td className="num">{row.orielReferenceYoy != null ? Number(row.orielReferenceYoy).toFixed(4) : '—'}</td>
+                            <td className={`num ${row.dislocationBps != null && row.dislocationBps < 0 ? 'negative' : 'positive'}`}>
+                              {row.dislocationBps != null ? `${Number(row.dislocationBps).toFixed(2)} bp` : '—'}
+                            </td>
+                            <td className="num">{row.grossEdgeBps != null ? `${Number(row.grossEdgeBps).toFixed(2)} bp` : '—'}</td>
+                            <td className={`num ${row.netExecutableEdgeBps != null && row.netExecutableEdgeBps > 0 ? 'gold' : 'muted'}`}>
+                              {row.netExecutableEdgeBps != null ? `${Number(row.netExecutableEdgeBps).toFixed(2)} bp` : '—'}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                  <div className="exec-ra-foot">
+                    Negative dislocation = venue quote sits below the Oriel
+                    Reference (cheap → buy / receive CPI exposure). Positive =
+                    rich → sell / fade. Net Edge = |dislocation| − 10 bp cost
+                    buffer, floored at zero.
+                  </div>
+                </section>
+              )}
+
               {ex.orielDecision && (
                 <section className="exec-decision-section">
                   <div className="exec-decision-ribbon">
@@ -228,53 +329,97 @@
             </>
           )}
 
+          {/* ───────────────────────  ScaleTrader tab  ─────────────────────── */}
           {tab === 'scaletrader' && (
             ex.scaletraderTicket ? (
-              <section className="exec-st-section">
-                <div className={`exec-st-ribbon ${ex.scaletraderTicket.side === 'Buy YES' ? 'buy' : 'sell'}`}>
-                  Illustrative ScaleTrader Ticket · {ex.scaletraderTicket.status} · <strong>{ex.scaletraderTicket.selectedVenueContract}</strong>
-                </div>
-                <div className="exec-st-kpi-grid">
-                  <StKpiCell label="Side"          value={ex.scaletraderTicket.side}                                              accent={ex.scaletraderTicket.side === 'Buy YES' ? 'success' : 'danger'} />
-                  <StKpiCell label="Start Price"   value={`$${Number(ex.scaletraderTicket.startPrice).toFixed(2)}`} />
-                  <StKpiCell label="Increment"     value={`$${Number(ex.scaletraderTicket.increment).toFixed(2)}`} />
-                  <StKpiCell label="Levels"        value={String(ex.scaletraderTicket.levels)} />
-                  <StKpiCell label="Clip Size"     value={ex.scaletraderTicket.clipSize.toLocaleString()} />
-                  <StKpiCell label="Max Exposure"  value={ex.scaletraderTicket.maxExposure.toLocaleString()} />
-                  <StKpiCell label="Profit-Taker"  value={`${ex.scaletraderTicket.profitTakerOffset >= 0 ? '+' : '−'}$${Math.abs(ex.scaletraderTicket.profitTakerOffset).toFixed(2)}`} />
-                  <StKpiCell label="Oriel Edge"    value={`${Number(ex.scaletraderTicket.edgeProbabilityPoints).toFixed(2)}`} suffix="pp" />
-                </div>
-                <div className="exec-st-detail-row">
-                  <div className="exec-st-detail-card">
-                    <div className="exec-st-detail-label">Oriel Reference</div>
-                    <div className="exec-st-detail-value">
-                      {Number(ex.scaletraderTicket.orielFairValueYoy).toFixed(4)}
-                      <span className="exec-st-detail-unit">% YoY</span>
+              <>
+                <p className="exec-tab-lede">
+                  Illustrative laddered order ticket built from the top-edge
+                  dislocation row. Side, start price, and increment come
+                  directly off the dislocation; clip size and max exposure
+                  come from a fixed 2,000-unit max-position cap and the
+                  selected ladder depth. Not routed to any venue — no IBKR
+                  auth, no TWS, no live order submission is wired in.
+                </p>
+
+                <section className="exec-st-section">
+                  <div className={`exec-st-ribbon ${ex.scaletraderTicket.side === 'Buy YES' ? 'buy' : 'sell'}`}>
+                    Illustrative ScaleTrader Ticket · {ex.scaletraderTicket.status} · <strong>{ex.scaletraderTicket.selectedVenueContract}</strong>
+                  </div>
+                  <div className="exec-st-kpi-grid">
+                    <StKpiCell label="Side"          value={ex.scaletraderTicket.side}                                              accent={ex.scaletraderTicket.side === 'Buy YES' ? 'success' : 'danger'} />
+                    <StKpiCell label="Start Price"   value={`$${Number(ex.scaletraderTicket.startPrice).toFixed(2)}`} />
+                    <StKpiCell label="Increment"     value={`$${Number(ex.scaletraderTicket.increment).toFixed(2)}`} />
+                    <StKpiCell label="Levels"        value={String(ex.scaletraderTicket.levels)} />
+                    <StKpiCell label="Clip Size"     value={ex.scaletraderTicket.clipSize.toLocaleString()} />
+                    <StKpiCell label="Max Exposure"  value={ex.scaletraderTicket.maxExposure.toLocaleString()} />
+                    <StKpiCell label="Profit-Taker"  value={`${ex.scaletraderTicket.profitTakerOffset >= 0 ? '+' : '−'}$${Math.abs(ex.scaletraderTicket.profitTakerOffset).toFixed(2)}`} />
+                    <StKpiCell label="Oriel Edge"    value={`${Number(ex.scaletraderTicket.edgeProbabilityPoints).toFixed(2)}`} suffix="pp" />
+                  </div>
+                  <div className="exec-st-detail-row">
+                    <div className="exec-st-detail-card">
+                      <div className="exec-st-detail-label">Oriel Reference</div>
+                      <div className="exec-st-detail-value">
+                        {Number(ex.scaletraderTicket.orielFairValueYoy).toFixed(4)}
+                        <span className="exec-st-detail-unit">% YoY</span>
+                      </div>
+                    </div>
+                    <div className="exec-st-detail-card">
+                      <div className="exec-st-detail-label">Contract Market Price</div>
+                      <div className="exec-st-detail-value">${Number(ex.scaletraderTicket.contractMarketPrice).toFixed(2)}</div>
+                    </div>
+                    <div className="exec-st-detail-card">
+                      <div className="exec-st-detail-label">Liquidity / Confidence</div>
+                      <div className="exec-st-detail-value">
+                        {(Number(ex.scaletraderTicket.liquidityScore) * 100).toFixed(0)}%
+                        <span className="exec-st-detail-sep"> / </span>
+                        {(Number(ex.scaletraderTicket.confidenceScore) * 100).toFixed(0)}%
+                      </div>
                     </div>
                   </div>
-                  <div className="exec-st-detail-card">
-                    <div className="exec-st-detail-label">Contract Market Price</div>
-                    <div className="exec-st-detail-value">${Number(ex.scaletraderTicket.contractMarketPrice).toFixed(2)}</div>
-                  </div>
-                  <div className="exec-st-detail-card">
-                    <div className="exec-st-detail-label">Liquidity / Confidence</div>
-                    <div className="exec-st-detail-value">
-                      {(Number(ex.scaletraderTicket.liquidityScore) * 100).toFixed(0)}%
-                      <span className="exec-st-detail-sep"> / </span>
-                      {(Number(ex.scaletraderTicket.confidenceScore) * 100).toFixed(0)}%
+                </section>
+
+                {scaletraderLadder.length > 0 && (
+                  <section className="exec-st-ladder">
+                    <div className="exec-st-ladder-head">
+                      Ladder rungs · {ex.scaletraderTicket.side === 'Buy YES' ? 'buy ladder · cheaper levels deeper' : 'sell ladder · richer levels deeper'}
                     </div>
-                  </div>
-                </div>
+                    <div className="exec-st-ladder-grid">
+                      {scaletraderLadder.map((rung) => (
+                        <div key={rung.level} className="exec-st-ladder-cell">
+                          <div className="exec-st-ladder-mini">Level {rung.level}</div>
+                          <div className="exec-st-ladder-price">${rung.price.toFixed(2)}</div>
+                          <div className="exec-st-ladder-sub">Clip {ex.scaletraderTicket.clipSize.toLocaleString()}</div>
+                        </div>
+                      ))}
+                    </div>
+                    <div className="exec-st-ladder-foot">
+                      Profit-taker offset {ex.scaletraderTicket.profitTakerOffset >= 0 ? '+' : '−'}${Math.abs(ex.scaletraderTicket.profitTakerOffset).toFixed(2)} applied to each fill.
+                      Total max exposure = levels × clip = {ex.scaletraderTicket.maxExposure.toLocaleString()} units.
+                    </div>
+                  </section>
+                )}
+
                 <div className="exec-st-disable">
                   <div className="exec-st-disable-label">Disable Conditions</div>
                   <div className="exec-st-disable-text">{ex.scaletraderTicket.disableConditions}</div>
                 </div>
-              </section>
+              </>
             ) : <EmptyPanel label="No ScaleTrader ticket available (no dislocations to pick from)." />
           )}
 
+          {/* ───────────────────────  TRS Deployment tab  ──────────────────── */}
           {tab === 'trs' && (
             <>
+              <p className="exec-tab-lede">
+                Illustrative pilot deployment showing how micro-fund capital
+                could support TRS-style CPI basis exposure, with a CPI
+                perp / reference hedge warehousing residual directional risk.
+                Backtest summary up top is the representative 30-day sim
+                that drives the scenario; the TRS card sizes the trade; the
+                comparison table runs the same math across 4 hedge modes.
+              </p>
+
               {ex.backtestSummary && (
                 <section className="exec-bt-section">
                   <div className="exec-bt-head">
@@ -379,8 +524,17 @@
             </>
           )}
 
+          {/* ───────────────────────  Methodology tab  ─────────────────────── */}
           {tab === 'methodology' && (
             <section className="exec-method-panel">
+              <p className="exec-tab-lede">
+                How the regime classifier, the posture multipliers, and the
+                pilot TRS scenario hang together. Same code paths as v7's
+                standalone simulator — this surface is the read-only summary,
+                the live sliders / sweep / heatmap still live in
+                <code> apps/market_sim/</code>.
+              </p>
+
               <div className="exec-method-card">
                 <div className="exec-method-card-title">How the regime is derived</div>
                 <p className="exec-method-card-body">
@@ -418,6 +572,42 @@
                   No TRS / Unhedged / Partial / Full.
                 </p>
               </div>
+
+              <section className="exec-formulas">
+                <div className="exec-formulas-head">Key formulas</div>
+                <table className="exec-formulas-table">
+                  <tbody>
+                    <tr>
+                      <td className="exec-formulas-name">Net executable edge</td>
+                      <td className="exec-formulas-code">max(0, |dislocation_bps| − cost_buffer_bps)</td>
+                    </tr>
+                    <tr>
+                      <td className="exec-formulas-name">Cross-venue weight</td>
+                      <td className="exec-formulas-code">0.6 × confidence_score + 0.4 × liquidity_score (normalized per maturity)</td>
+                    </tr>
+                    <tr>
+                      <td className="exec-formulas-name">Effective posture</td>
+                      <td className="exec-formulas-code">base_value × regime_multiplier (spread / inventory / edge_hurdle)</td>
+                    </tr>
+                    <tr>
+                      <td className="exec-formulas-name">Required margin</td>
+                      <td className="exec-formulas-code">trs_notional × initial_margin_pct</td>
+                    </tr>
+                    <tr>
+                      <td className="exec-formulas-name">Net fund PnL</td>
+                      <td className="exec-formulas-code">spread + directional + hedge + residual − financing + collateral</td>
+                    </tr>
+                    <tr>
+                      <td className="exec-formulas-name">Return on capital</td>
+                      <td className="exec-formulas-code">net_fund_pnl / fund_capital × (365 / horizon_days)</td>
+                    </tr>
+                    <tr>
+                      <td className="exec-formulas-name">Capital efficiency</td>
+                      <td className="exec-formulas-code">trs_notional / required_margin</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </section>
 
               <div className="exec-method-handoff">
                 <button
@@ -564,6 +754,25 @@
         <div style={{ color: 'var(--text-muted)', fontSize: 12.5 }}>{label}</div>
       </section>
     );
+  }
+
+  /* ─────────────────────────  Ladder builder  ────────────────────────── */
+  // Compute the ladder rungs from the ScaleTrader ticket (start price,
+  // increment, level count). Buy ladder steps down (cheaper); sell ladder
+  // steps up (richer). Clamped to [0.01, 0.99] to stay inside the unit
+  // probability space the venues quote in.
+  function buildLadder(ticket) {
+    if (!ticket || !ticket.levels || ticket.levels <= 0) return [];
+    const start = Number(ticket.startPrice) || 0;
+    const incr  = Number(ticket.increment)  || 0;
+    const buy   = ticket.side === 'Buy YES';
+    const out   = [];
+    for (let i = 0; i < ticket.levels; i++) {
+      const raw = buy ? start - i * incr : start + i * incr;
+      const px  = Math.max(0.01, Math.min(0.99, raw));
+      out.push({ level: i + 1, price: px });
+    }
+    return out;
   }
 
   window.App = window.App || {};
