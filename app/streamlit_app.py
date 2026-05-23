@@ -839,7 +839,7 @@ def _render_login():
              form. */
           .oriel-login-copyright {{
             position: fixed;
-            left: 0; right: 0; bottom: 14px;
+            left: 50%; right: 0; bottom: 14px;
             text-align: center;
             font-size: 10.5px;
             font-weight: 500;
@@ -997,6 +997,26 @@ def _render_login():
     st.markdown(
         """<div class="oriel-login-copyright">© 2026 Oriel Labs, LLC. All rights reserved.</div>""",
         unsafe_allow_html=True,
+    )
+
+    # Suppress Chrome password-manager popup by setting autocomplete="off"
+    # on the form and its inputs. Runs in a zero-height iframe that touches
+    # the parent document's DOM.
+    components.html(
+        """<script>
+        (function(){
+          try {
+            var d = window.top.document || window.parent.document;
+            var f = d.querySelector('[data-testid="stForm"]');
+            if(f) { f.setAttribute('autocomplete','off'); }
+            var ins = d.querySelectorAll('[data-testid="stForm"] input');
+            ins.forEach(function(el){
+              el.setAttribute('autocomplete','off');
+            });
+          } catch(e){}
+        })();
+        </script>""",
+        height=0,
     )
 
 # Logout handler — triggered by `?logout=1` from the React app's profile
