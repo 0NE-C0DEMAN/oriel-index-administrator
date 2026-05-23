@@ -26,11 +26,13 @@ from live_kalshi import live_cpi_payload_json
 from blended_curve import blended_payload_json
 from forecastex_data import forecastex_payload_json
 from polymarket_data import polymarket_payload_json
+from cme_data       import cme_payload_json
 from perp_data       import perp_payload_json
 from cms_data        import cms_payload_json
 from medical_basis_data import medical_basis_payload_json
 from parity_data         import parity_payload_json
 from admin_data          import admin_payload_json
+from execution_data      import execution_payload_json
 
 APP_ROOT = Path(__file__).resolve().parent
 
@@ -62,6 +64,23 @@ def _cached_polymarket_payload() -> str:
     """Build the v7 Polymarket package (live + sample) for the poly index
     tab. v7's own cache_data TTL is 600s, so we mirror that here."""
     return polymarket_payload_json()
+
+
+@st.cache_data(ttl=600, show_spinner=False)
+def _cached_cme_payload() -> str:
+    """Build the v7 CME CPI proxy package (source_status, contracts,
+    curve points, publishability) for the new CPI · CME tab. v7's
+    @st.cache_data ttl=600 on _cached_cme_proxy_package — mirrored here."""
+    return cme_payload_json()
+
+
+@st.cache_data(ttl=600, show_spinner=False)
+def _cached_execution_payload() -> str:
+    """Build the Execution Workbench summary (forward risk regime,
+    dislocation strip, posture multipliers) derived from the existing
+    Redesign perp / venue stack. Refresh in lockstep with the perp /
+    venue caches."""
+    return execution_payload_json()
 
 
 @st.cache_data(ttl=3600, show_spinner=False)
@@ -110,8 +129,12 @@ def _cached_admin_payload() -> str:
 
 
 # ── Streamlit page setup ─────────────────────────────────────────────────────
+# Per Ksenia's MVP-app-lock review the global shell should not box Oriel
+# into an admin console. Page title now says "Oriel CPI Surface"; the
+# "Index Administrator" wording is reserved for the Admin section's own
+# page header.
 st.set_page_config(
-    page_title="Oriel · Index Administrator",
+    page_title="Oriel CPI Surface",
     page_icon="◈",
     layout="wide",
     initial_sidebar_state="collapsed",
@@ -694,6 +717,21 @@ def _render_login():
             display: inline-block !important; visibility: visible !important;
             color: #FFFFFF !important;
           }}
+          /* Low-contrast copyright footer at the bottom of the viewport
+             per Ksenia's MVP-app-lock review. Sits beneath both panels,
+             centered, intentionally quiet so it never competes with the
+             form. */
+          .oriel-login-copyright {{
+            position: fixed;
+            left: 0; right: 0; bottom: 14px;
+            text-align: center;
+            font-size: 10.5px;
+            font-weight: 500;
+            letter-spacing: 0.04em;
+            color: rgba(14, 23, 51, 0.42);
+            pointer-events: none;
+            z-index: 3;
+          }}
           /* Responsive: collapse on narrow viewports */
           @media (max-width: 880px) {{
             .oriel-login-hero {{ display: none; }}
@@ -824,6 +862,13 @@ def _render_login():
         """    </div>"""
         """  </div>"""
         """</div>""",
+        unsafe_allow_html=True,
+    )
+
+    # Low-contrast copyright footer at the bottom of the login viewport
+    # per Ksenia's MVP-app-lock review.
+    st.markdown(
+        """<div class="oriel-login-copyright">© 2026 Oriel Labs, LLC. All rights reserved.</div>""",
         unsafe_allow_html=True,
     )
 
@@ -995,11 +1040,13 @@ blended_payload = _cached_blended_payload()
 # Build v7's ForecastEx package (live + sample) for the FX index tab.
 forecastex_payload = _cached_forecastex_payload()
 polymarket_payload = _cached_polymarket_payload()
+cme_payload        = _cached_cme_payload()
 perp_payload       = _cached_perp_payload()
 cms_payload        = _cached_cms_payload()
 mb_payload         = _cached_medical_basis_payload()
 parity_payload     = _cached_parity_payload()
 admin_payload      = _cached_admin_payload()
+execution_payload  = _cached_execution_payload()
 # Inject the logged-in user so the React top nav can render a profile
 # pill + logout option (replaces the old "Connect" button).
 session_user       = st.session_state.get("oriel_user", "Admin")
@@ -1010,6 +1057,8 @@ html = build_bundle(
     blended_payload_json=blended_payload,
     forecastex_payload_json=forecastex_payload,
     polymarket_payload_json=polymarket_payload,
+    cme_payload_json=cme_payload,
+    execution_payload_json=execution_payload,
     perp_payload_json=perp_payload,
     cms_payload_json=cms_payload,
     medical_basis_payload_json=mb_payload,

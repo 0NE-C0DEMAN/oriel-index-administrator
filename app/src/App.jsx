@@ -2,16 +2,17 @@
    App.jsx — Root component.
    Owns the active top-tab key and routes to the matching view.
    Per "all our screens should be tabbed", we have a flat tab strip:
-     overview → IndicesView (tile grid)
-     <indexKey> → IndexDetailView (with internal sub-tabs)
-     admin → IndexAdminView
+     overview    → IndicesView (3-band Overview, post-MVP-app-lock)
+     <indexKey>  → IndexDetailView (with internal sub-tabs)
+     placeholder → PlaceholderView (CPI · CME proxy, Execution Workbench)
+     admin       → IndexAdminView
    No SubHeader: each view owns its own header.
    Registers window.App.App.
    ========================================================================== */
 (() => {
   'use strict';
   const { useState, useCallback } = React;
-  const { TopNav, IndicesView, IndexDetailView, IndexAdminView, ChartModal } = window.App;
+  const { TopNav, IndicesView, IndexDetailView, IndexAdminView, PlaceholderView, CmeView, ExecutionView, ChartModal } = window.App;
   const { findTab } = window.App.NAV;
   const { byKey: indexByKey } = window.App.INDICES;
 
@@ -46,12 +47,15 @@
         />
         <main className="main">
           <div className="content">
-            {tab.kind === 'overview' && <IndicesView onOpenIndex={onOpenIndex} />}
-            {tab.kind === 'admin'    && <IndexAdminView />}
-            {tab.kind === 'index'    && (() => {
+            {tab.kind === 'overview'    && <IndicesView onOpenIndex={onOpenIndex} />}
+            {tab.kind === 'admin'       && <IndexAdminView />}
+            {tab.kind === 'cme'         && <CmeView onNavigate={onNavigate} />}
+            {tab.kind === 'execution'   && <ExecutionView onNavigate={onNavigate} />}
+            {tab.kind === 'placeholder' && <PlaceholderView tabKey={tab.key} tabLabel={tab.label} onNavigate={onNavigate} />}
+            {tab.kind === 'index'       && (() => {
               const idx = indexByKey(tab.key);
               if (!idx) return null;
-              return <IndexDetailView index={idx} />;
+              return <IndexDetailView index={idx} onNavigate={onNavigate} />;
             })()}
           </div>
         </main>

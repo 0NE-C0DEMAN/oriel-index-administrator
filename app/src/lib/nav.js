@@ -1,10 +1,18 @@
 /* ==========================================================================
    nav.js — Single source of truth for the top-nav tab strip.
-   Per the user's directive ("all our screens should be tabbed also just like
-   in the old app"), each top-level screen is a tab:
-     • Overview        — the cards/tile grid we already have
-     • v7 indices      — each opens its own detail page (ForecastTrader-style)
-     • Admin           — the Index Administrator section
+
+   Order mirrors v7's final-MVP-app-lock pass (PR #19 on the v7 streamlit):
+   CPI is the left-to-right spine, healthcare drops to the right as modules,
+   Validation sits between Execution and the modules block, Admin is last.
+
+   kind:
+     'overview'  → IndicesView (3-band Overview)
+     'index'     → IndexDetailView with INDICES.byKey(key)
+     'cme'       → CmeView (live CME proxy package: KPI strip + curve + contracts table)
+     'execution' → ExecutionView (forward risk regime + posture multipliers +
+                                   dislocation strip; handoff to standalone
+                                   market-sim app for the full simulator)
+     'admin'     → IndexAdminView
 
    The Admin tab is the last entry; UI may render a divider before it.
    Registers on window.App.NAV.
@@ -12,23 +20,19 @@
 (() => {
   'use strict';
 
-  // kind:
-  //   'overview' → IndicesView (tile grid)
-  //   'index'    → IndexDetailView with INDICES.byKey(key)
-  //   'admin'    → IndexAdminView
   const TABS = [
-    { key: 'overview', label: 'Overview',           kind: 'overview', icon: 'layers'      },
-    { key: 'hc',       label: 'Healthcare Trend',   kind: 'index',    icon: 'heart'       },
-    { key: 'cpi',      label: 'CPI · Kalshi',       kind: 'index',    icon: 'trending-up' },
-    { key: 'fx',       label: 'CPI · ForecastEx',   kind: 'index',    icon: 'bar-chart'   },
-    { key: 'poly',     label: 'CPI · Polymarket',   kind: 'index',    icon: 'globe'       },
-    { key: 'perp',     label: 'CPI Basis Engine',   kind: 'index',    icon: 'activity'    },
-    { key: 'cms',      label: 'Healthcare Reference', kind: 'index',  icon: 'shield'      },
-    // ForecastEx Medical Basis — pinned beside the other Healthcare-family
-    // tabs so related work groups together in the top strip.
-    { key: 'mb',       label: 'Medical CPI Basis',  kind: 'index',    icon: 'activity'    },
-    { key: 'parity',   label: 'Validation',         kind: 'index',    icon: 'sliders'     },
-    { key: 'admin',    label: 'Admin',              kind: 'admin',    icon: 'shield'      },
+    { key: 'overview',  label: 'Overview',             kind: 'overview',    icon: 'layers'      },
+    { key: 'perp',      label: 'CPI Basis Engine',     kind: 'index',       icon: 'activity'    },
+    { key: 'cpi',       label: 'CPI · Kalshi',         kind: 'index',       icon: 'trending-up' },
+    { key: 'fx',        label: 'CPI · ForecastEx',     kind: 'index',       icon: 'bar-chart'   },
+    { key: 'cme',       label: 'CPI · CME',            kind: 'cme',         icon: 'database'    },
+    { key: 'poly',      label: 'CPI · Polymarket',     kind: 'index',       icon: 'globe'       },
+    { key: 'execution', label: 'Execution Workbench',  kind: 'execution',   icon: 'sliders'     },
+    { key: 'parity',    label: 'Validation',           kind: 'index',       icon: 'shield'      },
+    { key: 'hc',        label: 'Healthcare Trend',     kind: 'index',       icon: 'heart'       },
+    { key: 'cms',       label: 'Healthcare Reference', kind: 'index',       icon: 'shield'      },
+    { key: 'mb',        label: 'Medical CPI Basis',    kind: 'index',       icon: 'activity'    },
+    { key: 'admin',     label: 'Admin',                kind: 'admin',       icon: 'shield'      },
   ];
 
   function findTab(key) {

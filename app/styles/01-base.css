@@ -50,9 +50,10 @@
   --info-light: #E0F2FE;
   /* Healthcare accent family. Originally pink/magenta; Ksenia replaced this
      with a teal/aqua palette so healthcare reads as a category, not a warning.
-     The variable names are kept (--pink, --pink-light) and the .accent-pink /
-     .badge-pink / .index-card-icon.pink classes are kept so we did not have
-     to touch every consumer; only the color values changed. */
+     The variable names are kept (--pink, --pink-light) and the .accent-pink
+     / .badge-pink classes are kept so we did not have to touch every
+     consumer; only the color values changed. (The old .index-card-icon.pink
+     was removed with the IndexCard component during MVP-app-lock cleanup.) */
   --pink: #14B8A6;       /* teal-500 (was #EC4899 pink) */
   --pink-light: #CCFBF1; /* teal-100 mint (was #FCE7F3 pink-light) */
 
@@ -346,6 +347,18 @@ table { border-collapse: collapse; width: 100%; }
   font-weight: 600;
   letter-spacing: -0.005em;
   white-space: nowrap;
+}
+
+/* Brand wordmark — quiet text sitting beside the logo + divider. Replaced
+   the old "Index Administrator" pill so the global shell does not box
+   Oriel into an admin console (per Ksenia's MVP-app-lock review). */
+.topnav-brand-wordmark {
+  font-size: 13px;
+  font-weight: 650;
+  letter-spacing: -0.005em;
+  color: var(--text);
+  white-space: nowrap;
+  opacity: 0.85;
 }
 
 /* Row 2: tab strip — Overview + 7 indices + Admin. Underline + soft

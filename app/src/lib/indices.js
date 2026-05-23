@@ -16,8 +16,12 @@
       venue: 'Prediction-market healthcare trend curve',
       icon: 'heart',
       accent: 'pink',
-      status: { variant: 'success', label: 'Active' },
-      feed: { variant: 'mute',  label: 'Sample' },
+      // Per Ksenia: card said "Active" while the footer said "Sample" — that
+      // mismatch read as if the module was live when it is really a sample
+      // preview. Badge now reads "Module Preview" so the audience sees the
+      // healthcare module as future-state extension, not the core live CPI.
+      status: { variant: 'warning', label: 'Module Preview' },
+      feed:   { variant: 'warn',    label: 'Sample · Module Preview' },
       description:
         'Market-implied U.S. healthcare cost trend derived from scalar bucket pricing.',
       bullets: [
@@ -751,8 +755,10 @@
       venue: 'Healthcare cost translation layer',
       icon: 'shield',
       accent: 'pink',
-      status: { variant: 'success', label: 'Live' },
-      feed: { variant: 'live', label: 'Live · CMS feed' },
+      // Per Ksenia: avoid the bare word "Live" because it implies tradable.
+      // "Live Reference" preserves the live public-data translation framing.
+      status: { variant: 'success', label: 'Live Reference' },
+      feed:   { variant: 'live',    label: 'Live · CMS public-data translation' },
       description:
         'Translates public healthcare cost rails into an Oriel spot reference and tradable basis view.',
       bullets: [
@@ -864,8 +870,12 @@
       venue: 'ForecastEx-style binary thresholds',
       icon: 'activity',
       accent: 'pink',
-      status: { variant: 'warning', label: 'Sample' },
-      feed:   { variant: 'warn',    label: 'Sample · Illustrative ladder' },
+      // Per Ksenia: this is future-state market design dependent on
+      // ForecastEx actually listing medical CPI basis contracts. The badge
+      // makes the listing dependency explicit so reviewers do not read this
+      // as a productized surface.
+      status: { variant: 'warning', label: 'Future-State Module' },
+      feed:   { variant: 'warn',    label: 'Listing-Dependent · Illustrative ladder' },
       description:
         'Medical CPI vs. CPI-U spread markets - a first prediction-market basis view on healthcare inflation.',
       bullets: [

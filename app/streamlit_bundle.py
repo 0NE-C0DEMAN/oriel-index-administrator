@@ -81,6 +81,8 @@ def build_bundle(
     blended_payload_json: str | None = None,
     forecastex_payload_json: str | None = None,
     polymarket_payload_json: str | None = None,
+    cme_payload_json: str | None = None,
+    execution_payload_json: str | None = None,
     perp_payload_json: str | None = None,
     cms_payload_json: str | None = None,
     medical_basis_payload_json: str | None = None,
@@ -132,6 +134,16 @@ def build_bundle(
         parts.append(
             "    /* Polymarket live + sample variants (v7 score_and_package) */\n"
             f"    window.__POLYMARKET__ = {polymarket_payload_json};"
+        )
+    if cme_payload_json is not None:
+        parts.append(
+            "    /* CME CPI proxy package (v7 venues.cme score_and_package) */\n"
+            f"    window.__CME__ = {cme_payload_json};"
+        )
+    if execution_payload_json is not None:
+        parts.append(
+            "    /* Execution Workbench summary (forward risk regime + dislocation strip) */\n"
+            f"    window.__EXECUTION__ = {execution_payload_json};"
         )
     if perp_payload_json is not None:
         parts.append(
