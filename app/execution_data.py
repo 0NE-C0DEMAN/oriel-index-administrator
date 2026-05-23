@@ -159,6 +159,126 @@ def _frames_for_sim_posture(vc: pd.DataFrame) -> tuple[pd.DataFrame, pd.DataFram
     return front_df, pd.DataFrame(rows_disl)
 
 
+# Representative backtest summary used to drive the illustrative TRS
+# deployment scenario. Matches the shape v7's apps/market_sim/oriel_hl_sim
+# run_backtest returns; values reflect a typical 30-day sim with the
+# current default base spread (12 bp) on a $3M launch notional. We feed
+# this through trs_deployment.build_trs_deployment_scenario to produce
+# the same scenario comparison Chris demos in v7's market-sim subapp.
+# (When a Redesign-side run_backtest exists, swap in the live values.)
+_REPRESENTATIVE_BACKTEST_SUMMARY = {
+    "launch_notional_usd":             3_000_000.0,
+    "spread_capture_pnl_usd":          24_000.0,
+    "directional_pnl_usd":             -6_000.0,
+    "total_pnl_usd":                   18_000.0,
+    "max_inventory_usd":               850_000.0,
+    "liquidity_self_sufficiency_score": 0.72,
+    "market_stability_score":          0.65,
+}
+
+_DEFAULT_TRS_INPUTS_DICT = {
+    "fundCapitalUsd":         3_000_000.0,
+    "trsNotionalMultiple":    2.0,
+    "initialMarginPct":       0.25,
+    "financingRatePct":       0.06,
+    "collateralYieldPct":     0.0,
+    "hedgeMode":              "Partial CPI perp/reference hedge",
+    "hedgeRatio":             0.75,
+    "dislocationRetention":   1.0,
+    "horizonDays":            30,
+}
+
+
+def _serialize_trs_result(result) -> Dict[str, Any]:
+    return {
+        "scenarioLabel":              result.scenario_label,
+        "fundCapitalUsd":             float(result.fund_capital_usd),
+        "trsNotionalUsd":             float(result.trs_notional_usd),
+        "requiredMarginUsd":          float(result.required_margin_usd),
+        "availableLiquidityUsd":      float(result.available_liquidity_usd),
+        "pnlScale":                   float(result.pnl_scale),
+        "grossDislocationPnlUsd":     float(result.gross_dislocation_pnl_usd),
+        "spreadCapturePnlUsd":        float(result.spread_capture_pnl_usd),
+        "grossDirectionalPnlUsd":     float(result.gross_directional_pnl_usd),
+        "hedgePnlUsd":                float(result.hedge_pnl_usd),
+        "residualBasisPnlUsd":        float(result.residual_basis_pnl_usd),
+        "financingCostUsd":           float(result.financing_cost_usd),
+        "collateralYieldUsd":         float(result.collateral_yield_usd),
+        "netFundPnlUsd":              float(result.net_fund_pnl_usd),
+        "returnOnCapitalPct":         float(result.return_on_capital_pct),
+        "maxGrossExposureUsd":        float(result.max_gross_exposure_usd),
+        "netExposureAfterHedgeUsd":   float(result.net_exposure_after_hedge_usd),
+        "maxInventoryUsd":            float(result.max_inventory_usd),
+        "maxNetInventoryAfterHedgeUsd": float(result.max_net_inventory_after_hedge_usd),
+        "capitalEfficiencyRatio":     float(result.capital_efficiency_ratio),
+        "stressDrawdownProxyUsd":     float(result.stress_drawdown_proxy_usd),
+        "hedgeRatio":                 float(result.hedge_ratio),
+        "liquiditySelfSufficiencyScore": float(result.liquidity_self_sufficiency_score),
+        "marketStabilityScore":       float(result.market_stability_score),
+        "warnings":                   list(result.warnings or ()),
+    }
+
+
+def _serialize_trs_row(row) -> Dict[str, Any]:
+    return {
+        "scenario":                       row.scenario,
+        "fundCapitalUsd":                 float(row.fund_capital_usd),
+        "trsNotionalUsd":                 float(row.trs_notional_usd),
+        "requiredMarginUsd":              float(row.required_margin_usd),
+        "grossExposureUsd":               float(row.gross_exposure_usd),
+        "netExposureAfterHedgeUsd":       float(row.net_exposure_after_hedge_usd),
+        "netPnlUsd":                      float(row.net_pnl_usd),
+        "returnOnCapitalPct":             float(row.return_on_capital_pct),
+        "maxInventoryUsd":                float(row.max_inventory_usd),
+        "residualBasisRiskUsd":           float(row.residual_basis_risk_usd),
+        "capitalEfficiencyRatio":         float(row.capital_efficiency_ratio),
+        "liquiditySelfSufficiencyScore":  float(row.liquidity_self_sufficiency_score),
+    }
+
+
+def _build_oriel_decision(dislocations: pd.DataFrame) -> Optional[Dict[str, Any]]:
+    """Pick the single best 'trade-worth-doing' row from the dislocations
+    frame — the row with the largest net executable edge. Mirrors the
+    decision strip Chris added to v7 falconx_sim_tab in PR #19."""
+    if dislocations is None or dislocations.empty:
+        return None
+    edge_col = "net_executable_edge_bps" if "net_executable_edge_bps" in dislocations.columns else "gross_edge_bps"
+    if edge_col not in dislocations.columns:
+        return None
+    row = dislocations.sort_values(edge_col, ascending=False).iloc[0]
+    disl_bps = float(row["dislocation_bps"])
+    preferred_side = "Buy / receive CPI exposure" if disl_bps < 0 else "Sell / fade CPI exposure"
+    rationale = (
+        "cheap to Oriel Reference after cost buffer"
+        if disl_bps < 0 else
+        "rich to Oriel Reference after cost buffer"
+    )
+    rm = row.get("release_month")
+    return {
+        "preferredSide":     preferred_side,
+        "preferredVenue":    str(row.get("venue", "—")),
+        "preferredMaturity": _format_maturity(rm),
+        "orielReferenceYoy": float(row.get("oriel_reference_yoy", 0.0)),
+        "bestDisplayedYoy":  float(row.get("implied_yoy", 0.0)),
+        "dislocationBps":    disl_bps,
+        "netExecutableEdgeBps": float(row.get(edge_col, 0.0) or 0.0),
+        "rationale":         rationale,
+        "status":            "not routed",
+    }
+
+
+def _format_maturity(value) -> str:
+    if value is None or (isinstance(value, float) and np.isnan(value)):
+        return "—"
+    try:
+        ts = pd.to_datetime(value, errors="coerce")
+        if pd.isna(ts):
+            return str(value)
+        return ts.strftime("%b %Y")
+    except Exception:
+        return str(value)
+
+
 def _payload_unavailable(reason: str) -> Dict[str, Any]:
     return {
         "available":           False,
@@ -183,6 +303,11 @@ def _payload_unavailable(reason: str) -> Dict[str, Any]:
             "venueCount":           0,
             "maturityCount":        0,
         },
+        "orielDecision":   None,
+        "trsDeployment":   None,
+        "trsComparison":   [],
+        "trsInputs":       _DEFAULT_TRS_INPUTS_DICT,
+        "backtestSummary": None,
     }
 
 
@@ -208,6 +333,32 @@ def _build_payload() -> Dict[str, Any]:
         base_edge_hurdle_bps=_BASE_EDGE_HURDLE_BPS,
     )
     strip = compute_dislocation_strip(front_df, dislocations)
+    decision = _build_oriel_decision(dislocations)
+
+    # TRS deployment scenario (illustrative — driven by a representative
+    # backtest summary, not a live run_backtest). Same math v7's
+    # apps/market_sim falconx_sim_tab uses; numbers update as the user
+    # tunes inputs on the React side via a follow-up controls panel.
+    trs_deployment_payload: Optional[Dict[str, Any]] = None
+    trs_comparison_payload: List[Dict[str, Any]] = []
+    try:
+        from trs_deployment import (  # type: ignore
+            TRSDeploymentInputs,
+            build_trs_deployment_scenario,
+            build_trs_scenario_comparison,
+        )
+        trs_inputs = TRSDeploymentInputs()
+        deployment = build_trs_deployment_scenario(
+            _REPRESENTATIVE_BACKTEST_SUMMARY, trs_inputs,
+            scenario_label="TRS wrapper, partial hedge (illustrative)",
+        )
+        comparison = build_trs_scenario_comparison(
+            _REPRESENTATIVE_BACKTEST_SUMMARY, trs_inputs,
+        )
+        trs_deployment_payload = _serialize_trs_result(deployment)
+        trs_comparison_payload = [_serialize_trs_row(r) for r in comparison]
+    except Exception as ex:
+        logger.warning("Execution payload: TRS scenario build failed (%s)", ex)
 
     return {
         "available":            True,
@@ -231,6 +382,19 @@ def _build_payload() -> Dict[str, Any]:
             "netExecutableEdgeBps": float(strip.net_executable_edge_bps),
             "venueCount":           int(strip.venue_count),
             "maturityCount":        int(strip.maturity_count),
+        },
+        "orielDecision":  decision,
+        "trsDeployment":  trs_deployment_payload,
+        "trsComparison":  trs_comparison_payload,
+        "trsInputs":      _DEFAULT_TRS_INPUTS_DICT,
+        "backtestSummary": {
+            "launchNotionalUsd":          _REPRESENTATIVE_BACKTEST_SUMMARY["launch_notional_usd"],
+            "spreadCapturePnlUsd":        _REPRESENTATIVE_BACKTEST_SUMMARY["spread_capture_pnl_usd"],
+            "directionalPnlUsd":          _REPRESENTATIVE_BACKTEST_SUMMARY["directional_pnl_usd"],
+            "totalPnlUsd":                _REPRESENTATIVE_BACKTEST_SUMMARY["total_pnl_usd"],
+            "maxInventoryUsd":            _REPRESENTATIVE_BACKTEST_SUMMARY["max_inventory_usd"],
+            "liquiditySelfSufficiencyScore": _REPRESENTATIVE_BACKTEST_SUMMARY["liquidity_self_sufficiency_score"],
+            "marketStabilityScore":       _REPRESENTATIVE_BACKTEST_SUMMARY["market_stability_score"],
         },
     }
 

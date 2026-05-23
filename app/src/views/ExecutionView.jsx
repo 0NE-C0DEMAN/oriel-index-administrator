@@ -2,8 +2,7 @@
    ExecutionView.jsx — Renders the Execution Workbench tab against the
    summary payload (`window.__EXECUTION__`) produced by execution_data.py.
 
-   Mirrors the v7 falconx_sim_tab Sim Posture + CPI Dislocation Strip
-   sections — the parts Chris asked to make obvious on screen:
+   Mirrors the v7 falconx_sim_tab sections Chris asked to make obvious:
 
        Forward Risk Regime banner    (Low / Moderate / Elevated + explainer)
        Risk score (0-100)            (regime thresholds 35 / 65)
@@ -12,12 +11,18 @@
                                        - inventory limit USD
                                        - executable edge hurdle bp
        CPI Dislocation Strip         (avg / median / max / net edge / venues / maturities)
+       Oriel Decision strip          (preferred side / venue / Oriel ref / best
+                                      price / net edge / rationale — PR #19)
+       TRS Pilot Deployment KPIs     (7 cells: fund capital, TRS notional,
+                                      required margin, net PnL, ROC, capital
+                                      efficiency, hedge ratio — PR #18)
+       TRS Scenario Comparison       (4 rows: No TRS / Unhedged / Partial / Full)
        Handoff CTAs                  (back to Basis Engine, open standalone sim)
 
-   The full v7 simulator (ScaleTrader ticket, TRS scenario, sweep,
-   ladder) stays in `apps/market_sim/`. This view is the React-side
-   readout of the same regime + dislocation strip data so the audience
-   sees real numbers, not just buttons.
+   The full v7 simulator (interactive ScaleTrader ticket, parameter sweep,
+   heatmap, backtest controls) stays in `apps/market_sim/`. This view is the
+   React-side readout of the same data so the audience sees real numbers,
+   not just buttons.
 
    Registers window.App.ExecutionView.
    ========================================================================== */
@@ -146,6 +151,112 @@
           </div>
         </section>
 
+        {/* Oriel Decision — picks the top-edge dislocation row.
+            Mirrors v7's PR #19 "Oriel Decision · trade-worth-doing
+            chain · not routed" KPI strip. */}
+        {ex.orielDecision && (
+          <section className="exec-decision-section">
+            <div className="exec-decision-ribbon">
+              Oriel Decision · trade-worth-doing chain · {ex.orielDecision.status}
+            </div>
+            <div className="exec-decision-grid">
+              <DecisionCell label="Preferred Side"      value={ex.orielDecision.preferredSide} accent="gold" sub={`Status: ${ex.orielDecision.status}`} />
+              <DecisionCell label="Preferred Venue"     value={ex.orielDecision.preferredVenue} />
+              <DecisionCell label="Maturity"            value={ex.orielDecision.preferredMaturity} />
+              <DecisionCell label="Oriel Reference"     value={`${Number(ex.orielDecision.orielReferenceYoy).toFixed(4)}`} suffix="% YoY" />
+              <DecisionCell label="Best Displayed"      value={`${Number(ex.orielDecision.bestDisplayedYoy).toFixed(4)}`} suffix="% YoY" />
+              <DecisionCell label="Net Executable Edge" value={fmtBp1(ex.orielDecision.netExecutableEdgeBps)} accent={ex.orielDecision.netExecutableEdgeBps > 0 ? 'success' : 'muted'} />
+              <DecisionCell label="Rationale"           value={ex.orielDecision.rationale} small />
+            </div>
+          </section>
+        )}
+
+        {/* TRS Pilot Deployment Economics — illustrative 30-day scenario
+            from v7 trs_deployment.py. */}
+        {ex.trsDeployment && (
+          <section className="exec-trs-section">
+            <div className="exec-trs-ribbon">
+              PILOT DEPLOYMENT ECONOMICS · illustrative 30-day TRS scenario · not dealer pricing
+            </div>
+            <div className="exec-trs-kpi-grid">
+              <TrsKpiCell label="Fund Capital"      value={fmtUsd(ex.trsDeployment.fundCapitalUsd)} />
+              <TrsKpiCell label="TRS Notional"      value={fmtUsd(ex.trsDeployment.trsNotionalUsd)}     sub={`×${Number(ex.trsInputs.trsNotionalMultiple).toFixed(1)} multiple`} />
+              <TrsKpiCell label="Required Margin"   value={fmtUsd(ex.trsDeployment.requiredMarginUsd)}  sub={`${(ex.trsInputs.initialMarginPct * 100).toFixed(1)}% IM`} />
+              <TrsKpiCell label="Net Fund PnL"      value={fmtUsd(ex.trsDeployment.netFundPnlUsd)}      accent={ex.trsDeployment.netFundPnlUsd > 0 ? 'success' : 'danger'} />
+              <TrsKpiCell label="Return on Capital" value={`${Number(ex.trsDeployment.returnOnCapitalPct).toFixed(2)}%`} accent={ex.trsDeployment.returnOnCapitalPct > 0 ? 'success' : 'danger'} sub="30-day horizon" />
+              <TrsKpiCell label="Capital Efficiency" value={`${Number(ex.trsDeployment.capitalEfficiencyRatio).toFixed(2)}x`} sub="notional / margin" />
+              <TrsKpiCell label="Hedge Ratio"       value={`${(ex.trsDeployment.hedgeRatio * 100).toFixed(0)}%`} sub={ex.trsInputs.hedgeMode} />
+            </div>
+
+            {/* Economic component breakdown */}
+            <div className="exec-trs-components">
+              <div className="exec-trs-components-head">Economic Components</div>
+              <table className="exec-trs-components-table">
+                <tbody>
+                  <ComponentRow label="Spread capture PnL"      value={fmtUsd(ex.trsDeployment.spreadCapturePnlUsd)} />
+                  <ComponentRow label="Directional PnL (pre-hedge)" value={fmtUsd(ex.trsDeployment.grossDirectionalPnlUsd)} />
+                  <ComponentRow label="Hedge PnL"               value={fmtUsd(ex.trsDeployment.hedgePnlUsd)} />
+                  <ComponentRow label="Residual basis PnL"      value={fmtUsd(ex.trsDeployment.residualBasisPnlUsd)} />
+                  <ComponentRow label="Financing cost"          value={`-${fmtUsd(ex.trsDeployment.financingCostUsd)}`} />
+                  <ComponentRow label="Collateral yield"        value={`+${fmtUsd(ex.trsDeployment.collateralYieldUsd)}`} />
+                  <ComponentRow label="Stress drawdown proxy"   value={fmtUsd(ex.trsDeployment.stressDrawdownProxyUsd)} muted />
+                </tbody>
+              </table>
+            </div>
+
+            {ex.trsDeployment.warnings && ex.trsDeployment.warnings.length > 0 && (
+              <ul className="exec-trs-warnings">
+                {ex.trsDeployment.warnings.map((w, i) => (
+                  <li key={i}><Icon name="info" size={11} /> {w}</li>
+                ))}
+              </ul>
+            )}
+          </section>
+        )}
+
+        {/* TRS Scenario Comparison — 4 rows mirroring v7's
+            build_trs_scenario_comparison output. */}
+        {ex.trsComparison && ex.trsComparison.length > 0 && (
+          <section className="exec-trs-compare-section">
+            <div className="exec-trs-compare-head">TRS Scenario Comparison · No TRS / Unhedged / Partial / Full hedge</div>
+            <div className="exec-trs-compare-scroll">
+              <table className="exec-trs-compare-table">
+                <thead>
+                  <tr>
+                    <th>Scenario</th>
+                    <th className="num">TRS Notional</th>
+                    <th className="num">Required Margin</th>
+                    <th className="num">Gross Exposure</th>
+                    <th className="num">Net Exposure</th>
+                    <th className="num">Net PnL</th>
+                    <th className="num">ROC %</th>
+                    <th className="num">Residual Basis Risk</th>
+                    <th className="num">Capital Eff.</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {ex.trsComparison.map((row, i) => (
+                    <tr key={i}>
+                      <td>{row.scenario}</td>
+                      <td className="num">{fmtUsd(row.trsNotionalUsd)}</td>
+                      <td className="num">{fmtUsd(row.requiredMarginUsd)}</td>
+                      <td className="num">{fmtUsd(row.grossExposureUsd)}</td>
+                      <td className="num">{fmtUsd(row.netExposureAfterHedgeUsd)}</td>
+                      <td className={`num ${row.netPnlUsd > 0 ? 'positive' : row.netPnlUsd < 0 ? 'negative' : ''}`}>{fmtUsd(row.netPnlUsd)}</td>
+                      <td className={`num ${row.returnOnCapitalPct > 0 ? 'positive' : row.returnOnCapitalPct < 0 ? 'negative' : ''}`}>{Number(row.returnOnCapitalPct).toFixed(3)}%</td>
+                      <td className="num">{fmtUsd(row.residualBasisRiskUsd)}</td>
+                      <td className="num">{Number(row.capitalEfficiencyRatio).toFixed(2)}x</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+            <div className="exec-trs-compare-foot">
+              Illustrative scenario · not dealer pricing · not legal / CSA / tax / accounting advice
+            </div>
+          </section>
+        )}
+
         {/* Handoff */}
         <div className="exec-handoff">
           <button
@@ -198,6 +309,38 @@
         <div className="exec-strip-value">{value}</div>
         {sub && <div className="exec-strip-sub">{sub}</div>}
       </div>
+    );
+  }
+
+  function DecisionCell({ label, value, suffix, accent, sub, small }) {
+    return (
+      <div className={`exec-decision-cell accent-${accent || 'default'}${small ? ' small' : ''}`}>
+        <div className="exec-decision-label">{label}</div>
+        <div className="exec-decision-value">
+          {value}
+          {suffix && <span className="exec-decision-suffix">{suffix}</span>}
+        </div>
+        {sub && <div className="exec-decision-sub">{sub}</div>}
+      </div>
+    );
+  }
+
+  function TrsKpiCell({ label, value, sub, accent }) {
+    return (
+      <div className={`exec-trs-kpi-cell accent-${accent || 'default'}`}>
+        <div className="exec-trs-kpi-label">{label}</div>
+        <div className="exec-trs-kpi-value">{value}</div>
+        {sub && <div className="exec-trs-kpi-sub">{sub}</div>}
+      </div>
+    );
+  }
+
+  function ComponentRow({ label, value, muted }) {
+    return (
+      <tr className={muted ? 'muted' : ''}>
+        <td>{label}</td>
+        <td className="num">{value}</td>
+      </tr>
     );
   }
 
