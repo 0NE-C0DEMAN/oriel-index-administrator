@@ -83,7 +83,7 @@
         {
           title: 'CPI Dislocation Strip',
           body: 'Avg / median / max dislocation, net executable edge after ' +
-                'cost buffer, plus venue count and maturity count — the ' +
+                'cost buffer, plus venue count and maturity count: the ' +
                 'six-metric proof-point Chris asked us to make prominent.',
         },
         {
@@ -110,7 +110,7 @@
       eyebrow: tabLabel || 'Section',
       title: tabLabel || 'Section',
       tag: { variant: 'default', label: 'Module 1 · App Shell' },
-      lede: 'The shell, navigation, and sub-header are wired up — content ' +
+      lede: 'The shell, navigation, and sub-header are wired up. Content ' +
             'for this section is the next module we will build.',
       bullets: [],
       ctas: [{ label: 'Back to Overview', target: 'overview', primary: true }],

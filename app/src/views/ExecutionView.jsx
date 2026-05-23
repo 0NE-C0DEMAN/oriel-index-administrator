@@ -1,5 +1,5 @@
 /* ==========================================================================
-   ExecutionView.jsx — Renders the Execution Workbench tab against the
+   ExecutionView.jsx - Renders the Execution Workbench tab against the
    summary payload (`window.__EXECUTION__`) produced by execution_data.py.
 
    Layout matches every other Redesign detail tab (see IndexDetailView):
@@ -45,7 +45,7 @@
     },
     Moderate: {
       headline: 'Neutral posture against the baseline config',
-      body: 'Dispersion and dislocations sit in the middle of the historical range. Posture multipliers all sit at 1.00 — the visible spread / inventory / edge hurdle match the published base config.',
+      body: 'Dispersion and dislocations sit in the middle of the historical range. Posture multipliers all sit at 1.00. The visible spread / inventory / edge hurdle match the published base config.',
     },
     Elevated: {
       headline: 'Wider quotes, shrunken inventory, higher edge floor',

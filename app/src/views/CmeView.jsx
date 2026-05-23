@@ -1,5 +1,5 @@
 /* ==========================================================================
-   CmeView.jsx — Renders the CPI · CME tab against the live CME proxy
+   CmeView.jsx - Renders the CPI · CME tab against the live CME proxy
    payload (`window.__CME__`) produced by cme_data.py.
 
    Layout matches every other Redesign detail tab (see IndexDetailView +
@@ -135,25 +135,25 @@
           : `Source status: ${cme.sourceStatus}.`,
         next: cme.sourceStatus === 'PROXY'
           ? 'Next: legal review + market-data licensing sign-off.'
-          : 'Cleared — feed ingested as governed source.',
+          : 'Cleared: feed ingested as governed source.',
         status: cme.sourceStatus === 'PROXY' ? 'pending' : 'cleared',
       },
       {
         title: 'Maturity coverage',
         body: `${cme.maturityCount} release ${cme.maturityCount === 1 ? 'month' : 'months'} covered. Curve spans the front-end of the CPI surface.`,
         next: cme.maturityCount >= 3
-          ? 'Cleared — coverage matches governed sources.'
-          : 'Pending — need at least 3 maturities to clear.',
+          ? 'Cleared: coverage matches governed sources.'
+          : 'Pending: need at least 3 maturities to clear.',
         status: cme.maturityCount >= 3 ? 'cleared' : 'partial',
       },
       {
         title: 'Liquidity depth',
         body: ladderStats.totalOi > 0
           ? `${ladderStats.totalOi.toLocaleString()} contracts open, avg liquidity ${fmtPct(ladderStats.avgLiq)} across the ladder.`
-          : 'No open interest yet — quote depth gate pending.',
+          : 'No open interest yet. Quote depth gate pending.',
         next: ladderStats.totalOi > 0
-          ? 'Cleared — all contracts sit above the proxy depth floor.'
-          : 'Pending — monitor depth as participation grows.',
+          ? 'Cleared: all contracts sit above the proxy depth floor.'
+          : 'Pending: monitor depth as participation grows.',
         status: ladderStats.totalOi > 0 ? 'cleared' : 'pending',
       },
       {
@@ -162,8 +162,8 @@
           ? 'Eligible for the shadow blend; governed promotion still gated on the licensed feed.'
           : 'Not yet eligible for shadow blend; missing coverage or calibration data.'),
         next: cme.publishable
-          ? 'Cleared — shadow blend can include CME on the Basis Engine tab.'
-          : 'Pending — fix any missing constituent data first.',
+          ? 'Cleared: shadow blend can include CME on the Basis Engine tab.'
+          : 'Pending: fix any missing constituent data first.',
         status: cme.publishable ? 'cleared' : 'pending',
       },
     ]), [cme.sourceStatus, cme.maturityCount, cme.publishable, cme.publishabilityReason, ladderStats.totalOi, ladderStats.avgLiq]);
