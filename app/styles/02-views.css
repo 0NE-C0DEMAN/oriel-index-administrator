@@ -2459,156 +2459,15 @@
 }
 
 /* ============================================================================
-   CmeView v3 redesign — sub-tab intros, diagnostics strip, eligibility
-   gates panel, promotion-path steps. Added after the user feedback that
-   the prior sub-tab pass left several tabs too sparse to feel substantive.
+   CmeView v4 + ExecutionView v4 — align with the rest of the app's
+   detail-tab design system. No streamlit-old elements: the methodology
+   tab uses the shared MethodologySteps + info-row + info-card primitives
+   (same components Kalshi / ForecastEx / Polymarket Methodology tabs
+   render). Section headers use .info-card-head (eyebrow + badge), not
+   uppercase plain heads. Only classes BELOW are tab-specific.
    ============================================================================ */
 
-/* Lede paragraph that opens every sub-tab body. Compact, muted, sets
-   context before the first content block. Shared by CmeView and
-   ExecutionView; one rule, two selectors. */
-.cme-tab-lede,
-.exec-tab-lede {
-  font-size: 13px;
-  line-height: 1.6;
-  color: var(--text);
-  margin: 4px 2px 6px;
-  max-width: 920px;
-}
-.cme-tab-lede code,
-.exec-tab-lede code {
-  font-family: 'JetBrains Mono', monospace;
-  font-size: 11.5px;
-  background: var(--bg-subtle);
-  border: 1px solid var(--border-subtle);
-  border-radius: 4px;
-  padding: 0 4px;
-  color: var(--text);
-}
-
-/* Section-head bar inside Overview and Methodology sub-tabs.
-   Mirrors v7's `<div class='shdr'>` plain-uppercase heads — no gradient,
-   no card chrome, thin underline only. */
-.cme-overview-section-head {
-  font-size: 11px;
-  font-weight: 700;
-  letter-spacing: 0.07em;
-  text-transform: uppercase;
-  color: var(--text-muted);
-  padding: 4px 0 6px;
-  border-bottom: 1px solid var(--border-subtle);
-  margin: 6px 0 4px;
-}
-
-/* Source-diagnostics strip (Overview) + Ladder-diagnostics strip
-   (Ladder). 4-cell grid that mirrors the page-level KPI strip rhythm
-   but plays the role of a per-tab summary band. */
-.cme-source-diag-strip,
-.cme-ladder-diag-strip {
-  display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 0;
-  background: var(--bg-elevated);
-  border: 1px solid var(--border);
-  border-radius: var(--r-lg);
-  box-shadow: var(--shadow-card);
-  overflow: hidden;
-}
-.cme-diag-cell {
-  padding: 10px 14px;
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  border-right: 1px solid var(--border-subtle);
-}
-.cme-diag-cell:last-child { border-right: none; }
-.cme-diag-label {
-  font-size: 10px;
-  font-weight: 700;
-  letter-spacing: 0.07em;
-  text-transform: uppercase;
-  color: var(--text-muted);
-}
-.cme-diag-value {
-  font-size: 14px;
-  font-weight: 650;
-  color: var(--text);
-  line-height: 1.25;
-}
-.cme-diag-value.mono {
-  font-family: 'JetBrains Mono', monospace;
-  font-size: 12.5px;
-  letter-spacing: 0.005em;
-}
-.cme-diag-cell.accent-warning .cme-diag-value { color: var(--warning); }
-
-/* Eligibility gates panel — four mini cards showing what CME needs
-   to clear to become governed. Status pill on the right. */
-.cme-gates-grid {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 10px;
-}
-@media (max-width: 880px) { .cme-gates-grid { grid-template-columns: 1fr; } }
-
-.cme-gate-card {
-  background: var(--bg-elevated);
-  border: 1px solid var(--border);
-  border-left-width: 3px;
-  border-radius: var(--r-lg);
-  box-shadow: var(--shadow-card);
-  padding: 10px 14px 12px;
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
-.cme-gate-card.cme-gate-cleared { border-left-color: var(--success); }
-.cme-gate-card.cme-gate-partial { border-left-color: var(--warning); }
-.cme-gate-card.cme-gate-pending { border-left-color: var(--text-muted); }
-
-.cme-gate-head {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-.cme-gate-dot {
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  flex-shrink: 0;
-}
-.cme-gate-dot-cleared { background: var(--success); }
-.cme-gate-dot-partial { background: var(--warning); }
-.cme-gate-dot-pending { background: var(--text-muted); }
-
-.cme-gate-label {
-  font-size: 12.5px;
-  font-weight: 650;
-  color: var(--text);
-  letter-spacing: -0.005em;
-  flex: 1;
-}
-.cme-gate-pill {
-  font-size: 10px;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
-  padding: 2px 8px;
-  border-radius: 999px;
-}
-.cme-gate-pill-cleared { background: var(--success-light); color: var(--success); }
-.cme-gate-pill-partial { background: var(--warning-light); color: var(--warning); }
-.cme-gate-pill-pending { background: var(--bg-subtle); color: var(--text-muted); }
-
-.cme-gate-detail {
-  font-size: 11.5px;
-  color: var(--text-muted);
-  line-height: 1.55;
-  margin: 0;
-}
-
-/* Publishability pill inside the Ladder table. Greens out PUBLISHABLE=Yes,
-   greys out NO so it scans without colour-blocking the cell. */
+/* ── Publishability pill inside the Ladder table ─────────────────────── */
 .cme-pub-pill {
   display: inline-block;
   font-size: 10.5px;
@@ -2621,112 +2480,69 @@
 .cme-pub-pill.ok { background: var(--success-light); color: var(--success); }
 .cme-pub-pill.no { background: var(--bg-subtle); color: var(--text-muted); }
 
-/* Ladder panel wrapper — keeps gap rhythm consistent with overview /
-   methodology panels. */
-.cme-ladder-panel,
-.cme-methodology-panel {
-  display: flex;
-  flex-direction: column;
-  gap: 14px;
-}
+/* ── Tone overrides for the shared MethodologySteps when used as the
+      eligibility-gate flow on the Status & Eligibility sub-tab.
+      Each step's status (cleared / partial / pending) drives the
+      number-circle background. Default circle is accent (blue) for the
+      promotion-path flow on the Methodology tab. */
+.cme-step-num-cleared { background: var(--success) !important; color: white !important; }
+.cme-step-num-partial { background: var(--warning) !important; color: white !important; }
+.cme-step-num-pending { background: var(--text-muted) !important; color: white !important; }
+.method-step.cme-step-cleared:hover { border-color: var(--success); }
+.method-step.cme-step-partial:hover { border-color: var(--warning); }
+.method-step.cme-step-pending:hover { border-color: var(--border-strong); }
 
-/* Promotion path — sequential 4-step block. Numbered circles + body
-   text. Matches the "How CME would be promoted" mental model the
-   methodology copy refers to. */
-.cme-promo-section {
+/* ── Ladder summary card (Curve & Ladder sub-tab) ────────────────────── */
+.cme-stats-card {
   background: var(--bg-elevated);
   border: 1px solid var(--border);
   border-radius: var(--r-lg);
   box-shadow: var(--shadow-card);
-  padding: 12px 16px 16px;
-}
-.cme-promo-head {
-  font-size: 11px;
-  font-weight: 700;
-  letter-spacing: 0.07em;
-  text-transform: uppercase;
-  color: var(--text-muted);
-  margin-bottom: 12px;
-  padding-bottom: 6px;
-  border-bottom: 1px solid var(--border-subtle);
-}
-.cme-promo-steps {
-  list-style: none;
-  padding: 0;
-  margin: 0;
+  padding: 10px 16px 12px;
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 6px;
 }
-.cme-promo-step {
+
+/* ── Overview handoff CTA row (Status & Eligibility sub-tab) ─────────── */
+.cme-handoff-row {
   display: flex;
-  gap: 12px;
-  align-items: flex-start;
-}
-.cme-promo-step-num {
-  flex-shrink: 0;
-  width: 24px;
-  height: 24px;
-  border-radius: 50%;
-  background: var(--accent-soft);
-  color: var(--accent);
-  font-size: 12px;
-  font-weight: 700;
-  font-family: 'JetBrains Mono', monospace;
-  display: flex;
+  flex-wrap: wrap;
   align-items: center;
-  justify-content: center;
+  gap: 8px;
+  padding: 6px 2px 0;
 }
-.cme-promo-step-body {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  gap: 3px;
-}
-.cme-promo-step-title {
-  font-size: 13px;
-  font-weight: 650;
-  color: var(--text);
-  letter-spacing: -0.005em;
-}
-.cme-promo-step-text {
-  font-size: 12px;
+.cme-handoff-note {
+  margin-left: auto;
+  font-size: 11.5px;
   color: var(--text-muted);
+  line-height: 1.4;
+  max-width: 360px;
+}
+
+/* ── Info-card body paragraphs (used inside the Overview cards) ──────── */
+.info-card-body {
+  font-size: 12.5px;
+  color: var(--text);
   line-height: 1.55;
   margin: 0;
 }
+.info-card-body.muted {
+  color: var(--text-muted);
+  font-size: 11.5px;
+}
 
-/* Methodology-tab CTA row — single primary action plus disclaimer line.
-   Lighter weight than the Overview tab's full button row. */
-.cme-method-cta-row {
+/* ── Action-button row inside an info-card-foot (Methodology Status) ── */
+.info-card-foot-actions {
   display: flex;
+  gap: 8px;
   flex-wrap: wrap;
-  gap: 10px;
-  align-items: center;
-  margin-top: 4px;
-}
-.cme-method-cta-row .cme-disclaimer {
-  flex: 1;
-  text-align: right;
-  min-width: 220px;
-}
-.cme-method-cta-row .cme-disclaimer code {
-  font-family: 'JetBrains Mono', monospace;
-  font-size: 10.5px;
-  color: var(--text);
-  background: var(--bg-subtle);
-  border: 1px solid var(--border-subtle);
-  border-radius: 4px;
-  padding: 0 4px;
+  padding-top: 6px;
+  border-top: 1px solid var(--border-subtle);
+  margin-top: 8px;
 }
 
-/* ============================================================================
-   ExecutionView v3 redesign — sub-tab intros, regime explainer card,
-   reference-audit table, scaletrader ladder visualization, key formulas.
-   ============================================================================ */
-
-/* Regime explainer card — closes out the Risk Posture sub-tab with a
-   plain-English read of what the current regime means for the book. */
+/* ── Regime explainer card (Risk Posture sub-tab) ────────────────────── */
 .exec-regime-explainer-card {
   background: var(--bg-elevated);
   border: 1px solid var(--border);
@@ -2784,8 +2600,9 @@
   margin: 2px 0 0;
 }
 
-/* Reference Audit table (Dislocations sub-tab) — per-row breakdown of
-   every (venue, maturity) pair the strip rolled up. */
+/* ── Reference Audit table (Dislocations sub-tab) ─────────────────────
+      Section wrapper carries info-card chrome via .info-card-head sitting
+      inside; the table body uses its own grid below the header. */
 .exec-ra-section {
   background: var(--bg-elevated);
   border: 1px solid var(--border);
@@ -2793,16 +2610,7 @@
   box-shadow: var(--shadow-card);
   overflow: hidden;
 }
-.exec-ra-head {
-  padding: 10px 16px 8px;
-  font-size: 11px;
-  font-weight: 700;
-  letter-spacing: 0.07em;
-  text-transform: uppercase;
-  color: var(--text-muted);
-  border-bottom: 1px solid var(--border-subtle);
-}
-.exec-ra-scroll { overflow-x: auto; padding: 0 14px 4px; }
+.exec-ra-scroll { overflow-x: auto; padding: 0 14px 8px; }
 .exec-ra-table {
   width: 100%;
   border-collapse: collapse;
@@ -2831,17 +2639,8 @@
 .exec-ra-table td.muted    { color: var(--text-muted); }
 .exec-ra-table td.positive { color: var(--success); }
 .exec-ra-table td.negative { color: var(--danger); }
-.exec-ra-foot {
-  padding: 8px 16px 12px;
-  font-size: 11.5px;
-  color: var(--text-muted);
-  line-height: 1.55;
-  border-top: 1px solid var(--border-subtle);
-}
 
-/* ScaleTrader ladder visualization — show the computed ladder rungs
-   side-by-side so reviewers can see what the levels look like in price
-   space. Auto-flows to fit; each rung is a compact pill. */
+/* ── ScaleTrader ladder visualization (ScaleTrader sub-tab) ──────────── */
 .exec-st-ladder {
   background: var(--bg-elevated);
   border: 1px solid var(--border);
@@ -2851,15 +2650,6 @@
   display: flex;
   flex-direction: column;
   gap: 10px;
-}
-.exec-st-ladder-head {
-  font-size: 11px;
-  font-weight: 700;
-  letter-spacing: 0.07em;
-  text-transform: uppercase;
-  color: var(--text-muted);
-  padding-bottom: 6px;
-  border-bottom: 1px solid var(--border-subtle);
 }
 .exec-st-ladder-grid {
   display: grid;
@@ -2894,49 +2684,6 @@
   color: var(--text-muted);
 }
 .exec-st-ladder-foot {
-  font-size: 11.5px;
-  color: var(--text-muted);
-  line-height: 1.55;
-}
-
-/* Key formulas mini-table (Methodology sub-tab). Two-column layout —
-   formula name on the left, math expression on the right (mono). */
-.exec-formulas {
-  background: var(--bg-elevated);
-  border: 1px solid var(--border);
-  border-radius: var(--r-lg);
-  box-shadow: var(--shadow-card);
-  overflow: hidden;
-}
-.exec-formulas-head {
-  padding: 10px 16px 8px;
-  font-size: 11px;
-  font-weight: 700;
-  letter-spacing: 0.07em;
-  text-transform: uppercase;
-  color: var(--text-muted);
-  border-bottom: 1px solid var(--border-subtle);
-}
-.exec-formulas-table {
-  width: 100%;
-  border-collapse: collapse;
-  font-size: 12px;
-}
-.exec-formulas-table td {
-  padding: 8px 16px;
-  border-bottom: 1px solid var(--border-subtle);
-  vertical-align: top;
-}
-.exec-formulas-table tr:last-child td { border-bottom: none; }
-.exec-formulas-name {
-  color: var(--text);
-  font-weight: 650;
-  white-space: nowrap;
-  width: 200px;
-  letter-spacing: -0.005em;
-}
-.exec-formulas-code {
-  font-family: 'JetBrains Mono', monospace;
   font-size: 11.5px;
   color: var(--text-muted);
   line-height: 1.55;

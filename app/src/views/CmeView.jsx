@@ -1,15 +1,18 @@
 /* ==========================================================================
    CmeView.jsx — Renders the CPI · CME tab against the live CME proxy
-   payload (`window.__CME__`) produced by cme_data.py. Mirrors v7's
-   tabs/cme_tab.py content.
+   payload (`window.__CME__`) produced by cme_data.py.
 
-   Layout follows the same sticky-head + DetailTabBar + body pattern the
-   rest of the Redesign tabs use (see IndexDetailView): compact page head
-   + 6-cell KPI strip + sub-tab bar (Overview · Ladder · Methodology),
-   then a body that switches on the active sub-tab. Each sub-tab is
-   designed to feel substantive on its own: intro + diagnostics strip +
-   data sections + closing handoff. Avoids the "naked tab" feel from the
-   earlier pass where Methodology was only a small dl/dt grid.
+   Layout matches every other Redesign detail tab (see IndexDetailView +
+   Kalshi tab as reference):
+
+     [sticky head: compact-page-head + KPI strip + DetailTabBar]
+     [body: each sub-tab is a horizontal numbered flow OR info-row of cards]
+
+   No streamlit-old elements: no lede paragraphs, no uppercase plain
+   section heads, no flat dl/dt grids. Everything uses the shared
+   MethodologySteps / info-row / info-card / .feed-pill / .idx-kpi
+   primitives so the CME tab reads as the same design system as every
+   other tab.
 
    Registers window.App.CmeView.
    ========================================================================== */
@@ -17,7 +20,7 @@
   'use strict';
   const { useState, useMemo } = React;
   const { cn } = window.App.utils;
-  const { Icon, Badge } = window.App;
+  const { Icon, Badge, MethodologySteps } = window.App;
 
   const SUB_TABS = [
     { key: 'overview',    label: 'Status & Eligibility',     icon: 'layers'   },
@@ -45,7 +48,6 @@
       );
     }
 
-    const tagVariant = cme.publishable ? 'success' : 'warning';
     const publishLabel = cme.publishable ? 'Shadow eligible' : 'Not eligible';
     const fmt2 = (v) => (v == null || Number.isNaN(v) ? '—' : Number(v).toFixed(2));
     const fmt4 = (v) => (v == null || Number.isNaN(v) ? '—' : Number(v).toFixed(4));
@@ -55,7 +57,6 @@
     const contracts = useMemo(() => cme.contracts || [], [cme.contracts]);
     const methodology = useMemo(() => cme.methodologyTable || [], [cme.methodologyTable]);
 
-    // Aggregate ladder diagnostics for the Ladder sub-tab KPI strip.
     const ladderStats = useMemo(() => {
       const ps = points;
       const cs = contracts;
@@ -70,71 +71,63 @@
       return { avgProb, avgLiq, totalVol, totalOi };
     }, [points, contracts]);
 
-    // Promotion gates — surfaces what CME needs to clear to become governed.
-    // Static list anchored to the v7 governance gate (coverage, consistency,
-    // calibration, history); status comes from publishable + curve presence.
-    const promotionGates = useMemo(() => ([
+    const promotionSteps = useMemo(() => ([
       {
-        key: 'feed',
-        label: 'Licensed feed approval',
-        status: cme.sourceStatus === 'PROXY' ? 'pending' : 'cleared',
-        detail: cme.sourceStatus === 'PROXY'
-          ? 'Interim proxy in use, licensed feed pending.'
-          : `Source status: ${cme.sourceStatus}`,
+        title: 'Proxy feed ingested',
+        body: 'CMEClient(source_mode="proxy") pulls threshold-event CPI contracts. Every row carries the PROXY source-status tag end-to-end.',
       },
       {
-        key: 'coverage',
-        label: 'Coverage across maturities',
-        status: cme.maturityCount >= 3 ? 'cleared' : 'partial',
-        detail: `${cme.maturityCount} release ${cme.maturityCount === 1 ? 'month' : 'months'} covered.`,
+        title: 'Score & package',
+        body: 'score_and_package collapses raw contracts into per-maturity curve points (probability + threshold + direction + liquidity).',
       },
       {
-        key: 'liquidity',
-        label: 'Liquidity / quote depth',
-        status: ladderStats.totalOi > 0 ? 'cleared' : 'pending',
-        detail: ladderStats.totalOi > 0
-          ? `${ladderStats.totalOi.toLocaleString()} contracts open, avg liquidity ${fmtPct(ladderStats.avgLiq)}.`
-          : 'No open interest yet — quote depth gate pending.',
+        title: 'Shadow blend impact',
+        body: 'Basis Engine · Source Blend section measures what adding CME to the governed blend changes (levels, weights, dispersion, dislocation).',
       },
       {
-        key: 'shadow',
-        label: 'Shadow-blend eligibility',
-        status: cme.publishable ? 'cleared' : 'pending',
-        detail: cme.publishabilityReason || (cme.publishable
-          ? 'CME passes the shadow-blend filter; governed promotion still requires the gate above.'
-          : 'Not yet eligible for shadow blend — see Basis Engine for the live calc.'),
-      },
-    ]), [cme.sourceStatus, cme.maturityCount, cme.publishable, cme.publishabilityReason, ladderStats.totalOi, ladderStats.avgLiq]);
-
-    const promotionSteps = [
-      {
-        n: 1,
-        title: 'Licensed feed approved',
-        body: 'CME licensed market-data agreement signed; PROXY label flips to LIVE end-to-end across client, contract, constituent, methodology_note.',
-      },
-      {
-        n: 2,
-        title: 'Shadow blend exposes CME-only delta',
-        body: 'Basis Engine · Source Blend & Shadow Impact quantifies what adding CME to the governed blend changes (levels, weights, dispersion, dislocation).',
-      },
-      {
-        n: 3,
         title: 'Eligibility gate cleared',
         body: 'Same coverage + consistency + calibration + history checks Kalshi and ForecastEx passed. Failure on any gate keeps CME in shadow mode.',
       },
       {
-        n: 4,
         title: 'Governance promotion',
-        body: 'Constituent registry updated, governed blend re-weighted, CPI Reference now includes CME. Front-end role label changes from Candidate to Constituent.',
+        body: 'Constituent registry updated, governed blend re-weighted, CPI Reference now includes CME. Role flips Candidate → Constituent.',
       },
-    ];
+    ]), []);
+
+    // Eligibility gates as a numbered horizontal flow (matches the
+    // MethodologySteps visual language). Each step's status drives a tone
+    // class on the number circle.
+    const gates = useMemo(() => ([
+      {
+        title: 'Licensed feed',
+        body: cme.sourceStatus === 'PROXY'
+          ? 'Interim proxy in use, licensed feed pending.'
+          : `Source status: ${cme.sourceStatus}.`,
+        status: cme.sourceStatus === 'PROXY' ? 'pending' : 'cleared',
+      },
+      {
+        title: 'Maturity coverage',
+        body: `${cme.maturityCount} release ${cme.maturityCount === 1 ? 'month' : 'months'} covered across the curve.`,
+        status: cme.maturityCount >= 3 ? 'cleared' : 'partial',
+      },
+      {
+        title: 'Liquidity depth',
+        body: ladderStats.totalOi > 0
+          ? `${ladderStats.totalOi.toLocaleString()} contracts open, avg liquidity ${fmtPct(ladderStats.avgLiq)}.`
+          : 'No open interest yet — quote depth gate pending.',
+        status: ladderStats.totalOi > 0 ? 'cleared' : 'pending',
+      },
+      {
+        title: 'Shadow eligibility',
+        body: cme.publishabilityReason || (cme.publishable
+          ? 'Eligible for shadow blend; governed promotion still requires the licensed feed.'
+          : 'Not yet eligible for shadow blend.'),
+        status: cme.publishable ? 'cleared' : 'pending',
+      },
+    ]), [cme.sourceStatus, cme.maturityCount, cme.publishable, cme.publishabilityReason, ladderStats.totalOi, ladderStats.avgLiq]);
 
     return (
       <div className="view detail-view cme-view">
-        {/* Sticky head: compact single-line page head + KPI strip + sub-tab
-            bar. Long-form context lives inside each sub-tab body so the
-            head stays compact like the Kalshi / ForecastEx / Polymarket
-            detail pages. */}
         <div className="detail-sticky-head">
           <div className="compact-page-head">
             <span className="compact-page-eyebrow">CPI · CME</span>
@@ -149,7 +142,7 @@
             <KpiCell label="Contracts"      value={String(cme.contractCount)}    accent="default" />
             <KpiCell label="Curve Points"   value={String(cme.curvePointCount)}  accent="default" />
             <KpiCell label="Maturities"     value={String(cme.maturityCount)}    accent="default" />
-            <KpiCell label="Publishability" value={publishLabel}                 accent={tagVariant} />
+            <KpiCell label="Publishability" value={publishLabel}                 accent={cme.publishable ? 'success' : 'warning'} />
             <KpiCell label="Role"           value="Candidate"                    accent="default" sub="not governed-live" />
           </div>
 
@@ -157,124 +150,48 @@
         </div>
 
         <div className="detail-tab-body">
-          {/* ─────────────────────────  Overview tab  ─────────────────────── */}
+          {/* ─────────────────────────  Status & Eligibility  ─────────────── */}
           {tab === 'overview' && (
-            <section className="cme-overview-panel">
-              <p className="cme-tab-lede">
-                CME is being evaluated as a candidate CPI curve constituent
-                through an interim proxy feed. The four boxes below show how
-                close CME is to passing the same eligibility gate Kalshi and
-                ForecastEx cleared before they were promoted into the
-                governed Oriel CPI Reference.
-              </p>
+            <>
+              <CmeStepFlow
+                eyebrow="Eligibility"
+                title="Where CME stands against the gate"
+                steps={gates}
+              />
 
-              <div className="cme-source-diag-strip">
-                <DiagCell label="Source Status"        value={cme.sourceStatus}                    accent="warning" />
-                <DiagCell label="Venue"                value={cme.venue || 'CME'}                  accent="default" />
-                <DiagCell label="Methodology Version"  value={cme.methodology || '—'}         accent="default" mono />
-                <DiagCell label="Valuation Snapshot"   value={formatTimestamp(cme.valuationTimestamp)} accent="default" mono />
+              <div className="info-row cols-3">
+                <CmeRoleCard cme={cme} fmtPct={fmtPct} ladderStats={ladderStats} />
+                <CmeShadowCard cme={cme} />
+                <CmeLabelCard cme={cme} />
               </div>
 
-              <div className="cme-overview-section-head">Where CME shows up in the product today</div>
-              <div className="cme-overview-grid">
-                <article className="cme-overview-card">
-                  <div className="cme-overview-card-title">Basis Engine · Source Blend &amp; Shadow Impact</div>
-                  <p className="cme-overview-card-body">
-                    The Source Blend &amp; Shadow Impact section on the CPI
-                    Basis Engine tab quantifies what adding CME to the
-                    governed blend would do to curve levels, source weights,
-                    dispersion, and downstream CPI dislocation metrics.
-                  </p>
-                </article>
-                <article className="cme-overview-card">
-                  <div className="cme-overview-card-title">Why shadow, not a third governed source yet</div>
-                  <p className="cme-overview-card-body">
-                    CME goes through the same eligibility gate as Kalshi and
-                    ForecastEx (coverage, consistency, calibration, history)
-                    before it can be promoted. The shadow blend lets us watch
-                    CME alongside the governed blend without changing the
-                    published Oriel CPI Reference.
-                  </p>
-                </article>
-                <article className="cme-overview-card">
-                  <div className="cme-overview-card-title">Role label flows through the data layer</div>
-                  <p className="cme-overview-card-body">
-                    Source status carries the <code>PROXY</code> label end-to-end
-                    through client, contract, constituent, and
-                    methodology_note fields so any downstream UI never
-                    confuses the interim proxy with a licensed feed.
-                  </p>
-                </article>
-              </div>
-
-              <div className="cme-overview-section-head">Eligibility gates (current status)</div>
-              <div className="cme-gates-grid">
-                {promotionGates.map((g) => (
-                  <article key={g.key} className={`cme-gate-card cme-gate-${g.status}`}>
-                    <header className="cme-gate-head">
-                      <span className={`cme-gate-dot cme-gate-dot-${g.status}`} aria-hidden="true" />
-                      <span className="cme-gate-label">{g.label}</span>
-                      <span className={`cme-gate-pill cme-gate-pill-${g.status}`}>
-                        {g.status === 'cleared' ? 'Cleared' : g.status === 'partial' ? 'Partial' : 'Pending'}
-                      </span>
-                    </header>
-                    <p className="cme-gate-detail">{g.detail}</p>
-                  </article>
-                ))}
-              </div>
-
-              <div className="cme-handoff">
-                <button
-                  type="button"
-                  className="placeholder-cta primary"
-                  onClick={() => onNavigate && onNavigate('perp')}
-                >
-                  See CME's effect in CPI Basis Engine <Icon name="arrow-right" size={12} />
-                </button>
-                <button
-                  type="button"
-                  className="placeholder-cta"
-                  onClick={() => onNavigate && onNavigate('cpi')}
-                >
-                  Compare against Kalshi <Icon name="arrow-right" size={12} />
-                </button>
-                <button
-                  type="button"
-                  className="placeholder-cta"
-                  onClick={() => onNavigate && onNavigate('fx')}
-                >
-                  Compare against ForecastEx <Icon name="arrow-right" size={12} />
-                </button>
-                <span className="cme-disclaimer">
-                  Not promoted into the governed blend. Not claiming licensed
-                  CME market-data readiness.
-                </span>
-              </div>
-            </section>
+              <CmeOverviewHandoff onNavigate={onNavigate} />
+            </>
           )}
 
-          {/* ─────────────────────────  Ladder tab  ───────────────────────── */}
+          {/* ─────────────────────────  Curve & Ladder  ────────────────────── */}
           {tab === 'ladder' && (
             (points.length > 0 || contracts.length > 0) ? (
-              <section className="cme-ladder-panel">
-                <p className="cme-tab-lede">
-                  Per-maturity curve points and the raw contract ladder
-                  underneath. Curve points are the threshold-event quotes the
-                  scoring pipeline reads; contracts are the raw venue rows
-                  before scoring. Each row carries the <code>PROXY</code>
-                  source-status tag so downstream consumers can filter.
-                </p>
-
-                <div className="cme-ladder-diag-strip">
-                  <DiagCell label="Avg Probability" value={fmt4(ladderStats.avgProb)} accent="warning" mono />
-                  <DiagCell label="Avg Liquidity"   value={fmtPct(ladderStats.avgLiq)} accent="default" />
-                  <DiagCell label="Total Volume"    value={ladderStats.totalVol.toLocaleString()} accent="default" mono />
-                  <DiagCell label="Total Open Interest" value={ladderStats.totalOi.toLocaleString()} accent="default" mono />
-                </div>
+              <>
+                <section className="cme-stats-card">
+                  <header className="info-card-head">
+                    <span className="info-card-eyebrow">Ladder summary</span>
+                    <Badge variant="accent">{points.length} curve points · {contracts.length} contracts</Badge>
+                  </header>
+                  <div className="info-stats-grid">
+                    <Stat label="Avg probability"      value={fmt4(ladderStats.avgProb)} />
+                    <Stat label="Avg liquidity score"  value={fmtPct(ladderStats.avgLiq)} muted />
+                    <Stat label="Total volume"         value={ladderStats.totalVol.toLocaleString()} muted />
+                    <Stat label="Total open interest"  value={ladderStats.totalOi.toLocaleString()} />
+                  </div>
+                </section>
 
                 {points.length > 0 && (
                   <section className="cme-table-section">
-                    <div className="cme-table-head">Curve Points · per maturity</div>
+                    <header className="info-card-head">
+                      <span className="info-card-eyebrow">Curve points · per maturity</span>
+                      <Badge variant="default">{points.length} rows</Badge>
+                    </header>
                     <div className="cme-table-scroll">
                       <table className="cme-table">
                         <thead>
@@ -287,7 +204,7 @@
                             <th className="num">Volume</th>
                             <th className="num">Open Interest</th>
                             <th>Publishable</th>
-                            <th>Source Status</th>
+                            <th>Source</th>
                           </tr>
                         </thead>
                         <tbody>
@@ -316,7 +233,10 @@
 
                 {contracts.length > 0 && (
                   <section className="cme-table-section">
-                    <div className="cme-table-head">Contracts · raw CME proxy ladder</div>
+                    <header className="info-card-head">
+                      <span className="info-card-eyebrow">Contracts · raw CME proxy ladder</span>
+                      <Badge variant="default">{contracts.length} rows</Badge>
+                    </header>
                     <div className="cme-table-scroll">
                       <table className="cme-table">
                         <thead>
@@ -357,69 +277,223 @@
                     </div>
                   </section>
                 )}
-              </section>
+              </>
             ) : <EmptyPanel label="No CME ladder data available." />
           )}
 
-          {/* ───────────────────  Methodology & Promotion tab  ─────────────── */}
+          {/* ───────────────────  Methodology & Promotion  ─────────────────── */}
           {tab === 'methodology' && (
-            <section className="cme-methodology-panel">
-              <p className="cme-tab-lede">
-                How the proxy is sourced and scored today, and the steps
-                between today's shadow surface and a governed constituent
-                role tomorrow. The same eligibility logic that gated Kalshi
-                and ForecastEx applies here, run unchanged.
-              </p>
-
-              {methodology.length > 0 && (
-                <section className="cme-methodology">
-                  <div className="cme-methodology-head">Methodology metadata</div>
-                  <dl className="cme-methodology-grid">
-                    {methodology.map((row, i) => (
-                      <div key={i} className="cme-methodology-row">
-                        <dt>{row.key}</dt>
-                        <dd>{row.value}</dd>
-                      </div>
-                    ))}
-                  </dl>
-                </section>
+            <div className="methodology-panel">
+              {MethodologySteps && (
+                <MethodologySteps
+                  steps={promotionSteps}
+                  accent="accent"
+                />
               )}
 
-              <div className="cme-promo-section">
-                <div className="cme-promo-head">Promotion path · proxy → shadow → governed</div>
-                <ol className="cme-promo-steps">
-                  {promotionSteps.map((s) => (
-                    <li key={s.n} className="cme-promo-step">
-                      <div className="cme-promo-step-num">{s.n}</div>
-                      <div className="cme-promo-step-body">
-                        <div className="cme-promo-step-title">{s.title}</div>
-                        <p className="cme-promo-step-text">{s.body}</p>
-                      </div>
-                    </li>
-                  ))}
-                </ol>
+              <div className="info-row cols-3">
+                <CmeStatusCard cme={cme} />
+                <CmeMethodologyKvCard methodology={methodology} cme={cme} />
+                <CmeFeedCard cme={cme} ladderStats={ladderStats} />
               </div>
-
-              <div className="cme-method-cta-row">
-                <button
-                  type="button"
-                  className="placeholder-cta primary"
-                  onClick={() => onNavigate && onNavigate('perp')}
-                >
-                  Open shadow-blend impact in Basis Engine <Icon name="arrow-right" size={12} />
-                </button>
-                <span className="cme-disclaimer">
-                  Methodology version <code>{cme.methodology || '—'}</code> ·
-                  PROXY label flows end-to-end · not yet governed-live.
-                </span>
-              </div>
-            </section>
+            </div>
           )}
         </div>
       </div>
     );
   }
 
+  /* ─────────────────────────  Overview cards  ───────────────────────── */
+  function CmeRoleCard({ cme, fmtPct, ladderStats }) {
+    return (
+      <section className="info-card">
+        <header className="info-card-head">
+          <span className="info-card-eyebrow">Role</span>
+          <span className="feed-pill feed-pill-warning">
+            <span className="feed-dot feed-warn" />
+            Candidate
+          </span>
+        </header>
+        <div className="info-kv-list">
+          <Kv label="Source status"   value={cme.sourceStatus} />
+          <Kv label="Venue"           value={cme.venue || 'CME'} />
+          <Kv label="Contracts"       value={String(cme.contractCount)} />
+          <Kv label="Curve points"    value={String(cme.curvePointCount)} />
+          <Kv label="Maturities"      value={String(cme.maturityCount)} />
+          <Kv label="Avg liquidity"   value={fmtPct(ladderStats.avgLiq)} />
+        </div>
+      </section>
+    );
+  }
+
+  function CmeShadowCard({ cme }) {
+    return (
+      <section className="info-card">
+        <header className="info-card-head">
+          <span className="info-card-eyebrow">Shadow blend impact</span>
+          <Badge variant={cme.publishable ? 'success' : 'warning'}>
+            {cme.publishable ? 'Eligible' : 'Pending'}
+          </Badge>
+        </header>
+        <p className="info-card-body">
+          The Source Blend &amp; Shadow Impact section on the CPI Basis Engine
+          tab quantifies what adding CME to the governed blend changes:
+          per-maturity curve levels, source weights, dispersion, and the
+          downstream CPI dislocation metrics.
+        </p>
+        <p className="info-card-body muted">
+          CME stays a shadow surface until the governed eligibility gate
+          (coverage · consistency · calibration · history) is cleared.
+        </p>
+      </section>
+    );
+  }
+
+  function CmeLabelCard({ cme }) {
+    return (
+      <section className="info-card">
+        <header className="info-card-head">
+          <span className="info-card-eyebrow">Source label propagation</span>
+          <Badge variant="default">end-to-end</Badge>
+        </header>
+        <div className="info-kv-list">
+          <Kv label="Client"          value="CMEClient(source_mode=&quot;proxy&quot;)" mono />
+          <Kv label="Contract field"  value="source_status=PROXY" mono />
+          <Kv label="Constituent"     value="role=candidate" mono />
+          <Kv label="Methodology"     value={cme.methodology || '—'} mono />
+        </div>
+        <p className="info-card-body muted">
+          The PROXY tag rides every contract, curve point, and constituent
+          row so downstream consumers never confuse the interim proxy with
+          a licensed feed.
+        </p>
+      </section>
+    );
+  }
+
+  function CmeOverviewHandoff({ onNavigate }) {
+    return (
+      <section className="cme-handoff-row">
+        <button
+          type="button"
+          className="placeholder-cta primary"
+          onClick={() => onNavigate && onNavigate('perp')}
+        >
+          See CME's effect in CPI Basis Engine <Icon name="arrow-right" size={12} />
+        </button>
+        <button
+          type="button"
+          className="placeholder-cta"
+          onClick={() => onNavigate && onNavigate('cpi')}
+        >
+          Compare against Kalshi <Icon name="arrow-right" size={12} />
+        </button>
+        <button
+          type="button"
+          className="placeholder-cta"
+          onClick={() => onNavigate && onNavigate('fx')}
+        >
+          Compare against ForecastEx <Icon name="arrow-right" size={12} />
+        </button>
+        <span className="cme-handoff-note">
+          Not promoted into the governed blend. Not claiming licensed CME
+          market-data readiness.
+        </span>
+      </section>
+    );
+  }
+
+  /* ──────────────────  Methodology-tab footer cards  ───────────────── */
+  function CmeStatusCard({ cme }) {
+    return (
+      <section className="info-card">
+        <header className="info-card-head">
+          <span className="info-card-eyebrow">Source &amp; status</span>
+          <Badge variant="warning">Proxy</Badge>
+        </header>
+        <div className="info-kv-list">
+          <Kv label="Source mode"      value="proxy" mono />
+          <Kv label="Role"             value="Shadow constituent candidate" />
+          <Kv label="Venue"            value={cme.venue || 'CME'} />
+          <Kv label="Contracts"        value={String(cme.contractCount)} />
+          <Kv label="Curve points"     value={String(cme.curvePointCount)} />
+          <Kv label="Maturities"       value={String(cme.maturityCount)} />
+        </div>
+      </section>
+    );
+  }
+
+  function CmeMethodologyKvCard({ methodology, cme }) {
+    return (
+      <section className="info-card">
+        <header className="info-card-head">
+          <span className="info-card-eyebrow">Methodology</span>
+          <Badge variant="accent">{cme.methodology || 'n/a'}</Badge>
+        </header>
+        <div className="info-kv-list">
+          {methodology.map((row, i) => (
+            <Kv key={i} label={row.key} value={row.value} mono={row.key === 'Methodology' || row.key === 'Source mode'} />
+          ))}
+        </div>
+      </section>
+    );
+  }
+
+  function CmeFeedCard({ cme, ladderStats }) {
+    const isPending = cme.sourceStatus === 'PROXY';
+    return (
+      <section className="info-card">
+        <header className="info-card-head">
+          <span className="info-card-eyebrow">Live feed status</span>
+          <span className={`feed-pill ${isPending ? 'feed-pill-warning' : 'feed-pill-success'}`}>
+            <span className={`feed-dot ${isPending ? 'feed-warn' : 'feed-live'}`} />
+            {isPending ? 'Proxy' : 'Live'}
+          </span>
+        </header>
+        <div className="info-kv-list">
+          <Kv label="Source status"        value={cme.sourceStatus} />
+          <Kv label="Publishable"          value={cme.publishable ? 'Shadow eligible' : 'Not eligible'} />
+          <Kv label="Valuation snapshot"   value={formatTimestamp(cme.valuationTimestamp)} mono />
+          <Kv label="Avg liquidity"        value={`${(Number(ladderStats.avgLiq) * 100).toFixed(0)}%`} />
+          <Kv label="Total volume"         value={ladderStats.totalVol.toLocaleString()} mono />
+          <Kv label="Total open interest"  value={ladderStats.totalOi.toLocaleString()} mono />
+        </div>
+      </section>
+    );
+  }
+
+  /* ────────────────  Numbered horizontal step flow  ────────────────── */
+  // Matches MethodologySteps visual language but supports per-step tone
+  // (cleared / partial / pending) so the eligibility gates can render in
+  // the same horizontal-flow layout the rest of the app uses.
+  function CmeStepFlow({ eyebrow, title, steps }) {
+    return (
+      <section className="method-steps cme-step-flow">
+        <div className="method-steps-head">
+          <div className="method-steps-eyebrow">{eyebrow}</div>
+          <div className="method-steps-title">{title}</div>
+        </div>
+        <ol className="method-steps-list">
+          {steps.map((s, i) => (
+            <li key={i} className={`method-step cme-step-${s.status}`}>
+              <div className={`method-step-num cme-step-num-${s.status}`}>{i + 1}</div>
+              <div className="method-step-body">
+                <div className="method-step-title">{s.title}</div>
+                <div className="method-step-text">{s.body}</div>
+              </div>
+              {i < steps.length - 1 && (
+                <div className="method-step-connector" aria-hidden="true">
+                  <Icon name="chevron-right" size={14} />
+                </div>
+              )}
+            </li>
+          ))}
+        </ol>
+      </section>
+    );
+  }
+
+  /* ───────────────────────────  Sub-tab bar  ─────────────────────────── */
   function SubTabBar({ tabs, active, onChange }) {
     return (
       <nav className="detail-tabbar" role="tablist" aria-label="CME sections">
@@ -442,6 +516,7 @@
     );
   }
 
+  /* ───────────────────────────  Cells  ───────────────────────────── */
   function KpiCell({ label, value, accent, sub }) {
     return (
       <div className={`cme-kpi-cell accent-${accent || 'default'}`}>
@@ -452,11 +527,20 @@
     );
   }
 
-  function DiagCell({ label, value, accent, mono }) {
+  function Stat({ label, value, muted }) {
     return (
-      <div className={`cme-diag-cell accent-${accent || 'default'}`}>
-        <div className="cme-diag-label">{label}</div>
-        <div className={`cme-diag-value${mono ? ' mono' : ''}`}>{value}</div>
+      <div className="info-stat">
+        <div className="info-stat-label">{label}</div>
+        <div className={cn('info-stat-value', 'font-mono', muted && 'muted')}>{value}</div>
+      </div>
+    );
+  }
+
+  function Kv({ label, value, mono }) {
+    return (
+      <div className="info-kv-row">
+        <span className="info-kv-key">{label}</span>
+        <span className={cn('info-kv-value', mono && 'font-mono')} dangerouslySetInnerHTML={{ __html: value }} />
       </div>
     );
   }
