@@ -49,7 +49,7 @@
     },
     Elevated: {
       headline: 'Wider quotes, shrunken inventory, higher edge floor',
-      body: 'Cross-venue dispersion or dislocations are running hot. The book widens quotes, pulls back inventory, and only fills against larger residuals — protective stance, not opportunistic.',
+      body: 'Cross-venue dispersion or dislocations are running hot. The book widens quotes, pulls back inventory, and only fills against larger residuals. Protective stance, not opportunistic.',
     },
   };
 
@@ -118,7 +118,7 @@
       },
       {
         title: 'Dislocations → ScaleTrader ticket',
-        body: 'Top-edge dislocation row (by net executable edge after a 10 bp cost buffer) drives an illustrative laddered ticket: side / start price / increment / clip / max exposure / profit-taker offset. Read-only — no IBKR auth, no TWS routing, no live order submission is wired in.',
+        body: 'Top-edge dislocation row (by net executable edge after a 10 bp cost buffer) drives an illustrative laddered ticket: side / start price / increment / clip / max exposure / profit-taker offset. Read-only, no IBKR auth, no TWS routing, no live order submission is wired in.',
       },
       {
         title: 'Pilot TRS scenario sized',
@@ -589,18 +589,12 @@
           </span>
         </header>
         <div className="info-kv-list">
-          <Kv label="Order routing"    value="None — no IBKR / TWS / venue auth wired" />
+          <Kv label="Order routing"    value="None (no IBKR / TWS / venue auth)" />
           <Kv label="Backtest source"  value="Representative 30-day sim summary" />
-          <Kv label="TRS pricing"      value="Illustrative · not dealer pricing" />
+          <Kv label="TRS pricing"      value="Illustrative, not dealer pricing" />
           <Kv label="Legal scope"      value="Not legal / CSA / tax / accounting advice" />
           <Kv label="Live simulator"   value="apps/market_sim/ (standalone)" mono />
         </div>
-        <p className="info-card-body muted">
-          Full interactive simulator (ScaleTrader controls, parameter
-          sweep, heatmap, run_backtest) ships as the standalone Oriel
-          Execution Workbench at <code>apps/market_sim/</code> until the
-          React port lands.
-        </p>
         <div className="info-card-foot info-card-foot-actions">
           <button
             type="button"

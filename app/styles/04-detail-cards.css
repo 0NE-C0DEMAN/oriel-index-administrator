@@ -691,13 +691,7 @@
 .info-row {
   display: grid;
   gap: 14px;
-  /* align-items: start so each card sits at its natural content height
-     rather than stretching to match the tallest card. Stretching left
-     empty whitespace at the bottom of shorter cards (the issue the user
-     called out as "text overflow" on the CME 3-card row and the
-     Execution Methodology footer). With start, every card ends at its
-     last content element. */
-  align-items: start;
+  align-items: stretch;
 }
 .info-row.cols-2 { grid-template-columns: minmax(0, 1fr) minmax(0, 1.6fr); }
 .info-row.cols-3 { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1fr); }
@@ -714,6 +708,10 @@
   flex-direction: column;
   overflow: hidden;
 }
+/* Main content area fills remaining card height so cards in the same
+   row end at a uniform baseline. */
+.info-card > .info-kv-list,
+.info-card > .info-stats-grid { flex: 1; }
 .info-card-head {
   padding: 12px 16px;
   display: flex;
@@ -728,29 +726,14 @@
   letter-spacing: 0.06em;
   font-weight: 600;
   color: var(--accent);
-  /* Eyebrows are SHORT category labels (2-3 words). Keep on one line —
-     truncate with ellipsis if a card is narrower than expected. Longer
-     descriptive titles belong in the .info-card-title element below the
-     header, not in the eyebrow. */
+  /* Short category labels (2-3 words). Single line, truncate on
+     overflow. */
   flex: 1 1 auto;
   min-width: 0;
   line-height: 1.35;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-}
-
-/* Card title — the full descriptive name of the card, shown below the
-   eyebrow + badge row. Wraps freely; this is where long titles like
-   "Where CME shows up today" or "Why shadow, not a third governed
-   source yet" go. */
-.info-card-title {
-  font-size: 15px;
-  font-weight: 650;
-  letter-spacing: -0.01em;
-  color: var(--text);
-  padding: 4px 16px 0;
-  line-height: 1.35;
 }
 .info-card-head > .badge,
 .info-card-head > [class*="feed-pill"] {

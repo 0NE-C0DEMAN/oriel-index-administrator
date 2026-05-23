@@ -408,13 +408,11 @@
   }
 
   /* ─────────────────────────  Overview cards  ─────────────────────────
-     Three info-cards restoring the original ca59531 explainer content
-     ("Where CME shows up today" / "Why a shadow surface, not a third
-     governed source yet" / "Role label flows through the data layer")
-     wrapped in the new design-system info-card chrome (eyebrow + badge +
-     body paragraph[s]). Quantitative role / methodology data lives in
-     the source-diagnostics strip above and in the page-level KPI strip,
-     so these three cards stay focused on the verbal explanation. */
+     Three info-cards in .info-row cols-3 matching the canonical
+     IndexInfoRow pattern: eyebrow + badge header, kv-list body.
+     Quantitative data lives in the source-diagnostics strip and
+     page-level KPI strip; these cards surface read-only context
+     (footprint / eligibility status / source-label tracking). */
   function CmeWhereCard({ onNavigate }) {
     return (
       <section className="info-card">
@@ -422,18 +420,12 @@
           <span className="info-card-eyebrow">Footprint</span>
           <Badge variant="accent">CPI Basis Engine</Badge>
         </header>
-        <div className="info-card-title">Where CME shows up today</div>
-        <p className="info-card-body">
-          On the CPI Basis Engine tab, the <strong>Source Blend &amp; Shadow Impact</strong>{' '}
-          section quantifies what adding CME to the governed blend would do
-          to curve levels, source weights, dispersion, and downstream CPI
-          dislocation metrics.
-        </p>
-        <p className="info-card-body muted">
-          The governed CPI Reference today remains Kalshi + ForecastEx.
-          CME shows up as a shadow surface only; the published reference is
-          unchanged until the licensed feed is approved.
-        </p>
+        <div className="info-kv-list">
+          <Kv label="Appears in"     value="CPI Basis Engine tab" />
+          <Kv label="Blend role"     value="Shadow surface only" />
+          <Kv label="Published ref"  value="Kalshi + ForecastEx (unchanged)" />
+          <Kv label="Promotion gate" value="Licensed-feed sign-off" />
+        </div>
         {onNavigate && (
           <div className="info-card-foot info-card-foot-actions">
             <button
@@ -456,19 +448,11 @@
           <span className="info-card-eyebrow">Shadow vs governed</span>
           <Badge variant="warning">Shadow blend</Badge>
         </header>
-        <div className="info-card-title">Why shadow, not a third governed source yet</div>
-        <p className="info-card-body">
-          CME goes through the same eligibility gate as Kalshi and
-          ForecastEx (coverage, consistency, calibration, history) before
-          it can be promoted. The shadow blend lets us watch CME alongside
-          the governed blend without changing the published Oriel CPI
-          Reference.
-        </p>
         <div className="info-kv-list">
           <Kv label="Coverage"    value="4 maturities cleared" />
-          <Kv label="Consistency" value="cross-venue agreement watched" />
-          <Kv label="Calibration" value="awaiting licensed feed" />
-          <Kv label="History"     value="proxy depth only" />
+          <Kv label="Consistency" value="Cross-venue agreement watched" />
+          <Kv label="Calibration" value="Awaiting licensed feed" />
+          <Kv label="History"     value="Proxy depth only" />
         </div>
       </section>
     );
@@ -481,13 +465,6 @@
           <span className="info-card-eyebrow">Source label</span>
           <Badge variant="default">end-to-end</Badge>
         </header>
-        <div className="info-card-title">Role label flows through the data layer</div>
-        <p className="info-card-body">
-          Source status carries the <code>PROXY</code> label end-to-end
-          through the client, contract, constituent, and methodology_note
-          fields so any downstream UI never confuses the interim proxy
-          with a licensed feed.
-        </p>
         <div className="info-kv-list">
           <Kv label="Client"         value="CMEClient(source_mode=&quot;proxy&quot;)" mono />
           <Kv label="Contract field" value="source_status=PROXY" mono />

@@ -2448,18 +2448,6 @@
   max-width: 360px;
 }
 
-/* ── Info-card body paragraphs (used inside the Overview cards) ──────── */
-.info-card-body {
-  font-size: 12.5px;
-  color: var(--text);
-  line-height: 1.55;
-  margin: 0;
-}
-.info-card-body.muted {
-  color: var(--text-muted);
-  font-size: 11.5px;
-}
-
 /* ── Action-button row inside an info-card-foot (Methodology Status) ── */
 .info-card-foot-actions {
   display: flex;
