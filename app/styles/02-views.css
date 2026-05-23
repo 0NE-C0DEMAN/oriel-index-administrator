@@ -1432,3 +1432,306 @@
   .detail-basis-cta { flex-direction: column; align-items: flex-start; }
   .detail-basis-cta-btn { align-self: stretch; justify-content: center; }
 }
+
+/* ==========================================================================
+   CPI · CME view (CmeView.jsx) — KPI strip + curve points table +
+   contracts table + methodology block. Renders the live CME proxy
+   package (window.__CME__).
+   ========================================================================== */
+.cme-view { display: flex; flex-direction: column; gap: 16px; }
+
+.cme-kpi-strip {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 12px;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-radius: var(--r-lg);
+  padding: 14px 16px;
+  box-shadow: var(--shadow-xs);
+}
+@media (max-width: 1100px) { .cme-kpi-strip { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+@media (max-width: 720px)  { .cme-kpi-strip { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+
+.cme-kpi-cell {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 4px 0;
+}
+.cme-kpi-label {
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+.cme-kpi-value {
+  font-size: 17px;
+  font-weight: 650;
+  letter-spacing: -0.012em;
+  font-variant-numeric: tabular-nums;
+  color: var(--text);
+  line-height: 1.2;
+}
+.cme-kpi-cell.accent-warning .cme-kpi-value { color: var(--warning); }
+.cme-kpi-cell.accent-success .cme-kpi-value { color: var(--success); }
+.cme-kpi-sub {
+  font-size: 10.5px;
+  color: var(--text-subtle);
+  line-height: 1.3;
+}
+
+.cme-table-section {
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-radius: var(--r-lg);
+  padding: 12px 14px 14px;
+  box-shadow: var(--shadow-xs);
+}
+.cme-table-head {
+  font-size: 11.5px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  margin-bottom: 8px;
+}
+.cme-table-scroll { overflow-x: auto; }
+.cme-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-variant-numeric: tabular-nums;
+  font-size: 12px;
+}
+.cme-table th {
+  text-align: left;
+  font-weight: 650;
+  font-size: 10.5px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  padding: 6px 10px;
+  border-bottom: 1px solid var(--border);
+  white-space: nowrap;
+}
+.cme-table th.num,
+.cme-table td.num { text-align: right; }
+.cme-table td {
+  padding: 7px 10px;
+  border-bottom: 1px solid var(--border-subtle);
+  color: var(--text);
+  white-space: nowrap;
+}
+.cme-table tbody tr:hover { background: var(--bg-subtle); }
+.cme-table .gold { color: var(--warning); font-weight: 650; }
+
+.cme-methodology {
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-radius: var(--r-lg);
+  padding: 12px 14px;
+  box-shadow: var(--shadow-xs);
+}
+.cme-methodology-head {
+  font-size: 11.5px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  margin-bottom: 8px;
+}
+.cme-methodology-grid { margin: 0; }
+.cme-methodology-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 6px 0;
+  border-bottom: 1px dashed var(--border-subtle);
+  font-size: 12.5px;
+}
+.cme-methodology-row:last-child { border-bottom: none; }
+.cme-methodology-row dt { color: var(--text-muted); font-weight: 600; margin: 0; }
+.cme-methodology-row dd { color: var(--text); margin: 0; text-align: right; }
+
+.cme-handoff {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-top: 2px;
+}
+.cme-disclaimer {
+  font-size: 11px;
+  color: var(--text-muted);
+  line-height: 1.5;
+}
+
+/* ==========================================================================
+   Execution Workbench view (ExecutionView.jsx) — regime banner, posture
+   cards (base × multiplier → effective), CPI dislocation strip, handoff.
+   Renders the live posture summary (window.__EXECUTION__).
+   ========================================================================== */
+.execution-view { display: flex; flex-direction: column; gap: 16px; }
+
+.exec-regime-banner {
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-left-width: 4px;
+  border-radius: var(--r-lg);
+  padding: 14px 16px;
+  box-shadow: var(--shadow-xs);
+}
+.exec-regime-banner.exec-regime-success  { border-left-color: var(--success); }
+.exec-regime-banner.exec-regime-info     { border-left-color: var(--info); }
+.exec-regime-banner.exec-regime-warning  { border-left-color: var(--warning); }
+
+.exec-regime-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-bottom: 8px;
+}
+.exec-regime-score {
+  font-size: 12px;
+  color: var(--text-muted);
+  font-variant-numeric: tabular-nums;
+}
+.exec-regime-score strong {
+  color: var(--text);
+  font-size: 14px;
+  font-weight: 700;
+  margin: 0 1px;
+}
+.exec-regime-thresholds {
+  font-size: 11px;
+  color: var(--text-subtle);
+  margin-left: 6px;
+}
+.exec-regime-explainer {
+  font-size: 13px;
+  line-height: 1.55;
+  color: var(--text-muted);
+  margin: 0;
+}
+
+.exec-posture-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+}
+@media (max-width: 900px) { .exec-posture-grid { grid-template-columns: 1fr; } }
+
+.exec-posture-card {
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-radius: var(--r-lg);
+  padding: 14px 16px 12px;
+  box-shadow: var(--shadow-xs);
+}
+.exec-posture-title {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  margin-bottom: 10px;
+}
+.exec-posture-row {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  gap: 12px;
+}
+.exec-posture-base,
+.exec-posture-eff { display: flex; flex-direction: column; gap: 2px; }
+.exec-posture-eff { align-items: flex-end; }
+.exec-posture-mini {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-subtle);
+}
+.exec-posture-value {
+  font-size: 15px;
+  font-weight: 650;
+  letter-spacing: -0.012em;
+  font-variant-numeric: tabular-nums;
+  color: var(--text);
+  line-height: 1.2;
+  font-family: 'JetBrains Mono', monospace;
+}
+.exec-posture-mult {
+  font-size: 13px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: var(--text-muted);
+  padding: 3px 8px;
+  border-radius: var(--r-full);
+  background: var(--bg-subtle);
+  border: 1px solid var(--border);
+}
+.exec-posture-success .exec-posture-mult { color: var(--success); background: var(--success-light); border-color: rgba(22,163,74,0.18); }
+.exec-posture-info    .exec-posture-mult { color: var(--info);    background: var(--info-light);    border-color: rgba(2,132,199,0.18); }
+.exec-posture-warning .exec-posture-mult { color: var(--warning); background: var(--warning-light); border-color: rgba(217,119,6,0.18); }
+.exec-posture-eff-value { color: var(--accent); }
+
+.exec-strip-section {
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-radius: var(--r-lg);
+  padding: 12px 14px 14px;
+  box-shadow: var(--shadow-xs);
+}
+.exec-strip-head {
+  font-size: 11.5px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  margin-bottom: 10px;
+}
+.exec-strip-grid {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 12px;
+}
+@media (max-width: 1100px) { .exec-strip-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+@media (max-width: 720px)  { .exec-strip-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+.exec-strip-cell { display: flex; flex-direction: column; gap: 2px; }
+.exec-strip-label {
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+.exec-strip-value {
+  font-size: 17px;
+  font-weight: 650;
+  letter-spacing: -0.012em;
+  font-variant-numeric: tabular-nums;
+  color: var(--text);
+  line-height: 1.2;
+  font-family: 'JetBrains Mono', monospace;
+}
+.exec-strip-sub {
+  font-size: 10.5px;
+  color: var(--text-subtle);
+}
+
+.exec-handoff {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-top: 2px;
+}
+.exec-disclaimer {
+  font-size: 11px;
+  color: var(--text-muted);
+  line-height: 1.5;
+}

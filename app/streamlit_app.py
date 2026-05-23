@@ -26,11 +26,13 @@ from live_kalshi import live_cpi_payload_json
 from blended_curve import blended_payload_json
 from forecastex_data import forecastex_payload_json
 from polymarket_data import polymarket_payload_json
+from cme_data       import cme_payload_json
 from perp_data       import perp_payload_json
 from cms_data        import cms_payload_json
 from medical_basis_data import medical_basis_payload_json
 from parity_data         import parity_payload_json
 from admin_data          import admin_payload_json
+from execution_data      import execution_payload_json
 
 APP_ROOT = Path(__file__).resolve().parent
 
@@ -62,6 +64,23 @@ def _cached_polymarket_payload() -> str:
     """Build the v7 Polymarket package (live + sample) for the poly index
     tab. v7's own cache_data TTL is 600s, so we mirror that here."""
     return polymarket_payload_json()
+
+
+@st.cache_data(ttl=600, show_spinner=False)
+def _cached_cme_payload() -> str:
+    """Build the v7 CME CPI proxy package (source_status, contracts,
+    curve points, publishability) for the new CPI · CME tab. v7's
+    @st.cache_data ttl=600 on _cached_cme_proxy_package — mirrored here."""
+    return cme_payload_json()
+
+
+@st.cache_data(ttl=600, show_spinner=False)
+def _cached_execution_payload() -> str:
+    """Build the Execution Workbench summary (forward risk regime,
+    dislocation strip, posture multipliers) derived from the existing
+    Redesign perp / venue stack. Refresh in lockstep with the perp /
+    venue caches."""
+    return execution_payload_json()
 
 
 @st.cache_data(ttl=3600, show_spinner=False)
@@ -1021,11 +1040,13 @@ blended_payload = _cached_blended_payload()
 # Build v7's ForecastEx package (live + sample) for the FX index tab.
 forecastex_payload = _cached_forecastex_payload()
 polymarket_payload = _cached_polymarket_payload()
+cme_payload        = _cached_cme_payload()
 perp_payload       = _cached_perp_payload()
 cms_payload        = _cached_cms_payload()
 mb_payload         = _cached_medical_basis_payload()
 parity_payload     = _cached_parity_payload()
 admin_payload      = _cached_admin_payload()
+execution_payload  = _cached_execution_payload()
 # Inject the logged-in user so the React top nav can render a profile
 # pill + logout option (replaces the old "Connect" button).
 session_user       = st.session_state.get("oriel_user", "Admin")
@@ -1036,6 +1057,8 @@ html = build_bundle(
     blended_payload_json=blended_payload,
     forecastex_payload_json=forecastex_payload,
     polymarket_payload_json=polymarket_payload,
+    cme_payload_json=cme_payload,
+    execution_payload_json=execution_payload,
     perp_payload_json=perp_payload,
     cms_payload_json=cms_payload,
     medical_basis_payload_json=mb_payload,

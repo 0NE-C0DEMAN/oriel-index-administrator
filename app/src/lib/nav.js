@@ -6,11 +6,13 @@
    Validation sits between Execution and the modules block, Admin is last.
 
    kind:
-     'overview'    → IndicesView (3-band Overview)
-     'index'       → IndexDetailView with INDICES.byKey(key)
-     'placeholder' → PlaceholderView (CME proxy explainer, Execution Workbench
-                                       handoff to standalone market-sim app)
-     'admin'       → IndexAdminView
+     'overview'  → IndicesView (3-band Overview)
+     'index'     → IndexDetailView with INDICES.byKey(key)
+     'cme'       → CmeView (live CME proxy package: KPI strip + curve + contracts table)
+     'execution' → ExecutionView (forward risk regime + posture multipliers +
+                                   dislocation strip; handoff to standalone
+                                   market-sim app for the full simulator)
+     'admin'     → IndexAdminView
 
    The Admin tab is the last entry; UI may render a divider before it.
    Registers on window.App.NAV.
@@ -23,9 +25,9 @@
     { key: 'perp',      label: 'CPI Basis Engine',     kind: 'index',       icon: 'activity'    },
     { key: 'cpi',       label: 'CPI · Kalshi',         kind: 'index',       icon: 'trending-up' },
     { key: 'fx',        label: 'CPI · ForecastEx',     kind: 'index',       icon: 'bar-chart'   },
-    { key: 'cme',       label: 'CPI · CME',            kind: 'placeholder', icon: 'database'    },
+    { key: 'cme',       label: 'CPI · CME',            kind: 'cme',         icon: 'database'    },
     { key: 'poly',      label: 'CPI · Polymarket',     kind: 'index',       icon: 'globe'       },
-    { key: 'execution', label: 'Execution Workbench',  kind: 'placeholder', icon: 'sliders'     },
+    { key: 'execution', label: 'Execution Workbench',  kind: 'execution',   icon: 'sliders'     },
     { key: 'parity',    label: 'Validation',           kind: 'index',       icon: 'shield'      },
     { key: 'hc',        label: 'Healthcare Trend',     kind: 'index',       icon: 'heart'       },
     { key: 'cms',       label: 'Healthcare Reference', kind: 'index',       icon: 'shield'      },
