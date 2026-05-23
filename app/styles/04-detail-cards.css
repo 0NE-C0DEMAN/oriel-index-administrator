@@ -722,10 +722,28 @@
   letter-spacing: 0.06em;
   font-weight: 600;
   color: var(--accent);
-  /* Allow long eyebrow text to wrap rather than push the badge off the
-     right edge. min-width: 0 lets flex children shrink below content. */
+  /* Eyebrows are SHORT category labels (2-3 words). Keep on one line —
+     truncate with ellipsis if a card is narrower than expected. Longer
+     descriptive titles belong in the .info-card-title element below the
+     header, not in the eyebrow. */
   flex: 1 1 auto;
   min-width: 0;
+  line-height: 1.35;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Card title — the full descriptive name of the card, shown below the
+   eyebrow + badge row. Wraps freely; this is where long titles like
+   "Where CME shows up today" or "Why shadow, not a third governed
+   source yet" go. */
+.info-card-title {
+  font-size: 15px;
+  font-weight: 650;
+  letter-spacing: -0.01em;
+  color: var(--text);
+  padding: 4px 16px 0;
   line-height: 1.35;
 }
 .info-card-head > .badge,

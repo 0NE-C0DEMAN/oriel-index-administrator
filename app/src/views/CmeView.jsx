@@ -293,7 +293,7 @@
                 {points.length > 0 && (
                   <section className="cme-table-section">
                     <header className="info-card-head">
-                      <span className="info-card-eyebrow">Curve points · per maturity</span>
+                      <span className="info-card-eyebrow">Curve points</span>
                       <Badge variant="default">{points.length} rows</Badge>
                     </header>
                     <div className="cme-table-scroll">
@@ -338,7 +338,7 @@
                 {contracts.length > 0 && (
                   <section className="cme-table-section">
                     <header className="info-card-head">
-                      <span className="info-card-eyebrow">Contracts · raw CME proxy ladder</span>
+                      <span className="info-card-eyebrow">Contracts</span>
                       <Badge variant="default">{contracts.length} rows</Badge>
                     </header>
                     <div className="cme-table-scroll">
@@ -419,9 +419,10 @@
     return (
       <section className="info-card">
         <header className="info-card-head">
-          <span className="info-card-eyebrow">Where CME shows up today</span>
+          <span className="info-card-eyebrow">Footprint</span>
           <Badge variant="accent">CPI Basis Engine</Badge>
         </header>
+        <div className="info-card-title">Where CME shows up today</div>
         <p className="info-card-body">
           On the CPI Basis Engine tab, the <strong>Source Blend &amp; Shadow Impact</strong>{' '}
           section quantifies what adding CME to the governed blend would do
@@ -452,9 +453,10 @@
     return (
       <section className="info-card">
         <header className="info-card-head">
-          <span className="info-card-eyebrow">Why a shadow surface, not a third governed source yet</span>
+          <span className="info-card-eyebrow">Shadow vs governed</span>
           <Badge variant="warning">Shadow blend</Badge>
         </header>
+        <div className="info-card-title">Why shadow, not a third governed source yet</div>
         <p className="info-card-body">
           CME goes through the same eligibility gate as Kalshi and
           ForecastEx (coverage, consistency, calibration, history) before
@@ -475,9 +477,10 @@
     return (
       <section className="info-card">
         <header className="info-card-head">
-          <span className="info-card-eyebrow">Role label flows through the data layer</span>
+          <span className="info-card-eyebrow">Source label</span>
           <Badge variant="default">end-to-end</Badge>
         </header>
+        <div className="info-card-title">Role label flows through the data layer</div>
         <p className="info-card-body">
           Source status carries the <code>PROXY</code> label end-to-end
           through the client, contract, constituent, and methodology_note

@@ -166,7 +166,7 @@
               {ex.regimeComparison && ex.regimeComparison.length > 0 && (
                 <section className="exec-rc-section">
                   <header className="info-card-head">
-                    <span className="info-card-eyebrow">Regime comparison · same dislocation under each regime</span>
+                    <span className="info-card-eyebrow">Regime comparison</span>
                     <Badge variant={tone === 'success' ? 'success' : tone === 'warning' ? 'warning' : 'accent'}>
                       Current: {ex.regime}
                     </Badge>
@@ -222,7 +222,7 @@
             <>
               <section className="exec-strip-section">
                 <header className="info-card-head">
-                  <span className="info-card-eyebrow">CPI dislocation strip · cross-venue residuals vs Oriel Reference</span>
+                  <span className="info-card-eyebrow">CPI dislocation strip</span>
                   <Badge variant="default">{ex.strip.venueCount} venues · {ex.strip.maturityCount} maturities</Badge>
                 </header>
                 <div className="exec-strip-grid">
@@ -238,7 +238,7 @@
               {ex.orielDecision && (
                 <section className="exec-decision-section">
                   <header className="info-card-head">
-                    <span className="info-card-eyebrow">Oriel decision · trade-worth-doing chain</span>
+                    <span className="info-card-eyebrow">Oriel decision</span>
                     <Badge variant="warning">{ex.orielDecision.status}</Badge>
                   </header>
                   <div className="exec-decision-grid">
@@ -256,7 +256,7 @@
               {ex.venueContribution && ex.venueContribution.length > 0 && (
                 <section className="exec-vc-section">
                   <header className="info-card-head">
-                    <span className="info-card-eyebrow">Cross-venue contribution · weight into Oriel Reference</span>
+                    <span className="info-card-eyebrow">Cross-venue contribution</span>
                     <Badge variant="accent">{ex.venueContribution.length} rows</Badge>
                   </header>
                   <div className="exec-vc-scroll">
@@ -293,7 +293,7 @@
               {dislocationsTable.length > 0 && (
                 <section className="exec-ra-section">
                   <header className="info-card-head">
-                    <span className="info-card-eyebrow">Reference audit · per-(venue, maturity) dislocation &amp; edge</span>
+                    <span className="info-card-eyebrow">Reference audit</span>
                     <Badge variant="default">{dislocationsTable.length} rows</Badge>
                   </header>
                   <div className="exec-ra-scroll">
@@ -339,7 +339,7 @@
               <>
                 <section className="exec-st-section">
                   <header className="info-card-head">
-                    <span className="info-card-eyebrow">Illustrative ScaleTrader ticket · not routed</span>
+                    <span className="info-card-eyebrow">ScaleTrader ticket</span>
                     <Badge variant={ex.scaletraderTicket.side === 'Buy YES' ? 'success' : 'danger'}>
                       {ex.scaletraderTicket.side} · {ex.scaletraderTicket.selectedVenueContract}
                     </Badge>
@@ -380,7 +380,7 @@
                 {scaletraderLadder.length > 0 && (
                   <section className="exec-st-ladder">
                     <header className="info-card-head">
-                      <span className="info-card-eyebrow">Ladder rungs · {ex.scaletraderTicket.side === 'Buy YES' ? 'buy ladder · cheaper levels deeper' : 'sell ladder · richer levels deeper'}</span>
+                      <span className="info-card-eyebrow">Ladder rungs</span>
                       <Badge variant="default">{scaletraderLadder.length} levels · clip {ex.scaletraderTicket.clipSize.toLocaleString()}</Badge>
                     </header>
                     <div className="exec-st-ladder-grid">
@@ -417,7 +417,7 @@
               {ex.backtestSummary && (
                 <section className="exec-bt-section">
                   <header className="info-card-head">
-                    <span className="info-card-eyebrow">Representative backtest summary · drives the TRS scenario below</span>
+                    <span className="info-card-eyebrow">Backtest summary</span>
                     <Badge variant="default">30-day · {Number(ex.baseSpreadBps).toFixed(0)} bp · ${(ex.backtestSummary.launchNotionalUsd / 1e6).toFixed(1)}M launch · {ex.regime}</Badge>
                   </header>
                   <div className="exec-bt-grid">
@@ -435,7 +435,7 @@
               {ex.trsDeployment && (
                 <section className="exec-trs-section">
                   <header className="info-card-head">
-                    <span className="info-card-eyebrow">Pilot deployment economics · illustrative 30-day TRS scenario</span>
+                    <span className="info-card-eyebrow">Pilot deployment</span>
                     <Badge variant="info">not dealer pricing</Badge>
                   </header>
                   <div className="exec-trs-kpi-grid">
@@ -476,7 +476,7 @@
               {ex.trsComparison && ex.trsComparison.length > 0 && (
                 <section className="exec-trs-compare-section">
                   <header className="info-card-head">
-                    <span className="info-card-eyebrow">TRS scenario comparison · No TRS / Unhedged / Partial / Full hedge</span>
+                    <span className="info-card-eyebrow">Scenario comparison</span>
                     <Badge variant="default">{ex.trsComparison.length} scenarios</Badge>
                   </header>
                   <div className="exec-trs-compare-scroll">
