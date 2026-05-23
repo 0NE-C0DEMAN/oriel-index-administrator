@@ -2080,13 +2080,13 @@
   overflow: hidden;
 }
 .exec-decision-ribbon {
-  background: linear-gradient(90deg, rgba(217, 119, 6, 0.10), rgba(217, 119, 6, 0.02));
-  color: var(--warning);
-  font-size: 10.5px;
+  background: transparent;
+  color: var(--text-muted);
+  font-size: 11.5px;
   font-weight: 700;
-  letter-spacing: 0.07em;
+  letter-spacing: 0.06em;
   text-transform: uppercase;
-  padding: 8px 14px;
+  padding: 10px 14px 6px;
   border-bottom: 1px solid var(--border-subtle);
 }
 .exec-decision-grid {
@@ -2141,13 +2141,13 @@
   overflow: hidden;
 }
 .exec-trs-ribbon {
-  background: linear-gradient(90deg, rgba(45, 91, 255, 0.10), rgba(45, 91, 255, 0.02));
-  color: var(--accent);
-  font-size: 10.5px;
+  background: transparent;
+  color: var(--text-muted);
+  font-size: 11.5px;
   font-weight: 700;
-  letter-spacing: 0.07em;
+  letter-spacing: 0.06em;
   text-transform: uppercase;
-  padding: 8px 14px;
+  padding: 10px 14px 6px;
   border-bottom: 1px solid var(--border-subtle);
 }
 .exec-trs-kpi-grid {
@@ -2354,15 +2354,17 @@
   overflow: hidden;
 }
 .exec-st-ribbon {
-  font-size: 10.5px;
+  background: transparent;
+  color: var(--text-muted);
+  font-size: 11.5px;
   font-weight: 700;
-  letter-spacing: 0.07em;
+  letter-spacing: 0.06em;
   text-transform: uppercase;
-  padding: 8px 14px;
+  padding: 10px 14px 6px;
   border-bottom: 1px solid var(--border-subtle);
 }
-.exec-st-ribbon.buy  { background: linear-gradient(90deg, rgba(22,163,74,0.10), rgba(22,163,74,0.02));  color: var(--success); }
-.exec-st-ribbon.sell { background: linear-gradient(90deg, rgba(220,38,38,0.10), rgba(220,38,38,0.02)); color: var(--danger); }
+.exec-st-ribbon.buy strong  { color: var(--success); }
+.exec-st-ribbon.sell strong { color: var(--danger); }
 .exec-st-kpi-grid {
   display: grid;
   grid-template-columns: repeat(8, minmax(0, 1fr));

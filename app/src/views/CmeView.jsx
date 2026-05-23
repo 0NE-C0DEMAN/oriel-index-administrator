@@ -19,10 +19,9 @@
   const { Icon, Badge } = window.App;
 
   const SUB_TABS = [
-    { key: 'overview',      label: 'Overview',      icon: 'layers'   },
-    { key: 'curve',         label: 'Curve Points',  icon: 'bar-chart' },
-    { key: 'contracts',     label: 'Contracts',     icon: 'database' },
-    { key: 'methodology',   label: 'Methodology',   icon: 'sliders'  },
+    { key: 'overview',    label: 'Overview',    icon: 'layers'   },
+    { key: 'ladder',      label: 'Ladder',      icon: 'database' },
+    { key: 'methodology', label: 'Methodology', icon: 'sliders'  },
   ];
 
   function CmeView({ onNavigate }) {
@@ -145,82 +144,83 @@
             </section>
           )}
 
-          {tab === 'curve' && (
-            points.length > 0 ? (
-              <section className="cme-table-section">
-                <div className="cme-table-head">Curve Points · per maturity</div>
-                <div className="cme-table-scroll">
-                  <table className="cme-table">
-                    <thead>
-                      <tr>
-                        <th>Release Month</th>
-                        <th className="num">Threshold</th>
-                        <th>Direction</th>
-                        <th className="num">Probability</th>
-                        <th className="num">Liquidity</th>
-                        <th className="num">Volume</th>
-                        <th className="num">Open Interest</th>
-                        <th>Source Status</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {points.map((p, i) => (
-                        <tr key={i}>
-                          <td>{p.releaseMonth}</td>
-                          <td className="num">{fmt2(p.threshold)}</td>
-                          <td>{p.direction}</td>
-                          <td className="num gold">{fmt4(p.probability)}</td>
-                          <td className="num">{fmt2(p.liquidityScore)}</td>
-                          <td className="num">{p.volume}</td>
-                          <td className="num">{p.openInterest}</td>
-                          <td>{cme.sourceStatus}</td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              </section>
-            ) : <EmptyPanel label="No CME curve points available." />
-          )}
-
-          {tab === 'contracts' && (
-            contracts.length > 0 ? (
-              <section className="cme-table-section">
-                <div className="cme-table-head">Contracts · raw CME proxy ladder</div>
-                <div className="cme-table-scroll">
-                  <table className="cme-table">
-                    <thead>
-                      <tr>
-                        <th>Contract ID</th>
-                        <th>Product</th>
-                        <th>Release</th>
-                        <th>Direction</th>
-                        <th className="num">Threshold</th>
-                        <th className="num">Mid</th>
-                        <th className="num">Volume</th>
-                        <th className="num">OI</th>
-                        <th>Settlement</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {contracts.map((c, i) => (
-                        <tr key={i}>
-                          <td>{c.contractId}</td>
-                          <td>{c.productCode}</td>
-                          <td>{c.releaseMonth}</td>
-                          <td>{c.direction}</td>
-                          <td className="num">{fmt2(c.threshold)}</td>
-                          <td className="num gold">{fmt4(c.mid)}</td>
-                          <td className="num">{c.volume}</td>
-                          <td className="num">{c.openInterest}</td>
-                          <td>{c.settlementSource || '—'}</td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              </section>
-            ) : <EmptyPanel label="No CME contracts available." />
+          {tab === 'ladder' && (
+            (points.length > 0 || contracts.length > 0) ? (
+              <>
+                {points.length > 0 && (
+                  <section className="cme-table-section">
+                    <div className="cme-table-head">Curve Points · per maturity</div>
+                    <div className="cme-table-scroll">
+                      <table className="cme-table">
+                        <thead>
+                          <tr>
+                            <th>Release Month</th>
+                            <th className="num">Threshold</th>
+                            <th>Direction</th>
+                            <th className="num">Probability</th>
+                            <th className="num">Liquidity</th>
+                            <th className="num">Volume</th>
+                            <th className="num">Open Interest</th>
+                            <th>Source Status</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {points.map((p, i) => (
+                            <tr key={i}>
+                              <td>{p.releaseMonth}</td>
+                              <td className="num">{fmt2(p.threshold)}</td>
+                              <td>{p.direction}</td>
+                              <td className="num gold">{fmt4(p.probability)}</td>
+                              <td className="num">{fmt2(p.liquidityScore)}</td>
+                              <td className="num">{p.volume}</td>
+                              <td className="num">{p.openInterest}</td>
+                              <td>{cme.sourceStatus}</td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  </section>
+                )}
+                {contracts.length > 0 && (
+                  <section className="cme-table-section">
+                    <div className="cme-table-head">Contracts · raw CME proxy ladder</div>
+                    <div className="cme-table-scroll">
+                      <table className="cme-table">
+                        <thead>
+                          <tr>
+                            <th>Contract ID</th>
+                            <th>Product</th>
+                            <th>Release</th>
+                            <th>Direction</th>
+                            <th className="num">Threshold</th>
+                            <th className="num">Mid</th>
+                            <th className="num">Volume</th>
+                            <th className="num">OI</th>
+                            <th>Settlement</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {contracts.map((c, i) => (
+                            <tr key={i}>
+                              <td>{c.contractId}</td>
+                              <td>{c.productCode}</td>
+                              <td>{c.releaseMonth}</td>
+                              <td>{c.direction}</td>
+                              <td className="num">{fmt2(c.threshold)}</td>
+                              <td className="num gold">{fmt4(c.mid)}</td>
+                              <td className="num">{c.volume}</td>
+                              <td className="num">{c.openInterest}</td>
+                              <td>{c.settlementSource || '—'}</td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  </section>
+                )}
+              </>
+            ) : <EmptyPanel label="No CME ladder data available." />
           )}
 
           {tab === 'methodology' && (
