@@ -185,6 +185,12 @@
             <span className="compact-page-tag accent">Prospective governed constituent</span>
           </div>
 
+          {/* v7 governance subtitle (tabs/cme_tab.py lines 34-39). Required
+              context so users understand the proxy framing before any KPI. */}
+          <p className="compact-page-subtitle">
+            Interim CME CPI proxy path for reviewer demonstration. Final licensed-feed approval and governance promotion remain pending; current governed CPI Reference remains Kalshi + ForecastEx, while CME is evaluated through shadow-blend diagnostics.
+          </p>
+
           <div className="cme-kpi-strip">
             <KpiCell label="Source Status"  value={cme.sourceStatus}             accent="warning" sub="interim proxy" />
             <KpiCell label="Contracts"      value={String(cme.contractCount)}    accent="default" />
@@ -405,6 +411,13 @@
                 <CmeStatusCard cme={cme} />
                 <CmeMethodologyKvCard methodology={methodology} cme={cme} />
                 <CmeFeedCard cme={cme} ladderStats={ladderStats} />
+              </div>
+
+              {/* v7 governance disclaimer (tabs/cme_tab.py lines 101-106).
+                  Closing footer that disclaims CME as proxy/shadow and not
+                  promoted to the governed blend. Must be visible. */}
+              <div className="note-box" style={{ marginTop: 16, padding: '10px 14px', fontSize: 12, lineHeight: 1.55, color: 'var(--text-muted)', borderTop: '1px solid var(--border)' }}>
+                CME is displayed as a proxy / shadow signal and prospective governed CPI curve constituent. This tab does not promote CME into the official governed blend and does not claim final licensed CME market-data readiness.
               </div>
             </div>
           )}

@@ -175,6 +175,13 @@ _REPRESENTATIVE_BACKTEST_SUMMARY = {
     "max_inventory_usd":               850_000.0,
     "liquidity_self_sufficiency_score": 0.72,
     "market_stability_score":          0.65,
+    # Backtest detail KPIs surfaced on v7's falconx_sim_tab (lines 370-376)
+    # but previously missing from Redesign payload. Representative values
+    # from the same 30-day sim window the other figures come from.
+    "fills":                           187,
+    "fill_rate_pct":                   62.3,
+    "avg_dislocation_bps":             8.4,
+    "net_edge_after_costs_bps":        2.6,
 }
 
 _DEFAULT_TRS_INPUTS_DICT = {
@@ -594,6 +601,11 @@ def _build_payload() -> Dict[str, Any]:
             "maxInventoryUsd":            _REPRESENTATIVE_BACKTEST_SUMMARY["max_inventory_usd"],
             "liquiditySelfSufficiencyScore": _REPRESENTATIVE_BACKTEST_SUMMARY["liquidity_self_sufficiency_score"],
             "marketStabilityScore":       _REPRESENTATIVE_BACKTEST_SUMMARY["market_stability_score"],
+            # Detail KPIs missing from Redesign before this change (v7 parity)
+            "fills":                      _REPRESENTATIVE_BACKTEST_SUMMARY["fills"],
+            "fillRatePct":                _REPRESENTATIVE_BACKTEST_SUMMARY["fill_rate_pct"],
+            "avgDislocationBps":          _REPRESENTATIVE_BACKTEST_SUMMARY["avg_dislocation_bps"],
+            "netEdgeAfterCostsBps":       _REPRESENTATIVE_BACKTEST_SUMMARY["net_edge_after_costs_bps"],
         },
     }
 

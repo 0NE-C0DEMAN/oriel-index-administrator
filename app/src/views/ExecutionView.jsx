@@ -136,6 +136,13 @@
             <span className="compact-page-tag info">Decision-support only · Not routed</span>
           </div>
 
+          {/* v7 PR #20 framing note (app.py lines 201-207). Required so
+              users understand the workbench is decision support, not order
+              routing or claim of guaranteed arbitrage. */}
+          <p className="compact-page-subtitle">
+            Venue signals can be used for dislocation analysis before they are promoted into the governed reference. Oriel normalizes comparable contracts, compares each venue to the Oriel Reference, and shows whether the spread remains attractive after costs and confidence adjustments. This is decision support for reference-based dislocation and cross-venue spread expressions, not guaranteed arbitrage or live order routing.
+          </p>
+
           <div className={`exec-regime-strip exec-regime-strip-${tone}`}>
             <span className={`exec-regime-strip-dot dot-${tone}`} aria-hidden="true" />
             <span className="exec-regime-strip-label">Forward Risk Regime</span>
@@ -425,6 +432,19 @@
                     <BtCell label="Spread Capture PnL" value={fmtUsd(ex.backtestSummary.spreadCapturePnlUsd)} accent={ex.backtestSummary.spreadCapturePnlUsd > 0 ? 'success' : 'danger'} />
                     <BtCell label="Directional PnL"    value={fmtUsd(ex.backtestSummary.directionalPnlUsd)}   accent={ex.backtestSummary.directionalPnlUsd > 0 ? 'success' : 'danger'} />
                     <BtCell label="Total PnL"          value={fmtUsd(ex.backtestSummary.totalPnlUsd)}         accent={ex.backtestSummary.totalPnlUsd > 0 ? 'success' : 'danger'} />
+                    {/* Detail KPIs ported from v7 falconx_sim_tab.py lines 370-376 */}
+                    {ex.backtestSummary.fills != null && (
+                      <BtCell label="Fills"            value={ex.backtestSummary.fills.toLocaleString()} />
+                    )}
+                    {ex.backtestSummary.fillRatePct != null && (
+                      <BtCell label="Fill Rate"        value={`${ex.backtestSummary.fillRatePct.toFixed(1)}%`} />
+                    )}
+                    {ex.backtestSummary.avgDislocationBps != null && (
+                      <BtCell label="Avg Dislocation"  value={`${ex.backtestSummary.avgDislocationBps.toFixed(1)} bp`} />
+                    )}
+                    {ex.backtestSummary.netEdgeAfterCostsBps != null && (
+                      <BtCell label="Net Edge (post-cost)" value={`${ex.backtestSummary.netEdgeAfterCostsBps.toFixed(1)} bp`} accent={ex.backtestSummary.netEdgeAfterCostsBps > 0 ? 'success' : 'danger'} />
+                    )}
                     <BtCell label="Max Inventory"      value={fmtUsd(ex.backtestSummary.maxInventoryUsd)} />
                     <BtCell label="Liquidity Score"    value={`${(ex.backtestSummary.liquiditySelfSufficiencyScore * 100).toFixed(0)}%`} />
                     <BtCell label="Stability Score"    value={`${(ex.backtestSummary.marketStabilityScore * 100).toFixed(0)}%`} />
