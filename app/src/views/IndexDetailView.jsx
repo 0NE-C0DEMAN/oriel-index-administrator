@@ -401,7 +401,60 @@
   }
 
   function ConstituentsPanel({ index }) {
-    return <IndexDataTabs index={index} />;
+    // For Polymarket, render PR #20's Eligibility Diagnostics card above the
+    // standard constituents table. Reads from index.detail.eligibilityTable
+    // (emitted by app/polymarket_data.py via analytics.polymarket_diagnostics).
+    const elig = index.key === 'poly' ? index.detail?.eligibilityTable : null;
+    return (
+      <React.Fragment>
+        {elig && <PolymarketEligibilityCard data={elig} accent={index.accent} />}
+        <IndexDataTabs index={index} />
+      </React.Fragment>
+    );
+  }
+
+  function PolymarketEligibilityCard({ data, accent }) {
+    if (!data) return null;
+    const rows = Array.isArray(data.rows) ? data.rows : [];
+    const reasons = Array.isArray(data.reasonSummary) ? data.reasonSummary : [];
+    const fmtNum = (v, d = 2) => (v == null || Number.isNaN(Number(v)) ? '—' : Number(v).toFixed(d));
+    return (
+      <section className={cn('info-card', `accent-${accent || 'accent'}`)} style={{ marginBottom: 16 }}>
+        <header className="info-card-head">
+          <span className="info-card-eyebrow">Polymarket Eligibility Diagnostics</span>
+          <span className="info-card-sub">PR #20 · display-only · governed curve unchanged</span>
+        </header>
+        <div className="info-kv-list" style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: 12, padding: '12px 16px' }}>
+          <Kv label="Eligible rows"   value={data.eligibleCount ?? 0} mono />
+          <Kv label="Excluded rows"   value={data.excludedCount ?? 0} mono />
+          <Kv label="Maturities"      value={data.maturityCount ?? 0} mono />
+          <Kv label="Avg liquidity"   value={fmtNum(data.avgLiquidity)} mono />
+          <Kv label="Avg confidence" value={fmtNum(data.avgConfidence, 1)} mono />
+        </div>
+        {reasons.length > 0 && (
+          <div style={{ padding: '8px 16px 12px', borderTop: '1px solid var(--border)', fontSize: 12 }}>
+            <strong style={{ fontSize: 11, textTransform: 'uppercase', letterSpacing: 0.4 }}>Top exclusion reasons:</strong>
+            <ul style={{ margin: '6px 0 0', paddingLeft: 18 }}>
+              {reasons.slice(0, 5).map((r) => (
+                <li key={r.reason_code}>{r.reason_code}: {r.count}</li>
+              ))}
+            </ul>
+          </div>
+        )}
+        <div style={{ padding: '8px 16px 12px', fontSize: 11, color: 'var(--text-muted)' }}>
+          Showing {rows.length} normalized rows. Eligibility thresholds: liquidity ≥ {data.thresholdLiquidity ?? '0.10'}, confidence ≥ {data.thresholdConfidence ?? '5.0'}, quote age ≤ 15 min.
+        </div>
+      </section>
+    );
+  }
+
+  function Kv({ label, value, mono }) {
+    return (
+      <div>
+        <div className="info-kv-label" style={{ fontSize: 10, textTransform: 'uppercase', letterSpacing: 0.4, color: 'var(--text-muted)' }}>{label}</div>
+        <div className={cn(mono && 'font-mono')} style={{ fontSize: 14, fontWeight: 600 }}>{value}</div>
+      </div>
+    );
   }
 
   function MonitorPanel({ index }) {

@@ -160,7 +160,9 @@ def _serialize_curve_package(pkg) -> Dict[str, Any]:
     ]
 
     # Venue readiness display model (PR #20). Display-only — does not alter
-    # the publishable flag or governed-curve construction.
+    # the publishable flag or governed-curve construction. No custom reason
+    # override - use the helper's default so React renders the same reason
+    # string v7's tab does (verified via cross-app data audit).
     try:
         from analytics.venue_readiness import build_venue_display_status
         _display_status = build_venue_display_status(
@@ -170,11 +172,6 @@ def _serialize_curve_package(pkg) -> Dict[str, Any]:
             constituent_count=n,
             comparable_row_count=n,
             has_normalized_rows=bool(points),
-            reason=(
-                "2 constituents available; normalized as part of the CPI signal stack."
-                if n == 2 and not pkg.publishable
-                else "Polymarket is normalized and monitored as a candidate CPI signal. Inclusion in the governed reference is contract-specific and eligibility-gated."
-            ),
         )
         _signal_status = _display_status.signal_status
         _reference_readiness = _display_status.reference_readiness
@@ -320,6 +317,31 @@ def _serialize_curve_package(pkg) -> Dict[str, Any]:
 
     front_distribution = _build_front_distribution(pkg)
 
+    # PR #20 Polymarket Eligibility Diagnostics — same data v7's tab renders.
+    # Display-only diagnostic; does not feed back into the governed curve.
+    try:
+        from analytics.polymarket_diagnostics import (
+            PolymarketEligibilityConfig,
+            build_polymarket_eligibility_table,
+            summarize_reason_codes,
+        )
+        from venues.polymarket import DEFAULT_CONFIG as _POLY_CFG
+        _elig_cfg = PolymarketEligibilityConfig(max_quote_age_seconds=_POLY_CFG.max_quote_age_seconds)
+        _elig_df = build_polymarket_eligibility_table(pkg.contracts, config=_elig_cfg)
+        _reason_df = summarize_reason_codes(_elig_df)
+        eligibility_table = {
+            "rows": _elig_df.to_dict(orient="records") if not _elig_df.empty else [],
+            "eligibleCount": int(_elig_df["eligible"].sum()) if not _elig_df.empty else 0,
+            "excludedCount": int(len(_elig_df) - _elig_df["eligible"].sum()) if not _elig_df.empty else 0,
+            "maturityCount": int(_elig_df["release_month"].dropna().nunique()) if not _elig_df.empty else 0,
+            "avgLiquidity": float(_elig_df["liquidity_score"].astype(float).mean()) if not _elig_df.empty else None,
+            "avgConfidence": float(_elig_df["confidence_score"].astype(float).mean()) if not _elig_df.empty else None,
+            "reasonSummary": _reason_df.to_dict(orient="records") if not _reason_df.empty else [],
+        }
+    except Exception as ex:
+        logger.warning("Polymarket eligibility diagnostic build failed (%s)", ex)
+        eligibility_table = None
+
     return {
         "valuationTime":         pkg.valuation_timestamp.strftime("%Y-%m-%d %H:%M UTC"),
         "valuationTimeIso":      pkg.valuation_timestamp.isoformat(),
@@ -344,6 +366,7 @@ def _serialize_curve_package(pkg) -> Dict[str, Any]:
         "stats":                 stats,
         "dislocation":           dislocation,
         "frontDistribution":     front_distribution,
+        "eligibilityTable":      eligibility_table,
     }
 
 

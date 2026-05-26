@@ -1542,6 +1542,10 @@
           d.contractObservations = variantData.contractObservations || [];
           d.methodology    = polyMethodology(variantData);
           d.runtimeMeta    = polyRuntimeMeta(variantData, mode);
+          // PR #20 Polymarket Eligibility Diagnostics — surfaced under the
+          // Constituents panel via PolymarketEligibilityCard. Data emitted
+          // by app/polymarket_data.py via analytics.polymarket_diagnostics.
+          d.eligibilityTable = variantData.eligibilityTable || null;
           // Surface source/fallback state on the detail object so React
           // components (IndexPrintCard versionLabel + sourceLabel) can flip
           // the chip from "-live" to "-fallback" when the live fetch fell

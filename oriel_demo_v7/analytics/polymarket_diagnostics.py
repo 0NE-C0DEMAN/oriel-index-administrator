@@ -22,9 +22,22 @@ POLYMARKET_REASON_CODES = {
 
 @dataclass(frozen=True)
 class PolymarketEligibilityConfig:
-    min_liquidity_score: float = 0.25
-    min_confidence_score: float = 40.0
-    max_quote_age_seconds: int | None = 900
+    """Diagnostic eligibility thresholds.
+
+    Notes on calibration:
+    - venues.polymarket.client._confidence_score combines spread (1 - clipped
+      spread_bp/10000), volume (clipped at 1000), and OI (clipped at 5000).
+    - Real Polymarket CPI markets typically quote 3-5% bid/ask spreads, which
+      drives the spread_component to 0 (capped). Resulting confidence on real
+      data sits in the 5-25 range, not the 40-80 range the original PR #20
+      threshold assumed (which was calibrated against the synthetic sample
+      fixture with 0.2% spreads).
+    - Threshold lowered to 5.0 so the diagnostic actually surfaces real
+      Polymarket rows. Env vars allow per-deployment tuning.
+    """
+    min_liquidity_score: float = float(__import__("os").getenv("POLY_DIAG_MIN_LIQUIDITY", "0.10"))
+    min_confidence_score: float = float(__import__("os").getenv("POLY_DIAG_MIN_CONFIDENCE", "5.0"))
+    max_quote_age_seconds: int | None = int(__import__("os").getenv("POLY_DIAG_MAX_QUOTE_AGE_SECONDS", "900"))
 
 
 def _get(row: Any, name: str, default: Any = None) -> Any:
