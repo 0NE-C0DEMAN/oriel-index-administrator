@@ -401,15 +401,73 @@
   }
 
   function ConstituentsPanel({ index }) {
-    // For Polymarket, render PR #20's Eligibility Diagnostics card above the
-    // standard constituents table. Reads from index.detail.eligibilityTable
-    // (emitted by app/polymarket_data.py via analytics.polymarket_diagnostics).
-    const elig = index.key === 'poly' ? index.detail?.eligibilityTable : null;
+    // For Polymarket, render PR #20's Eligibility Diagnostics + Shadow Impact
+    // above the standard constituents table. Both come from
+    // app/polymarket_data.py via analytics.polymarket_diagnostics.
+    const elig   = index.key === 'poly' ? index.detail?.eligibilityTable : null;
+    const shadow = index.key === 'poly' ? index.detail?.shadowImpact     : null;
     return (
       <React.Fragment>
-        {elig && <PolymarketEligibilityCard data={elig} accent={index.accent} />}
+        {elig   && <PolymarketEligibilityCard data={elig}   accent={index.accent} />}
+        {shadow && <PolymarketShadowImpactCard data={shadow} accent={index.accent} />}
         <IndexDataTabs index={index} />
       </React.Fragment>
+    );
+  }
+
+  function PolymarketShadowImpactCard({ data, accent }) {
+    if (!data) return null;
+    const rows = Array.isArray(data.rows) ? data.rows : [];
+    const summary = data.summary || {};
+    const fmt4 = (v) => (v == null || Number.isNaN(Number(v)) ? 'n/a' : Number(v).toFixed(4));
+    const fmt1 = (v) => (v == null || Number.isNaN(Number(v)) ? '0.0' : Number(v).toFixed(1));
+    const fmtPct = (v) => (v == null || Number.isNaN(Number(v)) ? '0.0%' : `${(Number(v) * 100).toFixed(1)}%`);
+    return (
+      <section className={cn('info-card', `accent-${accent || 'accent'}`)} style={{ marginBottom: 16 }}>
+        <header className="info-card-head">
+          <span className="info-card-eyebrow">Polymarket Shadow Impact</span>
+          <span className="info-card-sub">PR #20 · diagnostic only · default governed reference unchanged</span>
+        </header>
+        <div style={{ padding: '10px 16px 4px', fontSize: 12, lineHeight: 1.5, color: 'var(--text-secondary)' }}>
+          {data.note || 'Shadow view shows how eligible Polymarket contracts would shift the Oriel CPI Reference if blended in.'}
+        </div>
+        <div className="info-kv-list" style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 12, padding: '12px 16px' }}>
+          <Kv label="Shadow status" value={summary.statusLabel || 'n/a'} />
+          <Kv label="Eligible rows" value={summary.eligibleRowCount ?? 0} mono />
+          <Kv label="Excluded rows" value={summary.excludedRowCount ?? 0} mono />
+          <Kv label="Avg shift"     value={`${fmt1(summary.avgAbsCurveShiftBp)} bp`} mono />
+        </div>
+        {rows.length > 0 && (
+          <div style={{ padding: '4px 16px 14px', overflowX: 'auto' }}>
+            <table className="data-table" style={{ width: '100%', fontSize: 12, borderCollapse: 'collapse' }}>
+              <thead>
+                <tr style={{ borderBottom: '1px solid var(--border)', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: 0.4, fontSize: 10 }}>
+                  <th style={{ textAlign: 'left',  padding: '6px 8px' }}>Release</th>
+                  <th style={{ textAlign: 'right', padding: '6px 8px' }}>Current governed</th>
+                  <th style={{ textAlign: 'right', padding: '6px 8px' }}>Shadow (incl. PM)</th>
+                  <th style={{ textAlign: 'right', padding: '6px 8px' }}>Curve shift bp</th>
+                  <th style={{ textAlign: 'right', padding: '6px 8px' }}>PM weight</th>
+                  <th style={{ textAlign: 'right', padding: '6px 8px' }}>Eligible / Excl.</th>
+                  <th style={{ textAlign: 'left',  padding: '6px 8px' }}>Exclusion reasons</th>
+                </tr>
+              </thead>
+              <tbody>
+                {rows.map((r, i) => (
+                  <tr key={r.release + '-' + i} style={{ borderBottom: '1px solid var(--border-subtle, rgba(0,0,0,0.06))' }}>
+                    <td style={{ padding: '6px 8px' }}>{r.release}</td>
+                    <td style={{ padding: '6px 8px', textAlign: 'right', fontFamily: 'var(--font-mono)' }}>{fmt4(r.currentGovernedReference)}</td>
+                    <td style={{ padding: '6px 8px', textAlign: 'right', fontFamily: 'var(--font-mono)' }}>{fmt4(r.polymarketInclusiveShadowReference)}</td>
+                    <td style={{ padding: '6px 8px', textAlign: 'right', fontFamily: 'var(--font-mono)', color: Math.abs(r.curveShiftBp) > 10 ? 'var(--warning)' : 'inherit' }}>{fmt1(r.curveShiftBp)}</td>
+                    <td style={{ padding: '6px 8px', textAlign: 'right', fontFamily: 'var(--font-mono)' }}>{fmtPct(r.effectivePolymarketWeight)}</td>
+                    <td style={{ padding: '6px 8px', textAlign: 'right', fontFamily: 'var(--font-mono)' }}>{r.eligiblePmRows} / {r.excludedPmRows}</td>
+                    <td style={{ padding: '6px 8px', color: 'var(--text-muted)' }}>{r.exclusionReasonSummary || 'none'}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </section>
     );
   }
 

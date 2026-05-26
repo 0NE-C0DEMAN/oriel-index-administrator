@@ -323,6 +323,7 @@ def _serialize_curve_package(pkg) -> Dict[str, Any]:
         from analytics.polymarket_diagnostics import (
             PolymarketEligibilityConfig,
             build_polymarket_eligibility_table,
+            build_polymarket_shadow_blend_diagnostics,
             summarize_reason_codes,
         )
         from venues.polymarket import DEFAULT_CONFIG as _POLY_CFG
@@ -341,6 +342,61 @@ def _serialize_curve_package(pkg) -> Dict[str, Any]:
     except Exception as ex:
         logger.warning("Polymarket eligibility diagnostic build failed (%s)", ex)
         eligibility_table = None
+
+    # PR #20 Polymarket Shadow Impact — same shape v7's _render_shadow_impact()
+    # consumes (tabs/polymarket_tab.py lines 148-201). Reads the governed CPI
+    # reference (oriel_curve_current.csv) and computes per-maturity blend
+    # numbers. The default governed curve is NOT mutated; this is diagnostic
+    # only, exactly matching the standing rule.
+    shadow_impact = None
+    try:
+        import pandas as pd
+        from analytics.polymarket_diagnostics import (
+            PolymarketEligibilityConfig as _SI_Cfg,
+            build_polymarket_shadow_blend_diagnostics as _build_shadow,
+        )
+        from venues.polymarket import DEFAULT_CONFIG as _POLY_CFG_SI
+        _gov_path = _V7_ROOT / "data" / "oriel_curve_current.csv"
+        if _gov_path.exists():
+            _gov_df = pd.read_csv(_gov_path)
+            _gov_df["target_month"] = pd.to_datetime(_gov_df["target_month"], errors="coerce")
+            _gov_df = _gov_df.dropna(subset=["target_month", "expected_yoy_pct"])
+            _shadow = _build_shadow(
+                _gov_df,
+                pkg.contracts,
+                polymarket_weight=0.15,
+                config=_SI_Cfg(max_quote_age_seconds=_POLY_CFG_SI.max_quote_age_seconds),
+            )
+            _impact_df = _shadow["impact_by_maturity"]
+            _summary = _shadow["summary"] or {}
+            shadow_impact = {
+                "summary": {
+                    "status": str(_summary.get("status", "n/a")),
+                    "statusLabel": str(_summary.get("status", "n/a")).replace("_", " ").title(),
+                    "defaultGovernedReferenceChanged": bool(_summary.get("default_governed_reference_changed", False)),
+                    "eligibleRowCount": int(_summary.get("eligible_polymarket_row_count", 0)),
+                    "excludedRowCount": int(_summary.get("excluded_polymarket_row_count", 0)),
+                    "avgAbsCurveShiftBp": float(_summary.get("avg_abs_curve_shift_bp", 0.0)),
+                },
+                "rows": [
+                    {
+                        "release": str(r.get("release_month", "")),
+                        "currentGovernedReference": float(r.get("current_governed_reference", 0.0)) if pd.notna(r.get("current_governed_reference")) else None,
+                        "polymarketInclusiveShadowReference": float(r.get("polymarket_inclusive_shadow_reference", 0.0)) if pd.notna(r.get("polymarket_inclusive_shadow_reference")) else None,
+                        "curveShiftBp": float(r.get("curve_shift_bp", 0.0)) if pd.notna(r.get("curve_shift_bp")) else 0.0,
+                        "effectivePolymarketWeight": float(r.get("effective_polymarket_weight", 0.0)) if pd.notna(r.get("effective_polymarket_weight")) else 0.0,
+                        "eligiblePmRows": int(r.get("eligible_polymarket_row_count", 0)),
+                        "excludedPmRows": int(r.get("excluded_polymarket_row_count", 0)),
+                        "exclusionReasonSummary": str(r.get("exclusion_reason_summary", "none")),
+                    }
+                    for r in (_impact_df.to_dict(orient="records") if not _impact_df.empty else [])
+                ],
+                "polymarketWeight": 0.15,
+                "note": "Default governed reference unchanged. Shadow view shows how eligible Polymarket contracts would shift the Oriel CPI Reference if blended in at 15% weight.",
+            }
+    except Exception as ex:
+        logger.warning("Polymarket shadow impact build failed (%s)", ex)
+        shadow_impact = None
 
     return {
         "valuationTime":         pkg.valuation_timestamp.strftime("%Y-%m-%d %H:%M UTC"),
@@ -367,6 +423,7 @@ def _serialize_curve_package(pkg) -> Dict[str, Any]:
         "dislocation":           dislocation,
         "frontDistribution":     front_distribution,
         "eligibilityTable":      eligibility_table,
+        "shadowImpact":          shadow_impact,
     }
 
 

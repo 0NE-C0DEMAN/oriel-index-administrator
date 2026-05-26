@@ -1546,6 +1546,10 @@
           // Constituents panel via PolymarketEligibilityCard. Data emitted
           // by app/polymarket_data.py via analytics.polymarket_diagnostics.
           d.eligibilityTable = variantData.eligibilityTable || null;
+          // PR #20 Polymarket Shadow Impact — second card under Constituents
+          // panel, via PolymarketShadowImpactCard. Per-maturity shadow blend
+          // numbers; default governed reference is NOT mutated.
+          d.shadowImpact     = variantData.shadowImpact || null;
           // Surface source/fallback state on the detail object so React
           // components (IndexPrintCard versionLabel + sourceLabel) can flip
           // the chip from "-live" to "-fallback" when the live fetch fell
