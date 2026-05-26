@@ -48,7 +48,13 @@
       );
     }
 
-    const publishLabel = cme.publishable ? 'Shadow eligible' : 'Not eligible';
+    // PR #20: surface the venue-readiness display model. CME is a proxy
+    // shadow candidate, so even when publishable=False we show "Shadow
+    // Candidate" rather than the blunt "Not eligible" headline.
+    const publishLabel = cme.referenceReadiness
+      || (cme.publishable ? 'Shadow eligible' : 'Shadow Candidate');
+    const signalLabel  = cme.signalStatus || 'Proxy / Shadow Signal';
+    const tradeLabel   = cme.tradeUse || (cme.publishable ? 'Eligible for shadow impact' : 'Not enough comparable data');
     const fmt2 = (v) => (v == null || Number.isNaN(v) ? '—' : Number(v).toFixed(2));
     const fmt4 = (v) => (v == null || Number.isNaN(v) ? '—' : Number(v).toFixed(4));
     const fmtPct = (v) => (v == null || Number.isNaN(v) ? '—' : `${(Number(v) * 100).toFixed(0)}%`);
@@ -582,7 +588,8 @@
         </header>
         <div className="info-kv-list">
           <Kv label="Source status"        value={cme.sourceStatus} />
-          <Kv label="Publishable"          value={cme.publishable ? 'Shadow eligible' : 'Not eligible'} />
+          <Kv label="Signal Status"        value={cme.signalStatus || (cme.publishable ? 'Live Signal' : 'Proxy / Shadow Signal')} />
+          <Kv label="Reference Readiness"  value={cme.referenceReadiness || (cme.publishable ? 'Shadow eligible' : 'Shadow Candidate')} />
           <Kv label="Valuation snapshot"   value={formatTimestamp(cme.valuationTimestamp)} mono />
           <Kv label="Avg liquidity"        value={`${(Number(ladderStats.avgLiq) * 100).toFixed(0)}%`} />
           <Kv label="Total volume"         value={ladderStats.totalVol.toLocaleString()} mono />

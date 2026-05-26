@@ -57,13 +57,27 @@
       ? `${v >= 0 ? '+' : ''}${v} bps`
       : v.toFixed(4);
 
+    // PR #20 venue-readiness display model. When a venue is live but not yet
+    // governed-publishable (e.g. ForecastEx with 1 maturity, Polymarket as a
+    // candidate signal), show "● Normalized" instead of "○ Unpublished" so a
+    // live-but-thin feed does not look broken.
+    const isLiveSignal     = (print.signalStatus || '').startsWith('Live')
+                             || (print.signalStatus || '').startsWith('Proxy');
+    const headerEyebrow    = print.publishable ? 'Index Print' : 'Venue Signal';
+    const headerStatusText = print.publishable
+      ? 'Published'
+      : (isLiveSignal ? 'Normalized' : 'Unpublished');
+    const headerStatusTone = print.publishable
+      ? 'ok'
+      : (isLiveSignal ? 'normalized' : 'no');
+
     return (
       <section className={cn('ip-card', `accent-${accent}`)}>
         <header className="ip-card-head">
-          <span className="ip-card-eyebrow">Index Print</span>
-          <span className={cn('ip-card-status', print.publishable ? 'ok' : 'no')}>
+          <span className="ip-card-eyebrow">{headerEyebrow}</span>
+          <span className={cn('ip-card-status', headerStatusTone)}>
             <span className="ip-status-dot" />
-            {print.publishable ? 'Published' : 'Unpublished'}
+            {headerStatusText}
           </span>
         </header>
 
@@ -99,11 +113,24 @@
               <Row label="Valuation Time"    value={valuationTime} mono />
               <Row label="Base Value"        value={isBps ? '0 bps reference' : Number(print.baseValue).toFixed(2)} mono />
               <Row label="Anchor Exp. Value" value={fmtAnchor(print.anchorExpectedValue)} mono strong />
-              <Row
-                label="Publishable"
-                value={print.publishable ? 'Yes ✓' : (d.methodology.unpublishableLabel || 'No ✗')}
-                tone={print.publishable ? 'success' : 'warning'}
-              />
+              {print.signalStatus && (
+                <Row label="Signal Status" value={print.signalStatus}
+                     tone={isLiveSignal ? 'success' : 'warning'} />
+              )}
+              {print.referenceReadiness && (
+                <Row label="Reference Readiness" value={print.referenceReadiness}
+                     tone={print.publishable ? 'success' : 'warning'} />
+              )}
+              {print.tradeUse && (
+                <Row label="Trade Use" value={print.tradeUse} />
+              )}
+              {!print.referenceReadiness && (
+                <Row
+                  label="Publishable"
+                  value={print.publishable ? 'Yes ✓' : (d.methodology.unpublishableLabel || 'No ✗')}
+                  tone={print.publishable ? 'success' : 'warning'}
+                />
+              )}
               <Row label="Constituents"      value={print.constituentCount} mono />
             </>
           )}

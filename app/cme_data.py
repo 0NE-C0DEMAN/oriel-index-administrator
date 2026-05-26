@@ -136,6 +136,31 @@ def _build_payload() -> Dict[str, Any]:
         }
 
     maturity_count = len({p.release_month for p in pkg.points})
+
+    # Venue readiness display model (PR #20). CME runs in proxy mode so we
+    # surface "Proxy / Shadow Signal" / "Shadow Candidate" / "Eligible for
+    # shadow impact" instead of headlining as "Not eligible".
+    try:
+        from analytics.venue_readiness import build_venue_display_status
+        _display_status = build_venue_display_status(
+            venue="CME",
+            source_status=pkg.source_status,
+            publishable=pkg.publishable,
+            constituent_count=len(pkg.points),
+            comparable_row_count=len(pkg.points),
+            is_proxy=True,
+            has_normalized_rows=bool(pkg.points),
+        )
+        _signal_status = _display_status.signal_status
+        _reference_readiness = _display_status.reference_readiness
+        _trade_use = _display_status.trade_use
+        _display_reason = _display_status.reason
+    except Exception:
+        _signal_status = "Proxy / Shadow Signal" if pkg.points else "Unavailable"
+        _reference_readiness = "Shadow Candidate" if pkg.points else "Unavailable"
+        _trade_use = "Eligible for shadow impact" if pkg.points else "Not enough comparable data"
+        _display_reason = "Proxy venue is evaluated through shadow diagnostics; governed inclusion remains methodology-gated."
+
     return {
         "sourceStatus":         pkg.source_status,
         "publishable":          bool(pkg.publishable),
@@ -144,6 +169,10 @@ def _build_payload() -> Dict[str, Any]:
         "valuationTimestamp":   pkg.valuation_timestamp.isoformat() if pkg.valuation_timestamp else None,
         "methodology":          pkg.methodology,
         "venue":                pkg.venue,
+        "signalStatus":         _signal_status,
+        "referenceReadiness":   _reference_readiness,
+        "tradeUse":             _trade_use,
+        "displayReason":        _display_reason,
         "points":               [_serialize_point(p) for p in pkg.points],
         "contracts":            [_serialize_contract(c) for c in pkg.contracts],
         "contractCount":        len(pkg.contracts),

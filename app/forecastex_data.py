@@ -153,6 +153,34 @@ def _serialize_curve_package(pkg, *, sample_contracts=None, live_contracts=None)
         for p in points
     ]
 
+    # Venue readiness display model — mirrors PR #20's three-axis framing
+    # (Signal Status / Reference Readiness / Trade Use). Display-only; the
+    # underlying publishable flag is unchanged.
+    try:
+        from analytics.venue_readiness import build_venue_display_status
+        _display_status = build_venue_display_status(
+            venue="ForecastEx",
+            source_status=pkg.source_status,
+            publishable=pkg.publishable,
+            constituent_count=n,
+            comparable_row_count=n,
+            has_normalized_rows=bool(points),
+            reason=(
+                "1 constituent available; governed publication requires broader maturity / constituent coverage."
+                if n == 1 and not pkg.publishable
+                else None
+            ),
+        )
+        _signal_status = _display_status.signal_status
+        _reference_readiness = _display_status.reference_readiness
+        _trade_use = _display_status.trade_use
+        _display_reason = _display_status.reason
+    except Exception:
+        _signal_status = "Live Signal" if pkg.source_status != "FALLBACK" else "Fallback Signal"
+        _reference_readiness = "Reference Eligible" if pkg.publishable else "Coverage Review"
+        _trade_use = "Included in dislocation analysis" if n else "Not enough comparable data"
+        _display_reason = pkg.publishability_reason or ""
+
     # Index Print panel — exact mirror of v7's right-column key/value rows.
     index_print = {
         "indexLevel":          100.00,
@@ -163,6 +191,10 @@ def _serialize_curve_package(pkg, *, sample_contracts=None, live_contracts=None)
         "publishabilityReason": pkg.publishability_reason,
         "constituentCount":    n,
         "flaggedCount":        sum(1 for p in points if not p.publishable),
+        "signalStatus":        _signal_status,
+        "referenceReadiness":  _reference_readiness,
+        "tradeUse":            _trade_use,
+        "displayReason":       _display_reason,
         "front": {
             "value":    float(front.implied_yoy),
             "maturity": front.release_month,

@@ -159,32 +159,49 @@ def _serialize_curve_package(pkg) -> Dict[str, Any]:
         for p in points
     ]
 
-    # Venue Status pretty label (v7 uses .title()).
-    venue_status_label = (pkg.venue_status or "").title()
-    # Reference Status: "Eligible" if string == "eligible", else "Not eligible
-    # for Oriel publication" — mirrors v7 line 168.
-    ref_status_label = (
-        "Eligible"
-        if (pkg.reference_status or "").lower() == "eligible"
-        else "Not eligible for Oriel publication"
-    )
+    # Venue readiness display model (PR #20). Display-only — does not alter
+    # the publishable flag or governed-curve construction.
+    try:
+        from analytics.venue_readiness import build_venue_display_status
+        _display_status = build_venue_display_status(
+            venue="Polymarket",
+            source_status=pkg.source_status,
+            publishable=pkg.publishable,
+            constituent_count=n,
+            comparable_row_count=n,
+            has_normalized_rows=bool(points),
+            reason=(
+                "2 constituents available; normalized as part of the CPI signal stack."
+                if n == 2 and not pkg.publishable
+                else "Polymarket is normalized and monitored as a candidate CPI signal. Inclusion in the governed reference is contract-specific and eligibility-gated."
+            ),
+        )
+        _signal_status = _display_status.signal_status
+        _reference_readiness = _display_status.reference_readiness
+        _trade_use = _display_status.trade_use
+        _display_reason = _display_status.reason
+    except Exception:
+        _signal_status = "Live Signal" if pkg.source_status != "FALLBACK" else "Fallback Signal"
+        _reference_readiness = "Reference Eligible" if pkg.publishable else "Coverage Review"
+        _trade_use = "Included in dislocation analysis" if n else "Not enough comparable data"
+        _display_reason = pkg.publishability_reason or ""
 
-    # Index Print rows — matches v7 polymarket_tab.py:159-170 verbatim.
+    # Index Print rows — mirrors v7 PR #20 polymarket_tab.py row sequence:
+    # Signal Status / Reference Readiness / Trade Use replace the old binary
+    # "Venue Status / Reference Status" framing, and "Default Governed Curve"
+    # explicitly states the candidate venue does not mutate the governed blend.
     print_rows = [
-        {"label": "Index Name",        "value": "Oriel CPI Forward Index"},
-        {"label": "Methodology",       "value": pkg.methodology, "mono": True},
-        {"label": "Venue",             "value": pkg.venue},
-        {"label": "Venue Role",        "value": pkg.venue_role},
-        {"label": "Valuation Time",    "value": pkg.valuation_timestamp.strftime("%Y-%m-%d %H:%M UTC"), "mono": True},
-        {"label": "Base Value",        "value": "100.00", "mono": True},
-        {"label": "Anchor Exp. Value", "value": f"{front.implied_yoy:.4f}%", "mono": True, "strong": True},
-        {"label": "Venue Status",      "value": venue_status_label,
-         "tone":  "success" if pkg.venue_status == "live"
-                  else "warning" if pkg.venue_status == "partial"
-                  else "danger"},
-        {"label": "Reference Status",  "value": ref_status_label,
-         "tone":  "success" if pkg.reference_status == "eligible" else "warning"},
-        {"label": "Constituents",      "value": str(n), "mono": True},
+        {"label": "Index Name",             "value": "Oriel CPI Forward Index"},
+        {"label": "Methodology",            "value": pkg.methodology, "mono": True},
+        {"label": "Venue",                  "value": pkg.venue},
+        {"label": "Venue Role",             "value": "Candidate CPI signal"},
+        {"label": "Signal Status",          "value": _signal_status,
+         "tone":  "success" if _signal_status in ("Live Signal", "Proxy / Shadow Signal") else "warning"},
+        {"label": "Reference Readiness",    "value": _reference_readiness,
+         "tone":  "success" if _reference_readiness == "Reference Eligible" else "warning"},
+        {"label": "Trade Use",              "value": _trade_use},
+        {"label": "Default Governed Curve", "value": "Unchanged"},
+        {"label": "Constituents",           "value": str(n), "mono": True},
     ]
 
     index_print = {
@@ -196,6 +213,10 @@ def _serialize_curve_package(pkg) -> Dict[str, Any]:
         "publishabilityReason": pkg.publishability_reason,
         "constituentCount":     n,
         "flaggedCount":         sum(1 for p in points if not p.publishable),
+        "signalStatus":         _signal_status,
+        "referenceReadiness":   _reference_readiness,
+        "tradeUse":             _trade_use,
+        "displayReason":        _display_reason,
         "front": {"value": float(front.implied_yoy), "maturity": front.release_month, "label": "Front (1M implied)"},
         "back":  {"value": float(back.implied_yoy),  "maturity": back.release_month,
                   "label": f"Back ({_back_horizon_label(n)} implied)"},
@@ -204,7 +225,7 @@ def _serialize_curve_package(pkg) -> Dict[str, Any]:
             "pct":       round(term_structure_pct * 100, 2),
             "direction": "up" if term_structure_pct >= 0 else "down",
         },
-        "rows": print_rows,    # v7-exact row sequence rendered in IndexPrintCard
+        "rows": print_rows,    # PR #20 row sequence rendered in IndexPrintCard
     }
 
     # Stats card — v7 line 213-218: Mean / Avg σ / Avg confidence.

@@ -21,6 +21,10 @@
 
     const accent = index.accent || 'accent';
     const { indexLevel, baseValue, front, back, slope, publishable, flaggedCount, constituentCount, customLabels = {} } = print;
+    // PR #20 venue-readiness fields (display-only; publishable flag is unchanged).
+    const referenceReadiness = print.referenceReadiness || (publishable ? 'Reference Eligible' : 'Coverage Review');
+    const signalStatus       = print.signalStatus || (publishable ? 'Live Signal' : 'Live Signal');
+    const isReadinessOk      = publishable && referenceReadiness === 'Reference Eligible';
 
     // Default to today (the user's "valuation as of now"). The detail blob's
     // historical valuationTime is shown elsewhere if needed.
@@ -124,11 +128,11 @@
             lead
           />
           <KpiCell
-            label="Publishability"
+            label="Reference Readiness"
             value={
-              <span className={cn('idx-kpi-pub', publishable ? 'ok' : 'no')}>
-                <Icon name={publishable ? 'check' : 'info'} size={13} />
-                {publishable ? 'Eligible' : 'Not eligible'}
+              <span className={cn('idx-kpi-pub', isReadinessOk ? 'ok' : 'no')}>
+                <Icon name={isReadinessOk ? 'check' : 'info'} size={13} />
+                {referenceReadiness}
               </span>
             }
             sub={
@@ -138,7 +142,7 @@
                   : `${constituentCount} constituents`}
               </span>
             }
-            highlight={publishable ? 'pub-ok' : 'pub-no'}
+            highlight={isReadinessOk ? 'pub-ok' : 'pub-no'}
           />
         </div>
 
