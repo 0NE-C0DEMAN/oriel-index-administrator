@@ -40,21 +40,52 @@ class ForecastExClient:
         self.session.headers.update({"User-Agent": "oriel-forecastex-adapter/0.3"})
 
     def fetch_contracts(self) -> tuple[list[ForecastExContract], str]:
+        """Fetch + normalize. Tries the intraday pairs feed first (freshest)
+        and merges the daily prices feed on top to backfill maturities the
+        pairs feed doesn't yet have. The pairs feed is intraday but front-
+        month biased (only contracts that traded recently); the prices feed
+        is a daily snapshot that lists every active CPI maturity. Merging
+        gives us broader coverage without losing fresh quotes."""
         valuation_timestamp = datetime.now(UTC)
 
+        pairs_ok = False
+        contracts: list[ForecastExContract] = []
         try:
             pairs_df = self._fetch_pairs_frame()
             contracts = self._normalize_pairs_frame(pairs_df, valuation_timestamp)
-            status = "LIVE"
-            return contracts, status
+            pairs_ok = True
         except Exception:
-            if not self.config.allow_sample_fallback:
+            pairs_ok = False
+
+        # Backfill via daily prices feed. Keyed on (product_code) so pairs
+        # data wins for any contract present in both - pairs is fresher.
+        try:
+            prices_df = self._fetch_prices_frame()
+            prices_contracts = self._normalize_prices_frame(prices_df, valuation_timestamp)
+            seen = {c.product_code for c in contracts}
+            contracts.extend(c for c in prices_contracts if c.product_code not in seen)
+        except Exception:
+            # Prices fetch is optional - don't fail if pairs already succeeded.
+            if not pairs_ok and not self.config.allow_sample_fallback:
                 raise
-            return self._sample_contracts(valuation_timestamp), "FALLBACK"
+
+        if contracts:
+            return contracts, "LIVE"
+        if not self.config.allow_sample_fallback:
+            raise RuntimeError("ForecastEx fetch failed and sample fallback disabled")
+        return self._sample_contracts(valuation_timestamp), "FALLBACK"
 
     def _fetch_pairs_frame(self) -> pd.DataFrame:
         pairs_url = self.config.intraday_pairs_url or self._discover_latest_csv(kind="pairs")
         response = self.session.get(pairs_url, timeout=self.config.request_timeout_seconds)
+        response.raise_for_status()
+        return pd.read_csv(io.StringIO(response.text))
+
+    def _fetch_prices_frame(self) -> pd.DataFrame:
+        """Fetch the daily prices CSV - has broader maturity coverage than
+        pairs (every listed contract, not just ones that traded today)."""
+        prices_url = self.config.daily_prices_url or self._discover_latest_csv(kind="prices")
+        response = self.session.get(prices_url, timeout=self.config.request_timeout_seconds)
         response.raise_for_status()
         return pd.read_csv(io.StringIO(response.text))
 
@@ -148,6 +179,62 @@ class ForecastExClient:
             )
             contracts.append(contract)
 
+        return contracts
+
+    def _normalize_prices_frame(self, df: pd.DataFrame, valuation_timestamp: datetime) -> list[ForecastExContract]:
+        """Normalize the daily prices CSV. Schema differs from pairs:
+        - Has both YES and NO subtypes per contract; we keep only YES rows
+          and use end_price as the closing mid (no separate bid/ask).
+        - Provides real open_interest (pairs has none).
+        - Daily snapshot, so quotes can be 1+ days stale.
+        """
+        if df.empty:
+            return []
+        normalized_columns = {c: self._slug(c) for c in df.columns}
+        df = df.rename(columns=normalized_columns)
+
+        # Only YES rows — NO is the complement and double-counts.
+        if "subtype" in df.columns:
+            df = df[df["subtype"].astype(str).str.upper() == "YES"]
+
+        contracts: list[ForecastExContract] = []
+        for _, row in df.iterrows():
+            product_code = str(row.get("event_contract") or "")
+            pc_upper = product_code.upper().strip()
+            if not pc_upper.startswith("CPIY_"):
+                continue
+
+            release_month = self._extract_release_month(pc_upper) or "Unknown"
+            threshold = self._extract_threshold(product_code)
+            # end_price is the daily close mid. settlement_price is the official
+            # settle (only set when expired). Use end_price as the live mid.
+            mid = self._safe_float(row.get("end_price"))
+            if mid is None:
+                mid = self._safe_float(row.get("vwap"))
+            volume = self._safe_int(row.get("pair_quantity")) or 0
+            open_interest = self._safe_int(row.get("open_interest")) or 0
+            resolution_time = self._parse_datetime(row.get("expiration_date"))
+
+            contracts.append(ForecastExContract(
+                venue="ForecastEx",
+                contract_id=product_code,
+                product_code=product_code,
+                event_question="",
+                release_month=release_month,
+                resolution_time=resolution_time,
+                threshold=threshold,
+                side="YES",
+                bid=mid,  # no separate bid in daily prices feed
+                ask=mid,
+                last=mid,
+                mid=mid,
+                open_interest=open_interest,
+                volume=volume,
+                coupon_rate=None,
+                settlement_source="BLS CPI initial release",
+                valuation_timestamp=valuation_timestamp,
+                raw=row.to_dict(),
+            ))
         return contracts
 
     @staticmethod
