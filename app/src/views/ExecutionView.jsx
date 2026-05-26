@@ -321,15 +321,108 @@
                           <tr key={i}>
                             <td>{row.releaseMonth}</td>
                             <td>{row.venue}</td>
-                            <td className="num">{row.impliedYoy != null ? Number(row.impliedYoy).toFixed(4) : '—'}</td>
-                            <td className="num">{row.orielReferenceYoy != null ? Number(row.orielReferenceYoy).toFixed(4) : '—'}</td>
+                            <td className="num">{row.impliedYoy != null ? Number(row.impliedYoy).toFixed(4) : '-'}</td>
+                            <td className="num">{row.orielReferenceYoy != null ? Number(row.orielReferenceYoy).toFixed(4) : '-'}</td>
                             <td className={`num ${row.dislocationBps != null && row.dislocationBps < 0 ? 'negative' : 'positive'}`}>
-                              {row.dislocationBps != null ? `${Number(row.dislocationBps).toFixed(2)} bp` : '—'}
+                              {row.dislocationBps != null ? `${Number(row.dislocationBps).toFixed(2)} bp` : '-'}
                             </td>
-                            <td className="num">{row.grossEdgeBps != null ? `${Number(row.grossEdgeBps).toFixed(2)} bp` : '—'}</td>
+                            <td className="num">{row.grossEdgeBps != null ? `${Number(row.grossEdgeBps).toFixed(2)} bp` : '-'}</td>
                             <td className={`num ${row.netExecutableEdgeBps != null && row.netExecutableEdgeBps > 0 ? 'gold' : 'muted'}`}>
-                              {row.netExecutableEdgeBps != null ? `${Number(row.netExecutableEdgeBps).toFixed(2)} bp` : '—'}
+                              {row.netExecutableEdgeBps != null ? `${Number(row.netExecutableEdgeBps).toFixed(2)} bp` : '-'}
                             </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </section>
+              )}
+
+              {/* Normalization Audit (v7 falconx_sim_tab.py lines 662-680).
+                  Shows the per-row math behind each contract's normalized
+                  implied YoY: venue, release, implied, ref, dislocation,
+                  liquidity, confidence. v7 also surfaces raw_threshold,
+                  threshold_units, normalization_method - those come from
+                  upstream ingestion contract objects which Redesign's
+                  blended_curve.py does not currently thread through. Showing
+                  the subset that IS available so users can audit the row-by-
+                  row math without an empty-column placeholder table. */}
+              {dislocationsTable.length > 0 && (
+                <section className="exec-ra-section" style={{ marginTop: 12 }}>
+                  <header className="info-card-head">
+                    <span className="info-card-eyebrow">Normalization audit</span>
+                    <Badge variant="default">{dislocationsTable.length} rows</Badge>
+                  </header>
+                  <div className="exec-ra-scroll">
+                    <table className="exec-ra-table">
+                      <thead>
+                        <tr>
+                          <th>Release Month</th>
+                          <th>Venue</th>
+                          <th className="num">Normalized Implied YoY</th>
+                          <th className="num">Oriel Reference</th>
+                          <th className="num">Dislocation</th>
+                          <th className="num">Liquidity</th>
+                          <th className="num">Confidence</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {dislocationsTable.map((row, i) => (
+                          <tr key={`norm-${i}`}>
+                            <td>{row.releaseMonth}</td>
+                            <td>{row.venue}</td>
+                            <td className="num">{row.impliedYoy != null ? Number(row.impliedYoy).toFixed(4) : '-'}</td>
+                            <td className="num">{row.orielReferenceYoy != null ? Number(row.orielReferenceYoy).toFixed(4) : '-'}</td>
+                            <td className={`num ${row.dislocationBps != null && row.dislocationBps < 0 ? 'negative' : 'positive'}`}>
+                              {row.dislocationBps != null ? `${Number(row.dislocationBps).toFixed(2)} bp` : '-'}
+                            </td>
+                            <td className="num">{row.liquidityScore != null ? `${(row.liquidityScore * 100).toFixed(0)}%` : '-'}</td>
+                            <td className="num">{row.confidenceScore != null ? `${(row.confidenceScore * 100).toFixed(0)}%` : '-'}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </section>
+              )}
+
+              {/* Execution Snapshot (v7 falconx_sim_tab.py lines 683-701).
+                  Kalshi-native rows shown against the cross-venue Oriel
+                  reference. The same dislocationsTable filtered to venue=Kalshi
+                  so users can see Kalshi-by-Kalshi without scrolling the full
+                  audit table. */}
+              {dislocationsTable.filter(r => r.venue === 'Kalshi').length > 0 && (
+                <section className="exec-ra-section" style={{ marginTop: 12 }}>
+                  <header className="info-card-head">
+                    <span className="info-card-eyebrow">Execution snapshot · Kalshi-native</span>
+                    <Badge variant="default">{dislocationsTable.filter(r => r.venue === 'Kalshi').length} rows</Badge>
+                  </header>
+                  <p className="exec-ra-note" style={{ fontSize: 11, color: 'var(--text-muted)', padding: '4px 12px 0', margin: 0 }}>
+                    Kalshi threshold rows against the cross-venue Oriel reference. Polymarket and ForecastEx are incorporated upstream in normalization and reference weighting.
+                  </p>
+                  <div className="exec-ra-scroll">
+                    <table className="exec-ra-table">
+                      <thead>
+                        <tr>
+                          <th>Release Month</th>
+                          <th className="num">Implied YoY</th>
+                          <th className="num">Oriel Reference</th>
+                          <th className="num">Dislocation</th>
+                          <th className="num">Liquidity</th>
+                          <th className="num">Confidence</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {dislocationsTable.filter(r => r.venue === 'Kalshi').map((row, i) => (
+                          <tr key={`snap-${i}`}>
+                            <td>{row.releaseMonth}</td>
+                            <td className="num">{row.impliedYoy != null ? Number(row.impliedYoy).toFixed(4) : '-'}</td>
+                            <td className="num">{row.orielReferenceYoy != null ? Number(row.orielReferenceYoy).toFixed(4) : '-'}</td>
+                            <td className={`num gold`}>
+                              {row.dislocationBps != null ? `${Number(row.dislocationBps).toFixed(2)} bp` : '-'}
+                            </td>
+                            <td className="num">{row.liquidityScore != null ? `${(row.liquidityScore * 100).toFixed(0)}%` : '-'}</td>
+                            <td className="num">{row.confidenceScore != null ? `${(row.confidenceScore * 100).toFixed(0)}%` : '-'}</td>
                           </tr>
                         ))}
                       </tbody>
