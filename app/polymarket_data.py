@@ -186,13 +186,22 @@ def _serialize_curve_package(pkg) -> Dict[str, Any]:
         _trade_use = "Included in dislocation analysis" if n else "Not enough comparable data"
         _display_reason = pkg.publishability_reason or ""
 
+    # Honest methodology label: the hardcoded venue methodology string still
+    # ends in "-live" even when the fetch silently fell back to sample. Swap
+    # "-live" -> "-fallback" so the chip cannot misrepresent a sample as live.
+    _methodology_str = (
+        pkg.methodology.replace("-live", "-fallback")
+        if pkg.sample_mode and "-live" in (pkg.methodology or "")
+        else pkg.methodology
+    )
+
     # Index Print rows — mirrors v7 PR #20 polymarket_tab.py row sequence:
     # Signal Status / Reference Readiness / Trade Use replace the old binary
     # "Venue Status / Reference Status" framing, and "Default Governed Curve"
     # explicitly states the candidate venue does not mutate the governed blend.
     print_rows = [
         {"label": "Index Name",             "value": "Oriel CPI Forward Index"},
-        {"label": "Methodology",            "value": pkg.methodology, "mono": True},
+        {"label": "Methodology",            "value": _methodology_str, "mono": True},
         {"label": "Venue",                  "value": pkg.venue},
         {"label": "Venue Role",             "value": "Candidate CPI signal"},
         {"label": "Signal Status",          "value": _signal_status,
@@ -318,7 +327,10 @@ def _serialize_curve_package(pkg) -> Dict[str, Any]:
         "publishabilityReason":  pkg.publishability_reason,
         "sourceStatus":          pkg.source_status,
         "sampleMode":            bool(pkg.sample_mode),
-        "methodology":           pkg.methodology,
+        # Emit the honest, sample-aware methodology string so every React
+        # consumer (IndexPrintCard versionLabel + Index Print row) shows
+        # "-fallback" when the live feed silently fell back to sample.
+        "methodology":           _methodology_str,
         "venue":                 pkg.venue,
         "venueRole":             pkg.venue_role,
         "venueStatus":           pkg.venue_status,

@@ -26,29 +26,43 @@
 
     // Methodology version label:
     //  - Strip any leading 'v' so we don't render "vv0.3..." when the venue
-    //    payload already includes the prefix (e.g. v7's ForecastEx returns
-    //    "v0.3.0-forecastex-live" verbatim).
-    //  - Append "-phase2-live" only for CPI Kalshi (matches v7's chip), and
-    //    only when liveOn. Never append for venue versions that already
-    //    carry their own "-<venue>-live" tag (FX, Polymarket, etc.).
+    //    payload already includes the prefix.
+    //  - The "-<venue>-live" suffix on the hardcoded methodology string is
+    //    misleading when the live feed silently fell back to sample. Read
+    //    sourceStatus / sampleMode from the actual payload and swap "-live"
+    //    -> "-fallback" so the chip cannot misrepresent a sample as live.
+    //  - Append "-phase2-live" only for CPI Kalshi when liveOn and the
+    //    feed actually returned live.
     const rawVersion = String(d.methodology.version || '0.1.0').replace(/^v/, '');
     const hasVenueLiveTag = /-(?:phase2|forecastex|polymarket|perp|cms|parity)-live/i.test(rawVersion);
     const isCpiKalshi = (d.methodology.name || '').toLowerCase().includes('cpi forward')
                        && index.key === 'cpi';
+    const isFallback   = d.sampleMode === true
+                         || (d.sourceStatus && String(d.sourceStatus).toUpperCase() === 'FALLBACK');
+    // Rewrite any "-<venue>-live" tag to "-<venue>-fallback" when the actual
+    // payload reports FALLBACK; otherwise keep the original tag intact.
+    const stamped = isFallback
+      ? rawVersion.replace(/-([a-z0-9]+)-live\b/gi, '-$1-fallback')
+      : rawVersion;
     const versionLabel = liveOn
       ? (hasVenueLiveTag
-          ? `v${rawVersion}`
+          ? `v${stamped}`
           : isCpiKalshi
-            ? `v${rawVersion}-phase2-live`
+            ? `v${rawVersion}${isFallback ? '-phase2-fallback' : '-phase2-live'}`
             : `v${rawVersion}`)
       : (hasVenueLiveTag && isCpiKalshi
-          ? `v${rawVersion.replace(/-?phase2-live/g, '')}`
+          ? `v${rawVersion.replace(/-?phase2-(?:live|fallback)/g, '')}`
           : `v${rawVersion}`);
 
-    // Source label flips too: live → runtimeMeta.source; off → "Sample data".
-    const sourceLabel = liveOn
-      ? (d.runtimeMeta?.source || 'Live feed')
-      : 'Sample data';
+    // Source label reads ACTUAL outcome, not just the user's toggle intent.
+    // Off  -> "Sample data" (user opted out of live)
+    // On + actually live      -> runtimeMeta.source or "Live feed"
+    // On + fell back to sample -> "Sample (live feed unavailable)"
+    const sourceLabel = !liveOn
+      ? 'Sample data'
+      : isFallback
+        ? 'Sample (live feed unavailable)'
+        : (d.runtimeMeta?.source || 'Live feed');
 
     const fmtAnchor = (v) => isBps
       ? `${v >= 0 ? '+' : ''}${v.toFixed(0)} bps`
@@ -109,7 +123,10 @@
               <Row label="Index Name"        value={d.methodology.name} />
               <Row label="Methodology"       value={versionLabel} mono />
               {d.methodology.venue && <Row label="Venue" value={d.methodology.venue} />}
-              {d.runtimeMeta && <Row label="Data Source" value={sourceLabel} tone={liveOn ? 'success' : 'warning'} />}
+              {d.runtimeMeta && (
+                <Row label="Data Source" value={sourceLabel}
+                     tone={(liveOn && !isFallback) ? 'success' : 'warning'} />
+              )}
               <Row label="Valuation Time"    value={valuationTime} mono />
               <Row label="Base Value"        value={isBps ? '0 bps reference' : Number(print.baseValue).toFixed(2)} mono />
               <Row label="Anchor Exp. Value" value={fmtAnchor(print.anchorExpectedValue)} mono strong />

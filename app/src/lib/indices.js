@@ -1437,6 +1437,12 @@
           d.constituents = variantData.constituents || [];
           d.methodology  = fxMethodology(variantData.sourceStatus);
           d.runtimeMeta  = fxRuntimeMeta(variantData, mode);
+          // Surface source/fallback state on the detail object so React
+          // components (IndexPrintCard versionLabel + sourceLabel) can flip
+          // the chip from "-live" to "-fallback" when the live fetch fell
+          // back to sample - prevents a sample feed from looking live.
+          d.sourceStatus = variantData.sourceStatus;
+          d.sampleMode   = variantData.sampleMode;
           d.feedConfig   = {
             source:          'ForecastEx data feed',
             cacheTtlSeconds: 600,
@@ -1536,6 +1542,12 @@
           d.contractObservations = variantData.contractObservations || [];
           d.methodology    = polyMethodology(variantData);
           d.runtimeMeta    = polyRuntimeMeta(variantData, mode);
+          // Surface source/fallback state on the detail object so React
+          // components (IndexPrintCard versionLabel + sourceLabel) can flip
+          // the chip from "-live" to "-fallback" when the live fetch fell
+          // back to sample - prevents a sample feed from looking live.
+          d.sourceStatus   = variantData.sourceStatus;
+          d.sampleMode     = variantData.sampleMode;
           // Notes copy from Python payload (v7 verbatim) — render in NotesPanel.
           if (polymarketPayload.notes) {
             d.notes = polymarketPayload.notes;

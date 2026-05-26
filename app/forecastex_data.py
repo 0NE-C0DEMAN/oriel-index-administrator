@@ -259,6 +259,15 @@ def _serialize_curve_package(pkg, *, sample_contracts=None, live_contracts=None)
 
     front_distribution = _build_front_distribution(pkg, direction_fn=None)
 
+    # Honest methodology label: swap "-live" -> "-fallback" when the live
+    # feed fell back to sample, so the chip cannot misrepresent a sample
+    # as live.
+    _methodology_str = (
+        pkg.methodology.replace("-live", "-fallback")
+        if pkg.sample_mode and "-live" in (pkg.methodology or "")
+        else pkg.methodology
+    )
+
     return {
         "valuationTime":        pkg.valuation_timestamp.strftime("%Y-%m-%d %H:%M UTC"),
         "valuationTimeIso":     pkg.valuation_timestamp.isoformat(),
@@ -266,7 +275,7 @@ def _serialize_curve_package(pkg, *, sample_contracts=None, live_contracts=None)
         "publishabilityReason": pkg.publishability_reason,
         "sourceStatus":         pkg.source_status,
         "sampleMode":           bool(pkg.sample_mode),
-        "methodology":          pkg.methodology,
+        "methodology":          _methodology_str,
         "venue":                pkg.venue,
         "termStructurePct":     term_structure_pct,
         "forwardCurve":         forward_curve,
