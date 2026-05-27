@@ -15,24 +15,14 @@
   const { Icon, BrandMark } = window.App;
   const { TABS } = window.App.NAV;
 
-  /* Pull the authenticated user injected by streamlit_app.py
-     (window.__ORIEL_SESSION__ = {"user":"Chris"}). Falls back to "Admin"
-     when running outside the Streamlit wrapper. */
-  function _currentUser() {
-    try {
-      const s = (typeof window !== 'undefined' && window.__ORIEL_SESSION__) || null;
-      return (s && s.user) ? String(s.user) : 'Admin';
-    } catch (e) {
-      return 'Admin';
-    }
-  }
-  function _initials(name) {
-    if (!name) return '?';
-    const parts = String(name).trim().split(/\s+/).filter(Boolean);
-    if (!parts.length) return '?';
-    if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
-    return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
-  }
+  /* Productized account display per Chris's ask: top-right reads
+     "Macro Desk" + "Demo Environment" so the demo presents as an
+     institutional tool, not a personal prototype. Authentication keeps
+     using whatever username streamlit_app.py is configured with - this
+     is purely the rendered label. */
+  const DISPLAY_NAME = 'Macro Desk';
+  const DISPLAY_SUBTITLE = 'Demo Environment';
+  const DISPLAY_INITIALS = 'MD';
 
   /* Logout — drop to the Streamlit parent page with ?logout=1, which our
      server-side handler in streamlit_app.py picks up to clear the session
@@ -75,7 +65,6 @@
     const [now, setNow] = useState(() => formatClockUtc());
     const [menuOpen, setMenuOpen] = useState(false);
     const menuRef = useRef(null);
-    const user = _currentUser();
 
     useEffect(() => {
       const id = setInterval(() => setNow(formatClockUtc()), 30 * 1000);
@@ -152,20 +141,23 @@
                 onClick={() => setMenuOpen((v) => !v)}
                 aria-haspopup="menu"
                 aria-expanded={menuOpen}
-                aria-label={`Account · ${user}`}
-                title={`Signed in as ${user}`}
+                aria-label={`Account · ${DISPLAY_NAME}`}
+                title={`Signed in as ${DISPLAY_NAME} · ${DISPLAY_SUBTITLE}`}
               >
-                <span className="topnav-profile-avatar">{_initials(user)}</span>
-                <span className="topnav-profile-name">{user}</span>
+                <span className="topnav-profile-avatar">{DISPLAY_INITIALS}</span>
+                <span className="topnav-profile-name-stack">
+                  <span className="topnav-profile-name">{DISPLAY_NAME}</span>
+                  <span className="topnav-profile-subtitle">{DISPLAY_SUBTITLE}</span>
+                </span>
                 <Icon name={menuOpen ? 'chevron-up' : 'chevron-down'} size={12} />
               </button>
               {menuOpen && (
                 <div className="topnav-profile-menu" role="menu">
                   <div className="topnav-profile-menu-head">
-                    <span className="topnav-profile-menu-avatar">{_initials(user)}</span>
+                    <span className="topnav-profile-menu-avatar">{DISPLAY_INITIALS}</span>
                     <span className="topnav-profile-menu-text">
-                      <span className="topnav-profile-menu-name">{user}</span>
-                      <span className="topnav-profile-menu-role">Admin · Index Administrator</span>
+                      <span className="topnav-profile-menu-name">{DISPLAY_NAME}</span>
+                      <span className="topnav-profile-menu-role">{DISPLAY_SUBTITLE}</span>
                     </span>
                   </div>
                   <div className="topnav-profile-menu-divider" />
