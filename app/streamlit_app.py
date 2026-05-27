@@ -178,8 +178,12 @@ _SESSION_TTL_DAYS = 7
 
 
 def _admin_credentials() -> tuple[str, str]:
-    """Pull the admin credentials. Env vars win over the in-file default."""
-    u = os.environ.get("ORIEL_ADMIN_USERNAME", "Chris")
+    """Pull the admin credentials. Env vars win over the in-file default.
+
+    Default username is "Macro Desk" so the credential matches the
+    productized branding shown in the top-right TopNav account display.
+    Operators can override via ORIEL_ADMIN_USERNAME on the HF Space."""
+    u = os.environ.get("ORIEL_ADMIN_USERNAME", "Macro Desk")
     p = os.environ.get("ORIEL_ADMIN_PASSWORD", "Oriel2026@123!")
     return u, p
 
@@ -906,7 +910,7 @@ def _render_login():
     # CSS above to look like the JSX/React design system.
     with st.form("oriel_login", clear_on_submit=False, border=False):
         username = st.text_input(
-            "Username", placeholder="Chris", key="_login_u",
+            "Username", placeholder="Macro Desk", key="_login_u",
         )
         password = st.text_input(
             "Password", type="password", placeholder="••••••••••", key="_login_p",
