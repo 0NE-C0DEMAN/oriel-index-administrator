@@ -1323,6 +1323,19 @@
 .compact-page-tag.success { background: var(--success-light); color: var(--success); border-color: rgba(22,163,74,0.18); }
 .compact-page-tag.accent  { background: var(--accent-soft);   color: var(--accent);  border-color: var(--accent-light); }
 
+/* Subtitle paragraph beneath .compact-page-head. Matches the header's
+   horizontal inset (14px) so the text aligns with the title above
+   instead of spilling edge-to-edge. Muted + smaller so it reads as
+   secondary context, not body copy. */
+.compact-page-subtitle {
+  margin: 4px 14px 10px;
+  padding: 0;
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--text-muted);
+  max-width: 1100px;
+}
+
 /* Execution Workbench regime strip — single horizontal row pinned in
    the sticky head. The long-form regime explainer moved into the
    Methodology sub-tab's "How the regime is derived" card. */
