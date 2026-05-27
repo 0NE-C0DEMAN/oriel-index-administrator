@@ -232,7 +232,11 @@ def _serialize_curve_package(pkg, *, sample_contracts=None, live_contracts=None)
         "unit":            "%",
         "orielForward":    float(front.implied_yoy),
         "cpiSwapProxy":    cpi_swap_proxy,
-        "swapLabel":       "CPI Swap (proxy)",
+        # Illustrative placeholder, not a real swap quote (front * 1.018).
+        # Tagged as "placeholder" by MarketVsSignalCard via dis.swapTag.
+        "swapLabel":       "CPI Swap (illustrative)",
+        "swapTag":         "placeholder",
+        "swapNote":        "Illustrative placeholder, not a real swap quote. Wire to a licensed CPI swap source in a later validation PR.",
         "signalLabel":     "Energy Signal",
         "energySignal":    "↑ Elevated",
         "energyTone":      "warning",

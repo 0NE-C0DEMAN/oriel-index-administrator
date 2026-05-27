@@ -264,7 +264,10 @@ def _serialize_curve_package(pkg) -> Dict[str, Any]:
         "unit":            "%",
         "orielForward":    float(front.implied_yoy),
         "cpiSwapProxy":    cpi_swap_proxy,
-        "swapLabel":       "CPI Swap (proxy)",
+        # Illustrative placeholder, not a real swap quote (front * 1.018).
+        "swapLabel":       "CPI Swap (illustrative)",
+        "swapTag":         "placeholder",
+        "swapNote":        "Illustrative placeholder, not a real swap quote. Wire to a licensed CPI swap source in a later validation PR.",
         "frontLabel":      f"Oriel Forward ({front.release_month.split()[0]})",
         "dislocationBps":  dislocation_bp,
         # v7 polymarket replaces "Energy Signal" with an "Avg spread" row that

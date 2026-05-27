@@ -347,7 +347,11 @@
       unit: '%',
       orielForward: frontExpected,
       cpiSwapProxy,
-      swapLabel: opts.swapLabel || 'CPI Swap (proxy)',
+      // Illustrative placeholder (front * 1.018), not a real swap quote.
+      // Wire to a licensed CPI swap source in a later validation PR.
+      swapLabel: opts.swapLabel || 'CPI Swap (illustrative)',
+      swapTag: opts.swapTag || 'placeholder',
+      swapNote: opts.swapNote || 'Illustrative placeholder, not a real swap quote. Wire to a licensed CPI swap source in a later validation PR.',
       signalLabel: opts.signalLabel || 'Energy Signal',
       energySignal: opts.energySignal || '↑ Elevated',
       energyTone: opts.energyTone || 'warning',

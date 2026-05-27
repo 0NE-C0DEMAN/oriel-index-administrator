@@ -34,10 +34,11 @@
             signalTone="accent"
           />
           <Row
-            label={dis.swapLabel || 'CPI Swap (proxy)'}
+            label={dis.swapLabel || 'CPI Swap (illustrative)'}
             value={`${dis.cpiSwapProxy.toFixed(4)}${dis.unit}`}
-            signal="proxy"
+            signal={dis.swapTag || 'placeholder'}
             signalTone="muted"
+            title={dis.swapNote || 'Illustrative placeholder, not a real swap quote. Wire to a licensed CPI swap source in a later validation PR.'}
           />
           {/* Middle row default = "Energy Signal · — · ↑ Elevated" (CPI Kalshi).
               Venue payloads can override the entire row via `dis.middleRow`
@@ -70,9 +71,9 @@
     );
   }
 
-  function Row({ label, value, signal, signalTone, valueTone, strong }) {
+  function Row({ label, value, signal, signalTone, valueTone, strong, title }) {
     return (
-      <li className="mvs-card-row">
+      <li className="mvs-card-row" title={title || undefined}>
         <span className="mvs-card-row-label">{label}</span>
         <span className={cn('mvs-card-row-value', 'font-mono', valueTone && `tone-${valueTone}`, strong && 'strong')}>
           {value}
