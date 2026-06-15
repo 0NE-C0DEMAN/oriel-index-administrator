@@ -192,26 +192,47 @@ def build_basis_history(observations: Iterable[CPIIndexObservation | Mapping[str
             basis_bps=calculate_realized_basis_bps(medical_yoy, headline_yoy),
         ))
     if len(history) < 2:
-        raise ValueError("At least 14 contiguous monthly observations are required")
+        raise ValueError(
+            "At least two year-over-year basis points "
+            "(roughly 14 monthly observations) are required"
+        )
     return history
 
 
 def calculate_basis_momentum(history: Sequence[BasisHistoryPoint], months: int) -> float:
-    """Return the change in realized basis over the requested monthly lookback."""
+    """Return the change in realized basis over the requested monthly lookback.
+
+    The lookback is resolved by calendar month rather than list position, so a
+    series with a missing month still measures a true N-month change; when the
+    exact prior month is unavailable the momentum is reported as 0.0 instead of
+    silently spanning the wrong horizon.
+    """
     if months <= 0:
         raise ValueError("months must be positive")
     if len(history) <= months:
         return 0.0
-    return float(history[-1].basis_bps - history[-1 - months].basis_bps)
+    latest = history[-1]
+    by_month = {point.month: point for point in history}
+    prior = by_month.get(_add_months(latest.month, -months))
+    if prior is None:
+        return 0.0
+    return float(latest.basis_bps - prior.basis_bps)
 
 
 def calculate_seasonality_estimate(history: Sequence[BasisHistoryPoint], target_month: date | str) -> float:
-    """Estimate the typical one-month basis change into the target calendar month."""
+    """Estimate the typical one-month basis change into the target calendar month.
+
+    Each contribution is the change from the immediately preceding calendar
+    month into a target-month observation, resolved by month (not list
+    position) so gaps in the series cannot corrupt the estimate.
+    """
     target = _parse_month(target_month)
+    by_month = {point.month: point for point in history}
     changes = [
-        history[index].basis_bps - history[index - 1].basis_bps
-        for index in range(1, len(history))
-        if history[index].month.month == target.month
+        point.basis_bps - by_month[prior_month].basis_bps
+        for point in history
+        if point.month.month == target.month
+        and (prior_month := _add_months(point.month, -1)) in by_month
     ]
     return float(sum(changes) / len(changes)) if changes else 0.0
 
@@ -518,9 +539,26 @@ def _month_distance(earlier: date, later: date) -> int:
 
 
 def _build_fv_curve(front_basis_bps: float, long_run_mean_basis_bps: float) -> dict[str, float]:
+    """Term structure for the medical-vs-headline basis.
+
+    The front (1M) tenor anchors exactly to the engine's final fair value;
+    each longer tenor decays exponentially toward the long-run mean and
+    reaches it at the 12M tenor. The exponential weight is normalised over
+    the [1M, 12M] span so both endpoints are exact (front == final_fv,
+    12M == long_run_mean) and the interior tenors stay smooth and monotonic
+    — matching the "front anchored to final FV; converges to the long-run
+    mean by the 12M tenor" description shown in the UI.
+    """
+    tenors = (("1m", 1.0), ("3m", 3.0), ("6m", 6.0), ("12m", 12.0))
+    front_months, back_months = 1.0, 12.0
+    tau = 6.0  # decay time constant (months)
+    span = 1.0 - math.exp(-(back_months - front_months) / tau)
     curve: dict[str, float] = {}
-    for label, months in (("1m", 1), ("3m", 3), ("6m", 6), ("12m", 12)):
-        convergence = 1.0 - math.exp(-months / 12.0)
-        curve[label] = front_basis_bps + (long_run_mean_basis_bps - front_basis_bps) * convergence
+    for label, months in tenors:
+        if span <= 0.0:
+            fraction = 0.0
+        else:
+            fraction = (1.0 - math.exp(-(months - front_months) / tau)) / span
+        curve[label] = front_basis_bps + (long_run_mean_basis_bps - front_basis_bps) * fraction
     return curve
 
