@@ -219,6 +219,26 @@
   min-height: 320px;
 }
 
+/* Pin the chart canvas so the card's height is driven ONLY by the grid cell
+   (which stretches to the right column), never by the chart's own measured
+   height. Without this, the chart's ResizeObserver sizes the SVG to the
+   container, that measured height feeds back into the column's intrinsic
+   height, and the card creeps taller than the right column — pushing the
+   curve below the fold. Absolute-filling the canvas breaks that loop so the
+   two columns stay equal and the chart always fits its card. */
+.mb-col-left > .herochart-card { min-height: 0; }
+.mb-col-left .herochart-body {
+  position: relative;
+  min-height: 0;
+}
+.mb-col-left .herochart-body > .forward-chart {
+  /* Absolute-fill exactly matches the body, so the chart can't spill past the
+     card border and contributes no intrinsic height (no overflow:hidden, so
+     hover tooltips can still float above the top data points). */
+  position: absolute;
+  inset: 0;
+}
+
 /* Contract spec table — enforce field column width so wrapped values
    align cleanly. */
 .mb-spec-table th:first-child,
