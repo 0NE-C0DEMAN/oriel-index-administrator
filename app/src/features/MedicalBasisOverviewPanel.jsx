@@ -70,7 +70,7 @@
         {/* Section 1b — Oriel Continuous FV (Issue #21). Official BLS print is
             the settlement anchor; ForecastEx + USDi proxy are gated, capped
             signal enhancements only. */}
-        <ContinuousFvCard fv={mb.continuousFv} />
+        <ContinuousFvCard fv={mb.continuousFv} accent={accent} />
 
         {/* Section 2 — Body row.
             Charts (LEFT, 1.35fr) + Tools (RIGHT, 1fr). Both columns end
@@ -107,49 +107,161 @@
   }
 
   /* ───────────────────────── Oriel Continuous FV card ───────
-     Renders mb.continuousFv from analytics.bls_medical_basis_fv. Inline
-     styles keep it self-contained (no new stylesheet rules). */
-  function ContinuousFvCard({ fv }) {
+     Renders mb.continuousFv from analytics.bls_medical_basis_fv. Built on
+     the panel's own primitives — .data-card chrome, the .mb-spotlight-stat
+     decomposition grid (reused via SpotStat), and an inline-SVG term-
+     structure chart in the same idiom as BasisCurveChart (teal line, area
+     gradient, gridlines, dashed long-run-mean reference, markers, tooltip).
+     No ad-hoc inline layout, and a padded .mb-fv-body (not .data-card-body,
+     which is a 360px-max table scroller) so nothing clips. */
+  function ContinuousFvCard({ fv, accent = 'pink' }) {
     if (!fv) return null;
     const isLive = fv.sourceStatus === 'live';
-    const GOLD = '#d97706', MUT = '#5a6478', BORDER = 'var(--border,#e3e7ef)';
-    const cell = (label, value, color, sub) => (
-      <div style={{ flex: '1 1 140px', minWidth: 124 }}>
-        <div style={{ fontSize: 10.5, letterSpacing: '0.06em', textTransform: 'uppercase', color: 'var(--text-subtle,#8a93a6)' }}>{label}</div>
-        <div style={{ fontSize: 21, fontWeight: 650, color: color || 'var(--text,#0e1733)', marginTop: 2, lineHeight: 1.1 }}>{value}</div>
-        {sub ? <div style={{ fontSize: 10.5, color: 'var(--text-muted,#5a6478)', marginTop: 2 }}>{sub}</div> : null}
-      </div>
-    );
-    const maxAbs = Math.max.apply(null, fv.curve.map((p) => Math.abs(p.bps)).concat([1]));
     return (
-      <div className="data-card" style={{ marginBottom: 14 }}>
+      <div className={cn('data-card', 'mb-fv-card', `accent-${accent}`)}>
         <div className="data-card-head">
           <div>
             <div className="data-card-title">Oriel Continuous FV · BLS Settlement Basis</div>
             <div className="data-card-sub">Official BLS print is the settlement anchor; ForecastEx and the Uniswap USDi / USDi-Med proxy enter only as gated, capped signal enhancements.</div>
           </div>
-          <span className="feed-pill" style={{ background: isLive ? 'rgba(22,163,74,.12)' : 'rgba(217,119,6,.12)', color: isLive ? '#16a34a' : '#d97706', borderColor: isLive ? 'rgba(22,163,74,.30)' : 'rgba(217,119,6,.30)' }}>{isLive ? 'LIVE · BLS' : 'SAMPLE · ILLUSTRATIVE'}</span>
+          <span className={cn('feed-pill', isLive ? 'feed-pill-success' : 'feed-pill-warning')}>
+            {isLive ? 'LIVE · BLS' : 'SAMPLE · ILLUSTRATIVE'}
+          </span>
         </div>
-        <div className="data-card-body">
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 18, marginBottom: 16 }}>
-            {cell('Realized basis', fmtBp(fv.realizedBasisBps), '#2d5bff', `Last print ${fv.lastPrintMonth}`)}
-            {cell('Model FV · calibrated', fmtBp(fv.modelFvBps), null, 'Momentum + seasonality + reversion')}
-            {cell('ForecastEx adj', fmtBp(fv.forecastexAdjBps), GOLD, (fv.forecastexQualified ? 'qualified' : 'gated') + ' · cap ±50')}
-            {cell('USDi proxy adj', fmtBp(fv.proxyAdjBps), GOLD, (fv.proxyQualified ? 'qualified' : 'gated') + ' · cap ±25')}
-            {cell('Final FV', fmtBp(fv.finalFvBps), fv.finalFvBps >= 0 ? '#16a34a' : '#dc2626', 'Calibrated + enhancements')}
-            {cell('Confidence', String(fv.confidence), null, fv.publishability)}
+        <div className="mb-fv-body">
+          <div className="mb-fv-stats">
+            <SpotStat label="Realized basis" value={fmtBp(fv.realizedBasisBps)} sub={`Last print ${fv.lastPrintMonth}`} />
+            <SpotStat label="Model FV · calibrated" value={fmtBp(fv.modelFvBps)} sub="Momentum + seasonality + reversion" />
+            <SpotStat label="Final FV" value={fmtBp(fv.finalFvBps)} sub="Calibrated + enhancements" lead />
+            <SpotStat label="ForecastEx adj" value={fmtBp(fv.forecastexAdjBps)} sub={`${fv.forecastexQualified ? 'qualified' : 'gated'} · cap ±50`} />
+            <SpotStat label="USDi proxy adj" value={fmtBp(fv.proxyAdjBps)} sub={`${fv.proxyQualified ? 'qualified' : 'gated'} · cap ±25`} />
+            <SpotStat label="Confidence" value={String(fv.confidence)} sub={fv.publishability} />
           </div>
-          <div style={{ display: 'flex', alignItems: 'flex-end', gap: 16, height: 132, borderTop: `1px solid ${BORDER}`, paddingTop: 14 }}>
-            {fv.curve.map((p) => (
-              <div key={p.tenor} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'flex-end', height: '100%' }}>
-                <div style={{ fontSize: 11, fontWeight: 600, color: 'var(--text,#0e1733)', marginBottom: 4 }}>{fmtBp(p.bps)}</div>
-                <div style={{ width: '58%', maxWidth: 54, height: `${Math.max(4, Math.abs(p.bps) / maxAbs * 80)}%`, background: p.bps >= 0 ? GOLD : MUT, borderRadius: '3px 3px 0 0' }} />
-                <div style={{ fontSize: 11, color: 'var(--text-muted,#5a6478)', marginTop: 6 }}>{p.tenor}</div>
-              </div>
-            ))}
+          <div className="mb-fv-chart">
+            <div className="mb-fv-chart-head">
+              <span className="mb-fv-chart-title">Forward FV curve · front anchor to mean convergence</span>
+              <span className="mb-fv-chart-legend">
+                <span className="mb-fv-legend-item"><i className="mb-fv-swatch" /> FV basis</span>
+                <span className="mb-fv-legend-item"><i className="mb-fv-swatch mean" /> Long-run mean</span>
+              </span>
+            </div>
+            <div className="mb-fv-chart-canvas">
+              <FvCurveChart fv={fv} accent={accent} />
+            </div>
           </div>
-          <div style={{ fontSize: 10.5, color: 'var(--text-subtle,#8a93a6)', marginTop: 8 }}>Front tenor anchored to final FV; converges toward the long-run mean ({fmtBp(fv.longRunMeanBps)}) by the 12M tenor. Settlement anchor weight 1.00 · signal inputs illustrative (live feed listing-dependent).</div>
+          <div className="mb-fv-foot">
+            Front tenor anchors to the final fair value; the curve converges toward the long-run mean ({fmtBp(fv.longRunMeanBps)}) by the 12M tenor. Settlement anchor weight 1.00 · signal inputs illustrative (live feed listing-dependent).
+          </div>
         </div>
+      </div>
+    );
+  }
+
+  /* Term-structure curve for the Continuous FV card. Same inline-SVG idiom
+     as BasisCurveChart: responsive via useChartSize, teal lead line + area
+     gradient, 4 grid ticks, a dashed long-run-mean reference, a zero line
+     when zero is in range, circle markers, and a hover tooltip. */
+  function FvCurveChart({ fv, accent }) {
+    const c = seriesColors(accent);
+    const [ref, w, hMeasured] = useChartSize(560, 210);
+    const [hoverIdx, setHoverIdx] = useState(null);
+    const curve = fv.curve || [];
+    const mean = Number(fv.longRunMeanBps);
+
+    const layout = useMemo(() => {
+      if (!curve.length) return null;
+      const h = Math.max(hMeasured || 0, 190);
+      const padL = 58, padR = 16, padT = 16, padB = 30;
+      const innerW = Math.max(w - padL - padR, 40);
+      const innerH = h - padT - padB;
+      const vals = curve.map((p) => p.bps).concat([mean, 0]);
+      const yMin = Math.min(...vals);
+      const yMax = Math.max(...vals);
+      const span = yMax - yMin || 1;
+      const yLo = yMin - span * 0.16;
+      const yHi = yMax + span * 0.16;
+      const ySpan = yHi - yLo || 1;
+      const yAt = (v) => padT + innerH - ((v - yLo) / ySpan) * innerH;
+      const xAt = (i) => padL + (curve.length === 1 ? innerW / 2 : (innerW * i) / (curve.length - 1));
+      const pts = curve.map((p, i) => ({ ...p, cx: xAt(i), cy: yAt(p.bps) }));
+      const linePath = pts.map((p, i) => `${i === 0 ? 'M' : 'L'} ${p.cx.toFixed(2)} ${p.cy.toFixed(2)}`).join(' ');
+      const floorY = (padT + innerH).toFixed(2);
+      const areaPath = `${linePath} L ${pts[pts.length - 1].cx.toFixed(2)} ${floorY} L ${pts[0].cx.toFixed(2)} ${floorY} Z`;
+      const ticks = 4;
+      const yTicks = Array.from({ length: ticks + 1 }, (_, k) => { const v = yLo + (ySpan * k) / ticks; return { v, y: yAt(v) }; });
+      return {
+        w, h, padL, padR, padT, padB, innerW, innerH, pts, linePath, areaPath, yTicks,
+        meanY: yAt(mean), zeroIn: 0 >= yLo && 0 <= yHi, zeroY: yAt(0),
+        hitW: Math.max(innerW / curve.length, 32),
+      };
+    }, [curve, mean, w, hMeasured]);
+
+    if (!layout) return <div className="chart-empty">No curve data.</div>;
+    const hover = hoverIdx !== null ? layout.pts[hoverIdx] : null;
+
+    return (
+      <div ref={ref} className="forward-chart" style={{ width: '100%', height: '100%' }}>
+        <svg viewBox={`0 0 ${layout.w} ${layout.h}`} width={layout.w} height={layout.h} role="img" aria-label="Forward FV curve">
+          <defs>
+            <linearGradient id="mbfv-area" x1="0" x2="0" y1="0" y2="1">
+              <stop offset="0%" stopColor={c.lead} stopOpacity="0.16" />
+              <stop offset="100%" stopColor={c.lead} stopOpacity="0.0" />
+            </linearGradient>
+          </defs>
+
+          {layout.yTicks.map((t, i) => (
+            <line key={`g-${i}`} x1={layout.padL} x2={layout.w - layout.padR} y1={t.y} y2={t.y}
+                  stroke="var(--border-subtle)" strokeWidth="1" vectorEffect="non-scaling-stroke" />
+          ))}
+          {layout.zeroIn && (
+            <line x1={layout.padL} x2={layout.w - layout.padR} y1={layout.zeroY} y2={layout.zeroY}
+                  stroke="var(--border-strong)" strokeWidth="1" vectorEffect="non-scaling-stroke" />
+          )}
+
+          <path d={layout.areaPath} fill="url(#mbfv-area)" />
+
+          {/* Long-run mean reference (dashed) */}
+          <line x1={layout.padL} x2={layout.w - layout.padR} y1={layout.meanY} y2={layout.meanY}
+                stroke="var(--text-subtle)" strokeWidth="1.5" strokeDasharray="5 4"
+                strokeLinecap="round" vectorEffect="non-scaling-stroke" opacity="0.85" />
+
+          {/* FV basis line + markers */}
+          <path d={layout.linePath} fill="none" stroke={c.lead} strokeWidth="2.6"
+                strokeLinecap="round" strokeLinejoin="round" vectorEffect="non-scaling-stroke" />
+          {layout.pts.map((p, i) => (
+            <circle key={`d-${i}`} cx={p.cx} cy={p.cy} r={hoverIdx === i ? 5.5 : 4.5}
+                    fill={c.lead} stroke="white" strokeWidth="1.6" vectorEffect="non-scaling-stroke" />
+          ))}
+
+          {/* Y labels + rotated axis title */}
+          {layout.yTicks.map((t, i) => (
+            <text key={`yl-${i}`} x={layout.padL - 8} y={t.y + 3} textAnchor="end"
+                  fontSize="10.5" fontFamily="JetBrains Mono, monospace" fill="var(--text-subtle)">
+              {Math.round(t.v)}
+            </text>
+          ))}
+          <text x={13} y={layout.padT + layout.innerH / 2} textAnchor="middle" fontSize="11"
+                fill="var(--text-muted)" fontFamily="Inter, system-ui"
+                transform={`rotate(-90, 13, ${layout.padT + layout.innerH / 2})`}>FV basis (bps)</text>
+
+          {/* Hit targets + X labels */}
+          {layout.pts.map((p, i) => (
+            <rect key={`hit-${i}`} x={p.cx - layout.hitW / 2} y={layout.padT} width={layout.hitW} height={layout.innerH}
+                  fill="transparent" onMouseEnter={() => setHoverIdx(i)} onMouseLeave={() => setHoverIdx(null)} />
+          ))}
+          {layout.pts.map((p, i) => (
+            <text key={`xl-${i}`} x={p.cx} y={layout.h - 10} textAnchor="middle"
+                  fontSize="10.5" fill="var(--text-muted)" fontFamily="Inter, system-ui">{p.tenor}</text>
+          ))}
+        </svg>
+
+        {hover && (
+          <div className="forward-chart-tooltip"
+               style={{ left: `${(hover.cx / layout.w) * 100}%`, top: `${hover.cy - 14}px` }}>
+            <div className="forward-chart-tooltip-mat">{hover.tenor} tenor</div>
+            <div className="forward-chart-tooltip-val">{fmtBp(hover.bps)}</div>
+          </div>
+        )}
       </div>
     );
   }

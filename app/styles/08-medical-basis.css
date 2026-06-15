@@ -628,3 +628,79 @@
   font-size: 9.5px !important;
   font-family: 'JetBrains Mono', monospace !important;
 }
+
+/* ============================================================================
+   Oriel Continuous FV card (Issue #21) — BLS settlement-basis fair value.
+   Reuses .data-card chrome + .mb-spotlight-stat cells. The body is a padded
+   flex column (NOT .data-card-body, which is a 360px-max table scroller — that
+   was clipping the decomposition grid + chart). A real inline-SVG term-
+   structure chart (FvCurveChart) replaces the old ad-hoc bars.
+   ============================================================================ */
+.mb-fv-body {
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.mb-fv-stats {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px 14px;
+}
+@media (max-width: 760px) { .mb-fv-stats { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 440px) { .mb-fv-stats { grid-template-columns: 1fr; } }
+
+.mb-fv-chart {
+  border-top: 1px solid var(--border-subtle);
+  padding-top: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.mb-fv-chart-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px 18px;
+  flex-wrap: wrap;
+}
+.mb-fv-chart-title {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+.mb-fv-chart-legend {
+  display: inline-flex;
+  align-items: center;
+  gap: 16px;
+}
+.mb-fv-legend-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 11px;
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+.mb-fv-swatch {
+  width: 16px;
+  height: 0;
+  border-top: 2.5px solid var(--pink);
+  border-radius: 2px;
+  flex-shrink: 0;
+}
+.mb-fv-swatch.mean {
+  border-top: 2px dashed var(--text-subtle);
+}
+.mb-fv-chart-canvas {
+  width: 100%;
+  height: 210px;
+}
+.mb-fv-foot {
+  font-size: 10.5px;
+  line-height: 1.5;
+  color: var(--text-subtle);
+}
