@@ -129,30 +129,50 @@
           </span>
         </div>
         <div className="mb-fv-body">
-          <div className="mb-fv-stats">
-            <SpotStat label="Realized basis" value={fmtBp(fv.realizedBasisBps)} sub={`Last print ${fv.lastPrintMonth}`} />
-            <SpotStat label="Model FV · calibrated" value={fmtBp(fv.modelFvBps)} sub="Momentum + seasonality + reversion" />
-            <SpotStat label="Final FV" value={fmtBp(fv.finalFvBps)} sub="Calibrated + enhancements" lead />
-            <SpotStat label="ForecastEx adj" value={fmtBp(fv.forecastexAdjBps)} sub={`${fv.forecastexQualified ? 'qualified' : 'gated'} · cap ±50`} />
-            <SpotStat label="USDi proxy adj" value={fmtBp(fv.proxyAdjBps)} sub={`${fv.proxyQualified ? 'qualified' : 'gated'} · cap ±25`} />
-            <SpotStat label="Confidence" value={String(fv.confidence)} sub={fv.publishability} />
-          </div>
-          <div className="mb-fv-chart">
-            <div className="mb-fv-chart-head">
-              <span className="mb-fv-chart-title">Forward FV curve · front anchor to mean convergence</span>
-              <span className="mb-fv-chart-legend">
-                <span className="mb-fv-legend-item"><i className="mb-fv-swatch" /> FV basis</span>
-                <span className="mb-fv-legend-item"><i className="mb-fv-swatch mean" /> Long-run mean</span>
-              </span>
-            </div>
-            <div className="mb-fv-chart-canvas">
-              <FvCurveChart fv={fv} accent={accent} />
-            </div>
+          {/* Chart (2fr) + decomposition rail (1fr) — the app's standard
+              chart-plus-summary-rail hero layout, so the curve reads as a
+              proper landscape chart instead of a full-bleed stretched line. */}
+          <div className="mb-fv-hero">
+            <section className="mb-fv-chart-card">
+              <div className="mb-fv-chart-head">
+                <span className="mb-fv-chart-title">Forward FV curve · front anchor to mean convergence</span>
+                <span className="mb-fv-chart-legend">
+                  <span className="mb-fv-legend-item"><i className="mb-fv-swatch" /> FV basis</span>
+                  <span className="mb-fv-legend-item"><i className="mb-fv-swatch mean" /> Long-run mean</span>
+                </span>
+              </div>
+              <div className="mb-fv-chart-canvas">
+                <FvCurveChart fv={fv} accent={accent} />
+              </div>
+            </section>
+            <aside className="mb-fv-rail">
+              <div className="mb-fv-rail-head">Fair-value decomposition</div>
+              <FvRow label="Realized basis" sub={`Last print ${fv.lastPrintMonth}`} value={fmtBp(fv.realizedBasisBps)} />
+              <FvRow label="Model FV · calibrated" sub="Momentum + seasonality + reversion" value={fmtBp(fv.modelFvBps)} />
+              <FvRow label="ForecastEx adj" sub={`${fv.forecastexQualified ? 'qualified' : 'gated'} · cap ±50`} value={fmtBp(fv.forecastexAdjBps)} />
+              <FvRow label="USDi proxy adj" sub={`${fv.proxyQualified ? 'qualified' : 'gated'} · cap ±25`} value={fmtBp(fv.proxyAdjBps)} />
+              <FvRow label="Final FV" sub="Calibrated + enhancements" value={fmtBp(fv.finalFvBps)} lead />
+              <FvRow label="Confidence" sub={fv.publishability} value={String(fv.confidence)} />
+            </aside>
           </div>
           <div className="mb-fv-foot">
             Front tenor anchors to the final fair value; the curve converges toward the long-run mean ({fmtBp(fv.longRunMeanBps)}) by the 12M tenor. Settlement anchor weight 1.00 · signal inputs illustrative (live feed listing-dependent).
           </div>
         </div>
+      </div>
+    );
+  }
+
+  /* One row of the decomposition rail — label + sub on the left, mono value
+     on the right. Same key-value rhythm as the Index Print rail. */
+  function FvRow({ label, sub, value, lead }) {
+    return (
+      <div className={cn('mb-fv-rail-row', lead && 'lead')}>
+        <div className="mb-fv-rail-text">
+          <div className="mb-fv-rail-label">{label}</div>
+          <div className="mb-fv-rail-sub">{sub}</div>
+        </div>
+        <div className="mb-fv-rail-value font-mono">{value}</div>
       </div>
     );
   }
@@ -163,7 +183,7 @@
      when zero is in range, circle markers, and a hover tooltip. */
   function FvCurveChart({ fv, accent }) {
     const c = seriesColors(accent);
-    const [ref, w, hMeasured] = useChartSize(560, 210);
+    const [ref, w, hMeasured] = useChartSize(560, 300);
     const [hoverIdx, setHoverIdx] = useState(null);
     const curve = fv.curve || [];
     const mean = Number(fv.longRunMeanBps);
