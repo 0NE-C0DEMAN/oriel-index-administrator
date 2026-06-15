@@ -82,6 +82,84 @@ def _to_year(ts) -> str:
         return str(ts)[:4]
 
 
+_FV_CACHE: Dict[str, Any] | None = None
+
+
+def _build_continuous_fv() -> Dict[str, Any] | None:
+    """Oriel Continuous FV for the BLS Medical-vs-headline basis (Issue #21).
+
+    Official BLS print is the settlement anchor; ForecastEx + USDi proxy are
+    gated, capped signal enhancements only. Live BLS with a labeled sample
+    fallback. Computed once per process.
+    """
+    global _FV_CACHE
+    if _FV_CACHE is not None:
+        return _FV_CACHE
+    try:
+        from datetime import datetime, timedelta, timezone, date as _date
+        from analytics.bls_medical_basis_fv import (
+            BLSMedicalBasisFVEngine,
+            CPIIndexObservation,
+            OptionalBasisSignal,
+            fetch_official_bls_observations,
+        )
+    except Exception as ex:
+        logger.warning("Continuous FV: import failed (%s)", ex)
+        return None
+
+    def _sample_obs():
+        rows = []
+        start = _date(2021, 5, 1)
+        headline, medical = 269.0, 522.0
+        for off in range(61):
+            idx = start.year * 12 + start.month - 1 + off
+            m = _date(idx // 12, idx % 12 + 1, 1)
+            headline *= 1.00247 + (0.00015 if m.month in (1, 7) else 0.0)
+            medical *= 1.00280 + (0.00030 if m.month == 6 else 0.0)
+            rows.append(CPIIndexObservation(month=m, headline_cpi_index=round(headline, 3), medical_cpi_index=round(medical, 3)))
+        return rows
+
+    try:
+        try:
+            obs = fetch_official_bls_observations(timeout_seconds=8.0)
+            status = "live" if len(obs) >= 14 else "sample"
+            if status != "live":
+                obs = _sample_obs()
+        except Exception:
+            obs, status = _sample_obs(), "sample"
+
+        engine = BLSMedicalBasisFVEngine()
+        now = datetime.now(timezone.utc)
+        base = engine.evaluate(obs, valuation_time=now)
+        fe = OptionalBasisSignal(base.model_fv_basis_bps + 28.0, now - timedelta(hours=3), 0.84, 0.79, 0.20, "ForecastEx Medical Basis")
+        px = OptionalBasisSignal(base.model_fv_basis_bps - 15.0, now - timedelta(hours=6), 0.71, 0.74, 0.12, "Uniswap USDi / USDi-Med")
+        r = engine.evaluate(obs, valuation_time=now, forecastex_signal=fe, proxy_signal=px)
+        _FV_CACHE = {
+            "sourceStatus": status,
+            "lastPrintMonth": r.last_official_print_month,
+            "realizedBasisBps": round(float(r.realized_basis_bps), 1),
+            "modelFvBps": round(float(r.model_fv_basis_bps), 1),
+            "forecastexAdjBps": round(float(r.forecastex_adjustment_bps), 1),
+            "forecastexQualified": bool(r.forecastex_diagnostics.qualified),
+            "proxyAdjBps": round(float(r.proxy_alignment_adjustment_bps), 1),
+            "proxyQualified": bool(r.proxy_diagnostics.qualified),
+            "finalFvBps": round(float(r.final_fv_basis_bps), 1),
+            "longRunMeanBps": round(float(r.long_run_mean_basis_bps), 1),
+            "confidence": int(r.confidence_score),
+            "publishability": r.publishability,
+            "curve": [
+                {"tenor": "1M", "bps": round(float(r.fv_curve_bps["1m"]), 1)},
+                {"tenor": "3M", "bps": round(float(r.fv_curve_bps["3m"]), 1)},
+                {"tenor": "6M", "bps": round(float(r.fv_curve_bps["6m"]), 1)},
+                {"tenor": "12M", "bps": round(float(r.fv_curve_bps["12m"]), 1)},
+            ],
+        }
+        return _FV_CACHE
+    except Exception as ex:
+        logger.warning("Continuous FV: build failed (%s)", ex)
+        return None
+
+
 def _build_payload() -> Dict[str, Any] | None:
     bundle = _load_curve()
     if bundle is None:
@@ -198,6 +276,7 @@ def _build_payload() -> Dict[str, Any] | None:
         "settlementExample": settlement,
         "referenceLegs":     legs,
         "defaultThresholds": [int(t) for t in bundle["default_thresholds"]],
+        "continuousFv":      _build_continuous_fv(),
         "meta": {
             "version":        "0.1.0-medical-basis",
             "phaseLabel":     spec.phase_label,

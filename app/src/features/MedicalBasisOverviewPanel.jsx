@@ -67,6 +67,11 @@
         {/* Section 1 — Reference Legs (3 cards) */}
         <ReferenceLegsRow legs={mb.referenceLegs} />
 
+        {/* Section 1b — Oriel Continuous FV (Issue #21). Official BLS print is
+            the settlement anchor; ForecastEx + USDi proxy are gated, capped
+            signal enhancements only. */}
+        <ContinuousFvCard fv={mb.continuousFv} />
+
         {/* Section 2 — Body row.
             Charts (LEFT, 1.35fr) + Tools (RIGHT, 1fr). Both columns end
             at the same point — the chart card stretches to whatever
@@ -97,6 +102,54 @@
 
         {/* Footer — monotonic / repaired status note */}
         <ArbitrageNote mb={mb} />
+      </div>
+    );
+  }
+
+  /* ───────────────────────── Oriel Continuous FV card ───────
+     Renders mb.continuousFv from analytics.bls_medical_basis_fv. Inline
+     styles keep it self-contained (no new stylesheet rules). */
+  function ContinuousFvCard({ fv }) {
+    if (!fv) return null;
+    const isLive = fv.sourceStatus === 'live';
+    const GOLD = '#d97706', MUT = '#5a6478', BORDER = 'var(--border,#e3e7ef)';
+    const cell = (label, value, color, sub) => (
+      <div style={{ flex: '1 1 140px', minWidth: 124 }}>
+        <div style={{ fontSize: 10.5, letterSpacing: '0.06em', textTransform: 'uppercase', color: 'var(--text-subtle,#8a93a6)' }}>{label}</div>
+        <div style={{ fontSize: 21, fontWeight: 650, color: color || 'var(--text,#0e1733)', marginTop: 2, lineHeight: 1.1 }}>{value}</div>
+        {sub ? <div style={{ fontSize: 10.5, color: 'var(--text-muted,#5a6478)', marginTop: 2 }}>{sub}</div> : null}
+      </div>
+    );
+    const maxAbs = Math.max.apply(null, fv.curve.map((p) => Math.abs(p.bps)).concat([1]));
+    return (
+      <div className="data-card" style={{ marginBottom: 14 }}>
+        <div className="data-card-head">
+          <div>
+            <div className="data-card-title">Oriel Continuous FV · BLS Settlement Basis</div>
+            <div className="data-card-sub">Official BLS print is the settlement anchor; ForecastEx and the Uniswap USDi / USDi-Med proxy enter only as gated, capped signal enhancements.</div>
+          </div>
+          <span className="feed-pill" style={{ background: isLive ? 'rgba(22,163,74,.12)' : 'rgba(217,119,6,.12)', color: isLive ? '#16a34a' : '#d97706', borderColor: isLive ? 'rgba(22,163,74,.30)' : 'rgba(217,119,6,.30)' }}>{isLive ? 'LIVE · BLS' : 'SAMPLE · ILLUSTRATIVE'}</span>
+        </div>
+        <div className="data-card-body">
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 18, marginBottom: 16 }}>
+            {cell('Realized basis', fmtBp(fv.realizedBasisBps), '#2d5bff', `Last print ${fv.lastPrintMonth}`)}
+            {cell('Model FV · calibrated', fmtBp(fv.modelFvBps), null, 'Momentum + seasonality + reversion')}
+            {cell('ForecastEx adj', fmtBp(fv.forecastexAdjBps), GOLD, (fv.forecastexQualified ? 'qualified' : 'gated') + ' · cap ±50')}
+            {cell('USDi proxy adj', fmtBp(fv.proxyAdjBps), GOLD, (fv.proxyQualified ? 'qualified' : 'gated') + ' · cap ±25')}
+            {cell('Final FV', fmtBp(fv.finalFvBps), fv.finalFvBps >= 0 ? '#16a34a' : '#dc2626', 'Calibrated + enhancements')}
+            {cell('Confidence', String(fv.confidence), null, fv.publishability)}
+          </div>
+          <div style={{ display: 'flex', alignItems: 'flex-end', gap: 16, height: 132, borderTop: `1px solid ${BORDER}`, paddingTop: 14 }}>
+            {fv.curve.map((p) => (
+              <div key={p.tenor} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'flex-end', height: '100%' }}>
+                <div style={{ fontSize: 11, fontWeight: 600, color: 'var(--text,#0e1733)', marginBottom: 4 }}>{fmtBp(p.bps)}</div>
+                <div style={{ width: '58%', maxWidth: 54, height: `${Math.max(4, Math.abs(p.bps) / maxAbs * 80)}%`, background: p.bps >= 0 ? GOLD : MUT, borderRadius: '3px 3px 0 0' }} />
+                <div style={{ fontSize: 11, color: 'var(--text-muted,#5a6478)', marginTop: 6 }}>{p.tenor}</div>
+              </div>
+            ))}
+          </div>
+          <div style={{ fontSize: 10.5, color: 'var(--text-subtle,#8a93a6)', marginTop: 8 }}>Front tenor anchored to final FV; converges toward the long-run mean ({fmtBp(fv.longRunMeanBps)}) by the 12M tenor. Settlement anchor weight 1.00 · signal inputs illustrative (live feed listing-dependent).</div>
+        </div>
       </div>
     );
   }
