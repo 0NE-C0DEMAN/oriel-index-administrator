@@ -191,10 +191,13 @@
     const layout = useMemo(() => {
       if (!curve.length) return null;
       const h = Math.max(hMeasured || 0, 190);
-      const padL = 58, padR = 16, padT = 16, padB = 30;
+      const padL = 56, padR = 26, padT = 16, padB = 34;
       const innerW = Math.max(w - padL - padR, 40);
       const innerH = h - padT - padB;
-      const vals = curve.map((p) => p.bps).concat([mean, 0]);
+      // Auto-range on the curve points + the long-run mean (NOT anchored to 0)
+      // — same as BasisCurveChart. Forcing 0 into the range squashes a curve
+      // that sits far from zero (e.g. 41-46 bp) into a thin sliver at the top.
+      const vals = curve.map((p) => p.bps).concat([mean]);
       const yMin = Math.min(...vals);
       const yMax = Math.max(...vals);
       const span = yMax - yMin || 1;
@@ -270,7 +273,7 @@
                   fill="transparent" onMouseEnter={() => setHoverIdx(i)} onMouseLeave={() => setHoverIdx(null)} />
           ))}
           {layout.pts.map((p, i) => (
-            <text key={`xl-${i}`} x={p.cx} y={layout.h - 10} textAnchor="middle"
+            <text key={`xl-${i}`} x={p.cx} y={layout.h - 13} textAnchor="middle"
                   fontSize="10.5" fill="var(--text-muted)" fontFamily="Inter, system-ui">{p.tenor}</text>
           ))}
         </svg>

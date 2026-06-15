@@ -120,21 +120,38 @@ def _build_continuous_fv() -> Dict[str, Any] | None:
         return rows
 
     try:
-        try:
-            obs = fetch_official_bls_observations(timeout_seconds=8.0)
-            status = "live" if len(obs) >= 14 else "sample"
-            if status != "live":
-                obs = _sample_obs()
-        except Exception:
-            obs, status = _sample_obs(), "sample"
+        # Official BLS print is the settlement anchor: try live first, with a
+        # retry, and fall back to a clearly-labeled sample series only on real
+        # failure. A transient miss (cold-start latency, a rate-limited shared
+        # egress IP) must NOT pin sample for the process lifetime, so only a
+        # successful live result is cached (see the status == "live" guard at
+        # the bottom). Every later rebuild keeps trying live until it wins.
+        obs, status = None, "sample"
+        for _attempt in range(2):
+            try:
+                fetched = fetch_official_bls_observations(timeout_seconds=18.0)
+                if len(fetched) >= 14:
+                    obs, status = fetched, "live"
+                    break
+            except Exception as ex:
+                logger.warning("Continuous FV: BLS fetch attempt %d failed (%s)", _attempt + 1, ex)
+        if obs is None:
+            obs = _sample_obs()
 
         engine = BLSMedicalBasisFVEngine()
         now = datetime.now(timezone.utc)
         base = engine.evaluate(obs, valuation_time=now)
+        # ForecastEx Medical Basis — illustrative additive signal (no live
+        # medical-basis contract is listed yet). The engine gates it and caps
+        # the adjustment at ±50 bps.
         fe = OptionalBasisSignal(base.model_fv_basis_bps + 28.0, now - timedelta(hours=3), 0.84, 0.79, 0.20, "ForecastEx Medical Basis")
-        px = OptionalBasisSignal(base.model_fv_basis_bps - 15.0, now - timedelta(hours=6), 0.71, 0.74, 0.12, "Uniswap USDi / USDi-Med")
+        # USDi / USDi-Med proxy — routed through PR #23's real adapter on a
+        # deterministic, eligible pool snapshot (live Uniswap ingestion stays
+        # disabled until the USDi-Med pool is listed). The adapter applies its
+        # own quality gates; the engine caps the adjustment at ±25 bps.
+        px = _build_proxy_signal(base.model_fv_basis_bps, now)
         r = engine.evaluate(obs, valuation_time=now, forecastex_signal=fe, proxy_signal=px)
-        _FV_CACHE = {
+        result = {
             "sourceStatus": status,
             "lastPrintMonth": r.last_official_print_month,
             "realizedBasisBps": round(float(r.realized_basis_bps), 1),
@@ -154,9 +171,54 @@ def _build_continuous_fv() -> Dict[str, Any] | None:
                 {"tenor": "12M", "bps": round(float(r.fv_curve_bps["12m"]), 1)},
             ],
         }
-        return _FV_CACHE
+        # Pin only a real BLS result; keep retrying while on the sample series
+        # so a transient cold-start failure self-heals on the next rebuild.
+        if status == "live":
+            _FV_CACHE = result
+        return result
     except Exception as ex:
         logger.warning("Continuous FV: build failed (%s)", ex)
+        return None
+
+
+def _build_proxy_signal(model_fv_basis_bps: float, now) -> Any:
+    """USDi / USDi-Med proxy via PR #23's adapter (venues.uniswap.usdi_med_proxy).
+
+    Live Uniswap ingestion is intentionally disabled in that adapter until the
+    USDi-Med pool is listed, so we feed it a deterministic, eligible pool
+    snapshot — exactly the path the adapter documents as usable today. The
+    pool's USDi-Med / USDi ratio is set ~15 bps below model FV so the proxy
+    reads as a small, plausible market misalignment; the adapter's quality gates
+    and the engine's ±25 bp cap do the rest. Returns None (engine reports the
+    proxy as gated) if the snapshot is ineligible or the adapter is unavailable.
+    """
+    try:
+        from datetime import timedelta
+        from venues.uniswap.usdi_med_proxy import (
+            UniswapUsdiMedSnapshot,
+            build_usdi_med_proxy_signal,
+        )
+    except Exception as ex:
+        logger.warning("Continuous FV: proxy adapter unavailable (%s)", ex)
+        return None
+    try:
+        spot_ratio = 1.0 + (float(model_fv_basis_bps) - 15.0) / 10_000.0
+        twap_ratio = 1.0 + (float(model_fv_basis_bps) - 19.0) / 10_000.0
+        snapshot = UniswapUsdiMedSnapshot(
+            usdi_price=1.0,
+            usdi_med_price=spot_ratio,
+            usdi_med_usdi_ratio=spot_ratio,
+            pool_liquidity_usd=4_200_000.0,
+            volume_24h_usd=650_000.0,
+            twap_ratio=twap_ratio,
+            spot_ratio=spot_ratio,
+            price_impact_bps=18.0,
+            last_trade_timestamp=now - timedelta(hours=6),
+            data_source="deterministic",
+        )
+        return build_usdi_med_proxy_signal(snapshot, float(model_fv_basis_bps), now)
+    except Exception as ex:
+        logger.warning("Continuous FV: proxy signal build failed (%s)", ex)
         return None
 
 

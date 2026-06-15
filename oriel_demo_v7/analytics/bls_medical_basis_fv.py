@@ -413,24 +413,37 @@ def fetch_official_bls_observations(
     start_year: int | None = None,
     end_year: int | None = None,
     timeout_seconds: float = 20.0,
+    registration_key: str | None = None,
 ) -> list[CPIIndexObservation]:
     """Fetch paired CPI-U All Items and Medical Care CPI-U monthly levels.
 
     This loader is an optional convenience for the UI. The calculation engine
     does not require network access and accepts deterministic observations.
     """
+    import os
     import requests
 
     current_year = datetime.now(timezone.utc).year
     end = int(end_year or current_year)
-    start = int(start_year or end - 10)
+    start = int(start_year or end - 9)
+    # The unregistered BLS public API rejects a single query that spans more
+    # than 10 calendar years, which would surface as a non-success status and
+    # drop the UI to the sample series. Keep the window inside that bound.
+    if end - start > 9:
+        start = end - 9
+    # A free BLS registration key (BLS_API_KEY) lifts the daily quota from 25 to
+    # 500 requests and gives this request its own bucket instead of sharing the
+    # host's unregistered allowance — a shared cloud egress IP (e.g. a hosted
+    # Space) burns through 25/day fast, which is the usual reason a live fetch
+    # silently degrades to sample. Keyless still works while quota remains.
+    key = registration_key if registration_key is not None else os.environ.get("BLS_API_KEY", "")
     response = requests.post(
         BLS_API_URL,
         json={
             "seriesid": [HEADLINE_CPI_SERIES_ID, MEDICAL_CPI_SERIES_ID],
             "startyear": str(start),
             "endyear": str(end),
-            "registrationkey": "",
+            "registrationkey": key,
         },
         timeout=timeout_seconds,
     )
