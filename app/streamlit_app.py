@@ -16,6 +16,7 @@ or use streamlit.components.v1.declare_component() for a two-way bridge.
 from __future__ import annotations
 
 import json
+import threading
 from pathlib import Path
 
 import streamlit as st
@@ -1160,7 +1161,7 @@ st.markdown(
     <div class="oriel-boot-overlay">
       <div class="oriel-boot-overlay-spin"></div>
       <div class="oriel-boot-overlay-text">Loading Oriel</div>
-      <div class="oriel-boot-overlay-sub">Fetching live venue feeds…</div>
+      <div class="oriel-boot-overlay-sub">Starting up…</div>
     </div>
 
     <script>
@@ -1206,48 +1207,125 @@ st.markdown(
     unsafe_allow_html=True,
 )
 
-# ── Build the inlined bundle and embed ───────────────────────────────────────
-# Fetch live Kalshi CPI snapshots on each render (60s cache). Falls back to
-# sample data inside the React app when the payload is "null".
-live_payload = _cached_live_cpi_payload()
-# Build the v7 venue-blend parent curve once (1h cache; static CSV inputs).
-blended_payload = _cached_blended_payload()
-# Build v7's ForecastEx package (live + sample) for the FX index tab.
-forecastex_payload = _cached_forecastex_payload()
-polymarket_payload = _cached_polymarket_payload()
-cme_payload        = _cached_cme_payload()
-perp_payload       = _cached_perp_payload()
-cms_payload        = _cached_cms_payload()
-mb_payload         = _cached_medical_basis_payload()
-parity_payload     = _cached_parity_payload()
-admin_payload      = _cached_admin_payload()
-execution_payload  = _cached_execution_payload()
-# Inject the logged-in user so the React top nav can render a profile
-# pill + logout option (replaces the old "Connect" button).
-session_user       = st.session_state.get("oriel_user", "Admin")
-session_payload    = json.dumps({"user": session_user})
+# ── Live feeds load in the background; the page renders instantly ─────────────
+# The venue feeds (Kalshi, ForecastEx, Polymarket, CME, …) are fetched OFF the
+# request thread by a single per-process background refresher, so a slow or
+# unreachable venue API can never block the page. Each feed lands in a shared
+# cache the moment it resolves; the render reads whatever is ready (a missing
+# feed injects as "null", which the React app renders as its sample), and the
+# 3s fragment re-injects feeds as they arrive — so the dashboard appears
+# immediately and each section flashes to live as its data lands. The payload
+# builders are pure (no Streamlit calls), so they are safe to run in a thread.
+_FEED_BUILDERS = {
+    "live":       live_cpi_payload_json,
+    "blended":    blended_payload_json,
+    "forecastex": forecastex_payload_json,
+    "polymarket": polymarket_payload_json,
+    "cme":        cme_payload_json,
+    "execution":  execution_payload_json,
+    "perp":       perp_payload_json,
+    "cms":        cms_payload_json,
+    "mb":         medical_basis_payload_json,
+    "parity":     parity_payload_json,
+    "admin":      admin_payload_json,
+}
+# Per-feed refresh cadence (seconds), mirroring the old @st.cache_data TTLs.
+_FEED_TTL = {
+    "live": 60, "forecastex": 600, "polymarket": 600, "cme": 600,
+    "execution": 600, "mb": 600,
+    "blended": 3600, "perp": 3600, "cms": 3600, "parity": 3600, "admin": 3600,
+}
+
+
+def _fetch_feed(state: dict, name: str) -> None:
+    try:
+        value = _FEED_BUILDERS[name]()
+        if not isinstance(value, str):
+            value = "null"
+    except Exception:
+        value = "null"
+    with state["lock"]:
+        state["cache"][name] = value
+        state["ts"][name] = time.time()
+        state["inflight"].discard(name)
+
+
+def _refresh_due_feeds(state: dict) -> None:
+    now = time.time()
+    for name in _FEED_BUILDERS:
+        with state["lock"]:
+            if name in state["inflight"]:
+                continue
+            fresh = (
+                name in state["cache"]
+                and (now - state["ts"].get(name, 0.0)) < _FEED_TTL.get(name, 600)
+            )
+            if fresh:
+                continue
+            state["inflight"].add(name)
+        threading.Thread(target=_fetch_feed, args=(state, name), daemon=True).start()
+
+
+@st.cache_resource(show_spinner=False)
+def _feed_runtime() -> dict:
+    """Shared feed cache + background refresher — created once per process and
+    persisted across reruns and sessions by st.cache_resource."""
+    state: dict = {
+        "cache": {}, "ts": {}, "inflight": set(), "lock": threading.Lock(),
+    }
+
+    def _loop() -> None:
+        while True:
+            try:
+                _refresh_due_feeds(state)
+            except Exception:
+                pass
+            time.sleep(15)
+
+    threading.Thread(target=_loop, daemon=True).start()
+    return state
+
+
+def _feed(state: dict, name: str) -> str:
+    with state["lock"]:
+        return state["cache"].get(name, "null")
+
+
+_RT = _feed_runtime()
+
+
+# On a cold process, give the fast feeds a few seconds to land so the first
+# paint already carries live data; subsequent loads hit the warm shared cache
+# (kept fresh by the background refresher) instantly. A slow or unreachable feed
+# (e.g. Kalshi mid-outage) simply stays "null" → the React app renders its
+# sample, so the page renders within a few seconds and never blocks. We render
+# ONCE: the React bundle's in-browser mount takes longer than the feed cadence,
+# so re-rendering the iframe mid-mount would restart it and it would never
+# finish — the background refresher handles ongoing freshness across reloads.
+_deadline = time.time() + 9.0
+while time.time() < _deadline:
+    with _RT["lock"]:
+        ready = len(_RT["cache"])
+    if ready >= len(_FEED_BUILDERS):
+        break
+    time.sleep(0.25)
+
+session_user = st.session_state.get("oriel_user", "Admin")
 html = build_bundle(
     APP_ROOT,
-    live_payload_json=live_payload,
-    blended_payload_json=blended_payload,
-    forecastex_payload_json=forecastex_payload,
-    polymarket_payload_json=polymarket_payload,
-    cme_payload_json=cme_payload,
-    execution_payload_json=execution_payload,
-    perp_payload_json=perp_payload,
-    cms_payload_json=cms_payload,
-    medical_basis_payload_json=mb_payload,
-    parity_payload_json=parity_payload,
-    admin_payload_json=admin_payload,
-    session_payload_json=session_payload,
+    live_payload_json=_feed(_RT, "live"),
+    blended_payload_json=_feed(_RT, "blended"),
+    forecastex_payload_json=_feed(_RT, "forecastex"),
+    polymarket_payload_json=_feed(_RT, "polymarket"),
+    cme_payload_json=_feed(_RT, "cme"),
+    execution_payload_json=_feed(_RT, "execution"),
+    perp_payload_json=_feed(_RT, "perp"),
+    cms_payload_json=_feed(_RT, "cms"),
+    medical_basis_payload_json=_feed(_RT, "mb"),
+    parity_payload_json=_feed(_RT, "parity"),
+    admin_payload_json=_feed(_RT, "admin"),
+    session_payload_json=json.dumps({"user": session_user}),
 )
-
-# Pick a height that's <= a typical browser viewport so the iframe doesn't
-# overflow the page and force a browser-level scroll (which would carry the
-# topnav off-screen). The CSS above stretches the iframe to 100vh anyway,
-# but Streamlit needs a numeric `height` argument.
-# scrolling=True is critical: with scrolling=False, the iframe's `scrolling="no"`
-# attribute hard-disables scroll on the inner document AND constrains body
-# height to the iframe height — sticky headers and overflowing content can't
-# scroll at all. Enabling it lets the iframe body's overflow:auto take effect.
+# scrolling=True so the iframe body's overflow:auto can scroll; height is a
+# required numeric arg (the CSS above stretches the iframe to 100vh anyway).
 components.html(html, height=900, scrolling=True)

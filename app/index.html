@@ -11,10 +11,14 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 
-  <!-- React + Babel (CDN, no build step) -->
+  <!-- React + Babel (CDN, no build step).
+       @babel/standalone is PINNED to 7.x: the unpinned "latest" now resolves to
+       8.0.0, whose new defaults emit ESM helper imports that break in-browser
+       `type="text/babel"` transforms ("Cannot use import statement outside a
+       module") and stop the whole app from mounting. Keep this pinned. -->
   <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
   <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
-  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <script src="https://unpkg.com/@babel/standalone@7.26.4/babel.min.js"></script>
 
   <!-- Modular stylesheets — load in cascade order. Each file is a coherent
        slice of the design system; later files (especially 06-perp.css)
